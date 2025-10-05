@@ -49,7 +49,7 @@
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
 
-            <a class="btn-getstarted" href="#about">Get Started</a>
+            <a class="btn-getstarted" href="user-login.php">Get Started</a>
         </div>
     </header>
 
@@ -65,7 +65,7 @@
                             a Seasonal Crop Availability System for the Municipality of Barbaza, Antique
                         </p>
                         <div class="d-flex">
-                            <a href="#about" class="btn-get-started">Get Started</a>
+                            <a href="user-login.php" class="btn-get-started">Get Started</a>
                         </div>
                     </div>
                     <!-- <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out" data-aos-delay="200">

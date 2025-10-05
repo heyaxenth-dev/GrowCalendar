@@ -21,6 +21,17 @@ a:hover {
 	text-decoration: none;
 }
 
+.btn-default {
+	background-color: #0d3d02;
+	color: #fff;
+	/* border: none; */
+}
+
+.btn-default:hover {
+	background-color: #e9b51e;
+	color: #fff;
+}
+
 h1,
 h2,
 h3,

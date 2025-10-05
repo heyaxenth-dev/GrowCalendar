@@ -1,3 +1,18 @@
+<?php 
+    // Get the current script name
+    $current_page = basename($_SERVER['PHP_SELF'], ".php");
+
+    $renamed_pages = [
+    // 'Dashboard' => 'home',
+    'homepage' => 'Dashboard',
+    'crop_schedule' => 'Crop Schedule',
+    'crop_availability' => 'Crop Availability',
+    'recommendations' => 'Recommendations',
+    'crop_schedule_calendar' => 'Crop Schedule Calendar',
+    'user_management' => 'User Management',
+    'settings' => 'Settings',
+];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,7 +20,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-    <title>Admin - GrowCalendar System</title>
+    <title><?= $renamed_pages[$current_page] ?> - GrowCalendar System</title>
     <meta content="" name="description" />
     <meta content="" name="keywords" />
 
