@@ -6,7 +6,7 @@
         if (file_exists($file_path)) {
            return $file_path;
         }else {
-            return 'page-error-404.html';
+            return 'pages-error-404.html';
         }
     }
 
@@ -19,69 +19,58 @@
             <li class="nav-heading">Administrative Panel</li>
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'homepage') ? '' : 'collapsed' ?> "
-                    href="<?= get_page_link('homepage')?>">
+                <a class="nav-link <?= ($current_page == 'homepage') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('homepage') ?>">
                     <i class="bi bi-grid"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
             <!-- End Dashboard Nav -->
 
-            <!-- <li class="nav-heading">Pages</li> -->
-
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'crop_schedule') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('crop_schedule')?>">
-                    <i class="bi bi-calendar-plus"></i>
-                    <span>Crop Schedule</span>
+                <a class="nav-link <?= ($current_page == 'feedbacks') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('feedbacks') ?>">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Feedback Management</span>
                 </a>
             </li>
-            <!-- End Crop Schedule Page Nav -->
+            <!-- End Feedbacks Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'crop_availability') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('crop_availability')?>">
-                    <i class="bi bi-check2-circle"></i>
-                    <span>Crop Availability</span>
+                <a class="nav-link <?= ($current_page == 'marketability') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('marketability') ?>">
+                    <i class="bi bi-bar-chart-line"></i>
+                    <span>Marketability</span>
                 </a>
             </li>
-            <!-- End Crop Availability Page Nav -->
+            <!-- End Marketability Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'recommendations') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('recommendations')?>">
-                    <i class="bi bi-patch-check"></i>
-                    <span>Recommendations</span>
+                <a class="nav-link <?= ($current_page == 'analytics') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('analytics') ?>">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Analytics</span>
                 </a>
             </li>
-            <!-- End Recommendations Page Nav -->
+            <!-- End Analytics Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'crop_schedule_calendar')? '' : 'collapsed'?>"
-                    href="<?= get_page_link('crop_schedule_calendar')?>">
-                    <i class="bi bi-calendar-range"></i>
-                    <span>Crop Schedule Calendar</span>
+                <a class="nav-link <?= ($current_page == 'water_availability') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('water_availability') ?>">
+                    <i class="bi bi-droplet-half"></i>
+                    <span>Water Availability</span>
                 </a>
             </li>
-            <!-- End Crop Schedule Calendar Page Nav -->
+            <!-- End Water Availability Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'user_management') ? '' : 'collapsed'?>"
-                    href="<?= get_page_link('user_management')?>">
+                <a class="nav-link <?= ($current_page == 'user_management') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('user_management') ?>">
                     <i class="bi bi-people"></i>
                     <span>User Management</span>
                 </a>
             </li>
             <!-- End User Management Page Nav -->
-
-            <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'settings') ? '' : 'collapsed'?>"
-                    href="<?= get_page_link('settings')?>">
-                    <i class="bi bi-gear"></i>
-                    <span>Settings</span>
-                </a>
-            </li>
-            <!-- End Settings Page Nav -->
         </ul>
     </aside>
-    <!-- End Sidebar-->
+    <!-- End Sidebar -->

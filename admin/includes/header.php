@@ -2,17 +2,17 @@
     // Get the current script name
     $current_page = basename($_SERVER['PHP_SELF'], ".php");
 
+    // Renamed pages mapping
     $renamed_pages = [
-    // 'Dashboard' => 'home',
-    'homepage' => 'Dashboard',
-    'crop_schedule' => 'Crop Schedule',
-    'crop_availability' => 'Crop Availability',
-    'recommendations' => 'Recommendations',
-    'crop_schedule_calendar' => 'Crop Schedule Calendar',
-    'user_management' => 'User Management',
-    'settings' => 'Settings',
-];
+        'homepage' => 'Dashboard',
+        'feedbacks' => 'Feedbacks',
+        'marketability' => 'Marketability',
+        'analytics' => 'Analytics',
+        'water_availability' => 'Water Availability',
+        'user_management' => 'User Management',
+    ];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
