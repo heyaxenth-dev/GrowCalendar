@@ -5,12 +5,11 @@
     $renamed_pages = [
     // 'Dashboard' => 'home',
     'homepage' => 'Dashboard',
+    'recommendations' => 'Crop Recommendations',
     'crop_schedule' => 'Crop Schedule',
-    'crop_availability' => 'Crop Availability',
-    'recommendations' => 'Recommendations',
-    'crop_schedule_calendar' => 'Crop Schedule Calendar',
-    'user_management' => 'User Management',
-    'settings' => 'Settings',
+    'feedback' => 'Feedback',
+    'weather_insights' => 'Weather Insights',
+    'reports' => 'Reports',
 ];
 ?>
 <!DOCTYPE html>

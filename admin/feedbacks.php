@@ -19,11 +19,11 @@
 
         <section class="section">
             <div class="row">
-                <div class="col-lg-12">
+                <div class="col-lg-8">
 
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Crop Schedule Management</h5>
+                            <h5 class="card-title">Feedbacks Overview</h5>
                             <p>Manage the planting/sowing, vegetative, reproductive, and ripening/harvesting schedules
                                 of your crops.</p>
 
@@ -56,6 +56,78 @@
                     </div>
 
                 </div>
+
+                <!-- Success Rate -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Success Rate</h5>
+
+                            <!-- Pie Chart -->
+                            <div id="successRateChart"></div>
+
+                            <script>
+                            document.addEventListener("DOMContentLoaded", () => {
+                                const options = {
+                                    series: [75, 15, 10], // Success, Failure, Pending
+                                    chart: {
+                                        type: 'pie',
+                                        height: 250,
+                                    },
+                                    labels: ['Success', 'Failure', 'Pending'],
+                                    colors: ['#00b894', '#e74c3c', '#f39c12'],
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            colors: '#555',
+                                        },
+                                    },
+                                    dataLabels: {
+                                        enabled: true,
+                                        formatter: function(val, opts) {
+                                            return opts.w.globals.labels[opts.seriesIndex] + ': ' + val
+                                                .toFixed(0) + '%';
+                                        },
+                                    },
+                                    tooltip: {
+                                        y: {
+                                            formatter: function(val) {
+                                                return val + '%';
+                                            },
+                                        },
+                                    },
+                                };
+
+                                new ApexCharts(document.querySelector("#successRateChart"), options).render();
+                            });
+                            </script>
+                            <!-- End Pie Chart -->
+
+                            <!-- Summary List -->
+                            <div class="mt-4">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <i class="bi bi-circle-fill me-2" style="color: #00b894;"></i>
+                                        <span>Rice</span>
+                                        <span class="float-end fw-bold text-dark">85% Success</span>
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-circle-fill me-2" style="color: #0984e3;"></i>
+                                        <span>Corn</span>
+                                        <span class="float-end fw-bold text-dark">76% Success</span>
+                                    </li>
+                                    <li>
+                                        <i class="bi bi-circle-fill me-2" style="color: #a29bfe;"></i>
+                                        <span>Vegetables</span>
+                                        <span class="float-end fw-bold text-dark">92% Success</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Success Rate -->
+
             </div>
         </section>
 

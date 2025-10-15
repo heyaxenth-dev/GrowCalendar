@@ -30,6 +30,15 @@
             <!-- <li class="nav-heading">Pages</li> -->
 
             <li class="nav-item">
+                <a class="nav-link <?= ($current_page == 'recommendations') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('recommendations')?>">
+                    <i class="bi bi-patch-check"></i>
+                    <span>Crop Recommendations</span>
+                </a>
+            </li>
+            <!-- End Recommendations Page Nav -->
+
+            <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'crop_schedule') ? '' : 'collapsed' ?>"
                     href="<?= get_page_link('crop_schedule')?>">
                     <i class="bi bi-calendar-plus"></i>
@@ -39,49 +48,31 @@
             <!-- End Crop Schedule Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'crop_availability') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('crop_availability')?>">
-                    <i class="bi bi-check2-circle"></i>
-                    <span>Crop Availability</span>
+                <a class="nav-link <?= ($current_page == 'feedback')? '' : 'collapsed'?>"
+                    href="<?= get_page_link('feedback')?>">
+                    <i class="bi bi-chat"></i>
+                    <span>Feedback</span>
                 </a>
             </li>
-            <!-- End Crop Availability Page Nav -->
+            <!-- End Feedback Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'recommendations') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('recommendations')?>">
-                    <i class="bi bi-patch-check"></i>
-                    <span>Recommendations</span>
+                <a class="nav-link <?= ($current_page == 'weather_insights') ? '' : 'collapsed'?>"
+                    href="<?= get_page_link('weather_insights')?>">
+                    <i class="bi bi-cloud-sun"></i>
+                    <span>Weather Insights</span>
                 </a>
             </li>
-            <!-- End Recommendations Page Nav -->
+            <!-- End Weather Insights Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'crop_schedule_calendar')? '' : 'collapsed'?>"
-                    href="<?= get_page_link('crop_schedule_calendar')?>">
-                    <i class="bi bi-calendar-range"></i>
-                    <span>Crop Schedule Calendar</span>
+                <a class="nav-link <?= ($current_page == 'reports') ? '' : 'collapsed'?>"
+                    href="<?= get_page_link('reports')?>">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Reports</span>
                 </a>
             </li>
-            <!-- End Crop Schedule Calendar Page Nav -->
-
-            <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'user_management') ? '' : 'collapsed'?>"
-                    href="<?= get_page_link('user_management')?>">
-                    <i class="bi bi-people"></i>
-                    <span>User Management</span>
-                </a>
-            </li>
-            <!-- End User Management Page Nav -->
-
-            <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'settings') ? '' : 'collapsed'?>"
-                    href="<?= get_page_link('settings')?>">
-                    <i class="bi bi-gear"></i>
-                    <span>Settings</span>
-                </a>
-            </li>
-            <!-- End Settings Page Nav -->
+            <!-- End Reports Page Nav -->
         </ul>
     </aside>
     <!-- End Sidebar-->

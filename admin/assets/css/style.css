@@ -810,17 +810,22 @@ h6 {
 	flex-grow: 0;
 }
 
-.dashboard .sales-card .card-icon {
+.dashboard .recommendation-card .card-icon {
 	color: #0d3d02;
 	background: #f6f6fe;
 }
 
-.dashboard .revenue-card .card-icon {
+.dashboard .users-card .card-icon {
 	color: #2eca6a;
 	background: #e0f8e9;
 }
 
-.dashboard .customers-card .card-icon {
+.dashboard .rate-card .card-icon {
+	color: #e9b51e;
+	background: #fffedf;
+}
+
+.dashboard .feedbacks-card .card-icon {
 	color: #ff771d;
 	background: #ffecdf;
 }
