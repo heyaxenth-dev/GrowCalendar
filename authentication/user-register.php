@@ -10,7 +10,7 @@
     <meta content="" name="keywords">
 
     <!-- Favicons -->
-    <link href="assets/img/favicon.png" rel="icon">
+    <link href="assets/img/favicon.ico" rel="icon">
     <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
     <!-- Google Fonts -->
@@ -60,21 +60,31 @@
                                         <p class="text-center small">Enter your personal details to create account</p>
                                     </div>
 
-                                    <form class="row g-3 needs-validation" novalidate>
-                                        <div class="col-12">
-                                            <label for="yourName" class="form-label">Your Name</label>
-                                            <input type="text" name="name" class="form-control" id="yourName" required>
-                                            <div class="invalid-feedback">Please, enter your name!</div>
+                                    <form class="row g-3 needs-validation" action="./user-register-code.php"
+                                        method="POST" novalidate>
+
+                                        <div class="col-md-6">
+                                            <label for="FirstName" class="form-label">First Name</label>
+                                            <input type="text" name="firstname" class="form-control" id="FirstName"
+                                                required>
+                                            <div class="invalid-feedback">Please, enter your first name!</div>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div class="col-md-6">
+                                            <label for="LastName" class="form-label">Last Name</label>
+                                            <input type="text" name="lastname" class="form-control" id="LastName"
+                                                required>
+                                            <div class="invalid-feedback">Please, enter your last name!</div>
+                                        </div>
+
+                                        <div class="col-md-12">
                                             <label for="yourEmail" class="form-label">Your Email</label>
                                             <input type="email" name="email" class="form-control" id="yourEmail"
                                                 required>
                                             <div class="invalid-feedback">Please enter a valid Email adddress!</div>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div class="col-md-12">
                                             <label for="yourUsername" class="form-label">Username</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text" id="inputGroupPrepend">@</span>
@@ -84,14 +94,21 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div class="col-md-12">
                                             <label for="yourPassword" class="form-label">Password</label>
                                             <input type="password" name="password" class="form-control"
                                                 id="yourPassword" required>
                                             <div class="invalid-feedback">Please enter your password!</div>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div class="col-md-12">
+                                            <label for="yourConfirmPassword" class="form-label">Confirm Password</label>
+                                            <input type="password" name="confirm_password" class="form-control"
+                                                id="yourConfirmPassword" required>
+                                            <div class="invalid-feedback">Please confirm your password!</div>
+                                        </div>
+
+                                        <div class="col-md-12">
                                             <div class="form-check">
                                                 <input class="form-check-input" name="terms" type="checkbox" value=""
                                                     id="acceptTerms" required>
@@ -100,10 +117,11 @@
                                                 <div class="invalid-feedback">You must agree before submitting.</div>
                                             </div>
                                         </div>
-                                        <div class="col-12">
-                                            <button class="btn btn-default w-100" type="submit">Create Account</button>
+                                        <div class="col-md-12">
+                                            <button class="btn btn-default w-100" type="submit"
+                                                name="create_user_acc">Create Account</button>
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col-md-12">
                                             <p class="small mb-0">Already have an account? <a href="user-login.php">Log
                                                     in</a></p>
                                         </div>

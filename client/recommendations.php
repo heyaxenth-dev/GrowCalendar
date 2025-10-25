@@ -1,8 +1,7 @@
     <?php 
-    
+    include './authentication/authentication.php';
     include 'includes/header.php';
     include 'includes/sidebar.php';
-
     ?>
 
     <main id="main" class="main">

@@ -1,4 +1,8 @@
 <?php 
+    // Include database configuration
+    include '../database/config.php';
+    
+    
     // Get the current script name
     $current_page = basename($_SERVER['PHP_SELF'], ".php");
 
@@ -47,6 +51,25 @@
 </head>
 
 <body>
+    <?php 
+        // Get the current user details from the session
+        $username = $_SESSION['username'];
+        $email = $_SESSION['email'];
+
+        // Use username to fetch more user details from the database if needed
+        $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email'";
+        $stmt = $conn->prepare($get_user);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+
+        $user_id = $user['id'];
+        $user_firstname = $user['firstname'];
+        $user_lastname = $user['lastname'];
+        $user_role = $user['role'];
+        $fname_initial = strtoupper(substr($user_firstname, 0, 1));
+    
+    ?>
     <!-- ======= Header ======= -->
     <header id="header" class="header fixed-top d-flex align-items-center">
         <div class="d-flex align-items-center justify-content-between">
@@ -226,13 +249,15 @@
                 <li class="nav-item dropdown pe-3">
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
                         <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle" />
-                        <span class="d-none d-md-block dropdown-toggle ps-2">K. Anderson</span> </a>
+                        <span
+                            class="d-none d-md-block dropdown-toggle ps-2"><?= $fname_initial .". ". $user_lastname?></span>
+                    </a>
                     <!-- End Profile Iamge Icon -->
 
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
                         <li class="dropdown-header">
-                            <h6>Kevin Anderson</h6>
-                            <span>Web Designer</span>
+                            <h6><?= $user_firstname . " " . $user_lastname ?></h6>
+                            <span><?= $email ?></span>
                         </li>
                         <li>
                             <hr class="dropdown-divider" />
@@ -269,7 +294,7 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item d-flex align-items-center" href="#">
+                            <a class="dropdown-item d-flex align-items-center" href="../authentication/user-logout.php">
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Sign Out</span>
                             </a>

@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-    <title>Pages / Login - GrowCalendar</title>
+    <title>User Login - GrowCalendar</title>
     <meta content="" name="description" />
     <meta content="" name="keywords" />
 
     <!-- Favicons -->
-    <link href="assets/img/favicon.png" rel="icon" />
+    <link href="assets/img/favicon.ico" rel="icon" />
     <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
 
     <!-- Google Fonts -->
@@ -59,7 +59,8 @@
                                         </p>
                                     </div>
 
-                                    <form class="row g-3 needs-validation" novalidate>
+                                    <form class="row g-3 needs-validation" action="./user-login-code.php" method="POST"
+                                        novalidate>
                                         <div class="col-12">
                                             <label for="yourUsername" class="form-label">Username</label>
                                             <div class="input-group has-validation">
@@ -89,7 +90,7 @@
                                             </div>
                                         </div>
                                         <div class="col-12">
-                                            <button class="btn btn-default w-100" type="submit">
+                                            <button class="btn btn-default w-100" name="login_user" type="submit">
                                                 Login
                                             </button>
                                         </div>
