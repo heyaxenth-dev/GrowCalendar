@@ -9,9 +9,10 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $role = 'user';
 
     // Prepare and execute the SQL statement
-    $sql = "SELECT * FROM users WHERE username = ?";
+    $sql = "SELECT * FROM users WHERE username = ? AND role = '$role'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -27,19 +28,32 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             // $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['email'] = $user['email'];
-            // $_SESSION['role'] = $user['role'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['logged'] = "Welcome back, " . $user['username'];
+            $_SESSION['logged_icon'] = "success";
 
             // Redirect to dashboard or appropriate page
             header("Location: ../client/homepage.php");
             exit();
         } else {
             // Invalid password
-            echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
+            $_SESSION['status'] = "Login Failed!";
+            $_SESSION['status_text'] = "Invalid username or password. Please try again.";
+            $_SESSION['status_code'] = "error";
+            $_SESSION['status_btn'] = "Retry";
+
+            header("Location: user-login.php");
+            // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
             exit();
         }
     } else {
         // User not found
-        echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
+        $_SESSION['status'] = "Login Failed!";
+        $_SESSION['status_text'] = "Invalid username or password. Please try again.";
+        $_SESSION['status_code'] = "error";
+        $_SESSION['status_btn'] = "Retry";
+        header("Location: user-login.php");
+        // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
         exit();
     }
 }

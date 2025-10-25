@@ -37,12 +37,22 @@ if (isset($_POST['login_admin']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         } else {
             // Invalid password
-            echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
+            $_SESSION['status'] = "Login Failed!";
+            $_SESSION['status_text'] = "Invalid username or password. Please try again.";
+            $_SESSION['status_code'] = "error";
+            $_SESSION['status_btn'] = "Retry";
+            header("Location: admin-login.php");
+            // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
             exit();
         }
     } else {
         // User not found
-        echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
+        $_SESSION['status'] = "Login Failed!";
+        $_SESSION['status_text'] = "Invalid username or password. Please try again.";
+        $_SESSION['status_code'] = "error";
+        $_SESSION['status_btn'] = "Retry";
+        header("Location: admin-login.php");
+        // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
         exit();
     }
 }

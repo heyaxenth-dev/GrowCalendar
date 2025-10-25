@@ -1,4 +1,6 @@
-<?php 
+<?php
+session_start();
+// Database configuration file 
 include '../database/config.php';
 
 
@@ -29,9 +31,22 @@ if (isset($_POST['create_admin_acc']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $stmt->bind_param("ssssss", $role, $firstname, $lastname, $email, $username, $hashed_password);
 
     if ($stmt->execute()) {
-        echo "<script>alert('Account created successfully! You can now log in.'); window.location.href = 'admin-login.php';</script>";
+        $_SESSION['status'] = "Success!";
+        $_SESSION['status_text'] = "Account created successfully! You can now log in.";
+        $_SESSION['status_code'] = "success";
+        $_SESSION['status_btn'] = "Login";
+
+        header("Location: admin-login.php");
+        // echo "<script>alert('Account created successfully! You can now log in.'); window.location.href = 'admin-login.php';</script>";
     } else {
-        echo "<script>alert('Error creating account: " . $stmt->error . "'); window.location.href = 'admin-register.php';</script>";
+        $_SESSION['status'] = "Error!";
+        $_SESSION['status_text'] = "Error creating account. Please try again.";
+        $_SESSION['status_code'] = "error";
+        $_SESSION['status_btn'] = "Back";
+        
+        header("Location: admin-register.php");
+        
+        // echo "<script>alert('Error creating account: " . $stmt->error . "'); window.location.href = 'admin-register.php';</script>";
     }
 
     $stmt->close();

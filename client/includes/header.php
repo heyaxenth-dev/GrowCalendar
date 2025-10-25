@@ -55,9 +55,10 @@
         // Get the current user details from the session
         $username = $_SESSION['username'];
         $email = $_SESSION['email'];
+        $user_role = $_SESSION['role'];
 
         // Use username to fetch more user details from the database if needed
-        $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email'";
+        $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email' AND role = '$user_role'";
         $stmt = $conn->prepare($get_user);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -66,7 +67,6 @@
         $user_id = $user['id'];
         $user_firstname = $user['firstname'];
         $user_lastname = $user['lastname'];
-        $user_role = $user['role'];
         $fname_initial = strtoupper(substr($user_firstname, 0, 1));
     
     ?>
