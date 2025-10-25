@@ -1,3 +1,6 @@
+<?php 
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -45,6 +48,7 @@
                     <li><a href="#about">About</a></li>
                     <li><a href="#services">Services</a></li>
                     <li><a href="#contact">Contact</a></li>
+                    <li><a href="./authentication/admin-login.php"><i class="bi bi-person"></i></a></li>
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
@@ -52,6 +56,11 @@
             <a class="btn-getstarted" href="./authentication/user-login.php">Get Started</a>
         </div>
     </header>
+
+    <?php 
+    // sweet alert
+    include 'alert.php';
+    ?>
 
     <main class="main">
         <!-- Hero Section -->
