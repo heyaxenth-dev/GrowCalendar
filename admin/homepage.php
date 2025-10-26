@@ -53,7 +53,7 @@ Toast.fire({
                 <!-- Recommendations Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card info-card recommendation-card">
-                        <div class="filter">
+                        <!-- <div class="filter">
                             <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
                                 <li class="dropdown-header text-start">
@@ -64,7 +64,7 @@ Toast.fire({
                                 <li><a class="dropdown-item" href="#">This Month</a></li>
                                 <li><a class="dropdown-item" href="#">This Year</a></li>
                             </ul>
-                        </div>
+                        </div> -->
 
                         <div class="card-body">
                             <h5 class="card-title">
@@ -76,7 +76,18 @@ Toast.fire({
                                     <i class="bi bi-patch-check"></i>
                                 </div>
                                 <div class="ps-3">
-                                    <h6>3,264</h6>
+                                    <?php 
+                                        // Fetch total recommendations from database
+                                        $sql = "SELECT COUNT(*) AS total_recommendations FROM crop_recommendations";
+                                        $result = $conn->query($sql);
+                                        $total_recommendations = 0;
+                                        if ($result && $result->num_rows > 0) {
+                                            $row = $result->fetch_assoc();
+                                            $total_recommendations = $row['total_recommendations'];
+                                        }
+
+                                    ?>
+                                    <h6><?= $total_recommendations?></h6>
                                     <!-- <span class="text-success small pt-1 fw-bold">8%</span>
                                             <span class="text-muted small pt-2 ps-1">increase</span> -->
                                 </div>
@@ -89,18 +100,6 @@ Toast.fire({
                 <!-- Active Technologists Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card info-card users-card">
-                        <div class="filter">
-                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                                <li class="dropdown-header text-start">
-                                    <h6>Filter</h6>
-                                </li>
-
-                                <li><a class="dropdown-item" href="#">Today</a></li>
-                                <li><a class="dropdown-item" href="#">This Month</a></li>
-                                <li><a class="dropdown-item" href="#">This Year</a></li>
-                            </ul>
-                        </div>
 
                         <div class="card-body">
                             <h5 class="card-title">
@@ -112,7 +111,17 @@ Toast.fire({
                                     <i class="bi bi-people"></i>
                                 </div>
                                 <div class="ps-3">
-                                    <h6>3,264</h6>
+                                    <?php 
+                                        // Fetch total active technologists from database
+                                        $sql = "SELECT COUNT(*) AS total_technologists FROM users WHERE role = 'user' AND status = 'active'";
+                                        $result = $conn->query($sql);
+                                        $total_technologists = 0;
+                                        if ($result && $result->num_rows > 0) {
+                                            $row = $result->fetch_assoc();
+                                            $total_technologists = $row['total_technologists'];
+                                        }
+                                    ?>
+                                    <h6><?= $total_technologists?></h6>
                                     <!-- <span class="text-success small pt-1 fw-bold">8%</span>
                                             <span class="text-muted small pt-2 ps-1">increase</span> -->
                                 </div>
@@ -125,18 +134,6 @@ Toast.fire({
                 <!-- Success Rate Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card info-card rate-card">
-                        <div class="filter">
-                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                                <li class="dropdown-header text-start">
-                                    <h6>Filter</h6>
-                                </li>
-
-                                <li><a class="dropdown-item" href="#">Today</a></li>
-                                <li><a class="dropdown-item" href="#">This Month</a></li>
-                                <li><a class="dropdown-item" href="#">This Year</a></li>
-                            </ul>
-                        </div>
 
                         <div class="card-body">
                             <h5 class="card-title">
@@ -148,7 +145,13 @@ Toast.fire({
                                     <i class="bi bi-hand-thumbs-up"></i>
                                 </div>
                                 <div class="ps-3">
-                                    <h6>3,264</h6>
+                                    <?php 
+                                        // Fetch success rate from database or calculate it
+                                        // For demonstration, using a static value
+                                        $success_rate = 85; // Example static value
+
+                                    ?>
+                                    <h6><?= $success_rate?></h6>
                                     <!-- <span class="text-success small pt-1 fw-bold">8%</span>
                                             <span class="text-muted small pt-2 ps-1">increase</span> -->
                                 </div>
@@ -161,19 +164,6 @@ Toast.fire({
                 <!-- Feedbacks Received Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card info-card feedbacks-card">
-                        <div class="filter">
-                            <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                                <li class="dropdown-header text-start">
-                                    <h6>Filter</h6>
-                                </li>
-
-                                <li><a class="dropdown-item" href="#">Today</a></li>
-                                <li><a class="dropdown-item" href="#">This Month</a></li>
-                                <li><a class="dropdown-item" href="#">This Year</a></li>
-                            </ul>
-                        </div>
-
                         <div class="card-body">
                             <h5 class="card-title">
                                 Feedbacks Received
@@ -184,7 +174,17 @@ Toast.fire({
                                     <i class="bi bi-box-arrow-in-down-left"></i>
                                 </div>
                                 <div class="ps-3">
-                                    <h6>1244</h6>
+                                    <?php 
+                                        // Fetch total feedbacks from database
+                                        $sql = "SELECT COUNT(*) AS total_feedbacks FROM crop_feedback";
+                                        $result = $conn->query($sql);
+                                        $total_feedbacks = 0;
+                                        if ($result && $result->num_rows > 0) {
+                                            $row = $result->fetch_assoc();
+                                            $total_feedbacks = $row['total_feedbacks'];
+                                        }
+                                    ?>
+                                    <h6><?= $total_feedbacks?></h6>
                                     <!-- <span class="text-danger small pt-1 fw-bold">12%</span>
                                             <span class="text-muted small pt-2 ps-1">decrease</span> -->
                                 </div>

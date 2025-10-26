@@ -54,13 +54,13 @@
             </li>
             <!-- End Analytics Page Nav -->
 
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'water_availability') ? '' : 'collapsed' ?>"
                     href="<?= get_page_link('water_availability') ?>">
                     <i class="bi bi-droplet-half"></i>
                     <span>Water Availability</span>
                 </a>
-            </li>
+            </li> -->
             <!-- End Water Availability Page Nav -->
 
             <li class="nav-item">
