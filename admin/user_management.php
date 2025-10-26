@@ -40,12 +40,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php 
+                                        // Get user data from database
+                                        $sql = "SELECT firstname, lastname, barangay, status, last_login FROM users WHERE role = 'user' AND status = 'active'";
+                                        $result = $conn->query($sql);
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                           //Get feedback count for each technologist
+                                           ;
+                                             $feedback_sql = "SELECT COUNT(*) AS feedback_count FROM crop_feedback WHERE user_id = ?";
+                                                $feedback_stmt = $conn->prepare($feedback_sql);
+                                                $feedback_stmt->bind_param("i", $user_id);
+                                                $feedback_stmt->execute();
+                                                $feedback_result = $feedback_stmt->get_result();
+                                                $feedback_row = $feedback_result->fetch_assoc();
+                                                $row['feedback_count'] = $feedback_row['feedback_count'];
+                                        
+                                        ?>
                                     <tr>
-                                        <td>Maria Santos</td>
-                                        <td>Barbaza</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                        <td>2005/02/11</td>
-                                        <td>37</td>
+                                        <td><?= $row['firstname'] ?> <?= $row['lastname'] ?></td>
+                                        <td><?= ($row['barangay'] == null ? '<span class="text-danger fw-bold">Unassigned</span>' : $row['barangay']) ?>
+                                        </td>
+                                        <!-- Default Status is Active -->
+                                        <td><?= ($row['status'] == 'Active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>')?>
+                                        </td>
+                                        <!-- Translate to a readable date format -->
+                                        <td><?= date('M d, Y', strtotime($row['last_login'])) ?></td>
+                                        <td><?= $row['feedback_count'] ?></td>
                                         <td>
                                             <a href="user_profile" class="btn btn-primary btn-sm"><i
                                                     class="bi bi-eye"></i> View</a>
@@ -53,6 +73,7 @@
                                                 Deactivate</a>
                                         </td>
                                     </tr>
+                                    <?php } ?>
                                 </tbody>
                             </table>
                             <!-- End Table with stripped rows -->

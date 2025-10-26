@@ -23,7 +23,12 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Verify the password
         if (password_verify($password, $user['password'])) {
-            // Password is correct, set session variables
+            // Password is correct, set session variables and update last login date
+            $update_sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("i", $user['id']);
+            $update_stmt->execute();
+
             $_SESSION['user_authenticated'] = true;
             // $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
