@@ -82,9 +82,10 @@ Toast.fire({
                             <!-- Current Weather Card -->
                             <div class="card">
                                 <div class="card-body">
-                                    <div class="justify-content-between d-flex">
+                                    <div class="justify-content-between d-flex align-items-center mb-3">
                                         <h5 class="card-title">Current Weather</h5>
-                                        <a href="weather_insights.php"></a>
+                                        <h5><a href="weather_insights.php">View Forecast <i
+                                                    class="bi bi-arrow-right"></i></a></h5>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-8">
@@ -153,22 +154,70 @@ Toast.fire({
                                         <thead>
                                             <tr>
                                                 <th>Crop</th>
-                                                <th>Variety</th>
-                                                <th>Area</th>
+                                                <th>Description</th>
+                                                <th>Planting Season</th>
                                                 <th>Phase</th>
-                                                <th>Health</th>
+                                                <th>Progress Percentage</th>
                                                 <th>Days to Harvest</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            <?php 
+                                                // Fetch current crops from database
+                                                $sql = "SELECT * FROM crop_schedules WHERE user_id = ? AND status != 'completed'";
+                                                $stmt = $conn->prepare($sql);
+                                                $stmt->bind_param("i", $_SESSION['user_id']);
+                                                $stmt->execute();
+                                                $result = $stmt->get_result();
+
+                                                while ($schedule = $result->fetch_assoc()) {
+                                                    // Fetch crop details
+                                                    $crop_sql = "SELECT * FROM crops WHERE id = ?";
+                                                    $crop_stmt = $conn->prepare($crop_sql);
+                                                    $crop_stmt->bind_param("i", $schedule['crop_id']);
+                                                    $crop_stmt->execute();
+                                                    $crop_result = $crop_stmt->get_result();
+                                                    $crop_details = $crop_result->fetch_assoc();
+
+                                                    // Define crop phases and badges
+                                                    $phases = [
+                                                        'seedling' => ['name' => 'Seedling', 'badge' => 'bg-secondary'],
+                                                        'planting' => ['name' => 'Planting', 'badge' => 'bg-success'],
+                                                        'budding' => ['name' => 'Budding', 'badge' => 'bg-info'],
+                                                        'reproductive' => ['name' => 'Reproductive', 'badge' => 'bg-warning'],
+                                                        'vegetative' => ['name' => 'Vegetative', 'badge' => 'bg-primary'],
+                                                        'completed' => ['name' => 'Completed', 'badge' => 'bg-danger']
+                                                    ];
+
+                                                    $phase = $phases[$schedule['status']] ?? ['name' => 'Unknown', 'badge' => 'bg-dark'];
+
+                                                    // Calculate days to harvest
+                                                    $expected_harvest_date = new DateTime($schedule['expected_harvest_date']);
+                                                    $today = new DateTime();
+                                                    $interval = $today->diff($expected_harvest_date);
+                                                    $days_remaining = $interval->invert ? 0 : $interval->days; // 0 if past harvest date
+                                                ?>
                                             <tr>
-                                                <td>Rice</td>
-                                                <td>NSIC Rc222</td>
-                                                <td>2.5 hectares</td>
-                                                <td><span class="badge bg-primary">Vegetative</span></td>
-                                                <td>Good</td>
-                                                <td>45 days</td>
+                                                <td><?= htmlspecialchars($crop_details['name']) ?></td>
+                                                <td><?= htmlspecialchars($crop_details['description']) ?></td>
+                                                <td><?= htmlspecialchars($crop_details['planting_season']) ?></td>
+                                                <td>
+                                                    <span class="badge <?= $phase['badge']; ?>">
+                                                        <?= $phase['name']; ?>
+                                                    </span>
+                                                </td>
+                                                <td><?= htmlspecialchars($schedule['progress_percentage']) . "%" ?></td>
+                                                <td>
+                                                    <?php if ($days_remaining > 0): ?>
+                                                    <?= $days_remaining ?> day<?= $days_remaining > 1 ? 's' : '' ?> left
+                                                    <?php else: ?>
+                                                    <span class="text-success fw-bold">Ready for harvest</span>
+                                                    <?php endif; ?>
+                                                </td>
                                             </tr>
+                                            <?php 
+        } 
+        ?>
                                         </tbody>
                                     </table>
                                     <!-- End Current Crops Table -->
@@ -180,124 +229,24 @@ Toast.fire({
                 <!-- End Center Columns -->
 
                 <!-- Left side columns -->
+                <!-- Temperature Forecast Chart -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Yield Performance</h5>
-
-                            <!-- Bar Chart -->
-                            <div id="yieldPerformanceChart"></div>
-
-                            <script>
-                            document.addEventListener("DOMContentLoaded", () => {
-                                new ApexCharts(document.querySelector("#yieldPerformanceChart"), {
-                                    series: [{
-                                            name: "Previous Yield",
-                                            data: [5, 6, 20, 24],
-                                        },
-                                        {
-                                            name: "Current Yield",
-                                            data: [5, 6, 21, 24],
-                                        },
-                                    ],
-                                    chart: {
-                                        type: "bar",
-                                        height: 350,
-                                        toolbar: {
-                                            show: false,
-                                        },
-                                    },
-                                    plotOptions: {
-                                        bar: {
-                                            horizontal: false,
-                                            columnWidth: "55%",
-                                            endingShape: "rounded",
-                                        },
-                                    },
-                                    dataLabels: {
-                                        enabled: false,
-                                    },
-                                    stroke: {
-                                        show: true,
-                                        width: 2,
-                                        colors: ["transparent"],
-                                    },
-                                    xaxis: {
-                                        categories: ["Rice", "Corn", "Tomato", "Eggplant"],
-                                    },
-                                    yaxis: {
-                                        title: {
-                                            text: "tons/ha",
-                                        },
-                                    },
-                                    fill: {
-                                        opacity: 1,
-                                    },
-                                    colors: ["#4154f1", "#2eca6a"],
-                                    legend: {
-                                        position: "top",
-                                    },
-                                    tooltip: {
-                                        y: {
-                                            formatter: function(val) {
-                                                return val + " tons/ha";
-                                            },
-                                        },
-                                    },
-                                }).render();
-                            });
-                            </script>
-                            <!-- End Bar Chart -->
+                            <h5 class="card-title">Temperature Forecast</h5>
+                            <canvas id="temperatureChart" width="400" height="200"></canvas>
                         </div>
                     </div>
                 </div>
                 <!-- End Left side columns -->
 
                 <!-- Right side columns -->
+                <!-- Rainfall & Humidity Chart -->
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0">Recent Recommendations</h5>
-                                <a href="#" class="text-success">View All <i class="bi bi-arrow-right"></i></a>
-                            </div>
-
-                            <!-- Recommendation 1 -->
-                            <div class="border rounded p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="fw-bold mb-1">Eggplant (Fortuner F1)</h6>
-                                        <p class="mb-1 small text-muted">
-                                            Planting window: Oct 15 - Nov 5
-                                        </p>
-                                        <p class="mb-1">
-                                            <strong>Suitability:</strong> 92%<br />
-                                            <strong>Yield:</strong> 22–25 tons/ha<br />
-                                            <strong>Profit:</strong> ₱180,000/ha
-                                        </p>
-                                    </div>
-                                    <span class="badge bg-success rounded-pill">Accepted</span>
-                                </div>
-                            </div>
-
-                            <!-- Recommendation 2 -->
-                            <div class="border rounded p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="fw-bold mb-1">Sweet Potato (VSP 6)</h6>
-                                        <p class="mb-1 small text-muted">
-                                            Planting window: Oct 10 - Oct 30
-                                        </p>
-                                        <p class="mb-1">
-                                            <strong>Suitability:</strong> 88%<br />
-                                            <strong>Yield:</strong> 15–18 tons/ha<br />
-                                            <strong>Profit:</strong> ₱120,000/ha
-                                        </p>
-                                    </div>
-                                    <span class="badge bg-warning text-dark rounded-pill">Pending</span>
-                                </div>
-                            </div>
-
+                            <h5 class="card-title">Rainfall & Humidity</h5>
+                            <canvas id="rainfallChart" width="400" height="200"></canvas>
                         </div>
                     </div>
                 </div>
@@ -307,6 +256,66 @@ Toast.fire({
         </section>
     </main>
     <!-- End #main -->
+    <!-- Chart.js for weather charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+// Temperature Forecast Chart
+const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+const tempChart = new Chart(tempCtx, {
+    type: 'line',
+    data: {
+        labels: ['Today', 'Tomorrow', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        datasets: [{
+            label: 'High Temp',
+            data: [31, 32, 29, 30, 31, 31],
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            tension: 0.1
+        }, {
+            label: 'Low Temp',
+            data: [24, 25, 24, 24, 25, 25],
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: false,
+                min: 20,
+                max: 35
+            }
+        }
+    }
+});
+
+// Rainfall Chart
+const rainCtx = document.getElementById('rainfallChart').getContext('2d');
+const rainChart = new Chart(rainCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Today', 'Wednesday', 'Friday', 'Sunday'],
+        datasets: [{
+            label: 'Rainfall Probability',
+            data: [20, 80, 30, 0],
+            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+    </script>
 
     <?php 
     include 'includes/footer.php';
