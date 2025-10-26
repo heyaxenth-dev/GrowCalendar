@@ -5,7 +5,7 @@
  */
 
 // Include database configuration
-include '../database/config.php';
+include '../../database/config.php';
 
 // Start session
 session_start();
@@ -60,149 +60,149 @@ try {
     }
     
     ?>
-    <div class="row">
-        <div class="col-md-6">
-            <h6 class="text-primary mb-3">Crop Information</h6>
-            <table class="table table-sm">
-                <tr>
-                    <td><strong>Crop Name:</strong></td>
-                    <td><?= htmlspecialchars($schedule['crop_name']) ?></td>
-                </tr>
-                <tr>
-                    <td><strong>Scientific Name:</strong></td>
-                    <td><em><?= htmlspecialchars($schedule['scientific_name']) ?></em></td>
-                </tr>
-                <tr>
-                    <td><strong>Expected Harvest Days:</strong></td>
-                    <td><?= $schedule['harvest_days'] ?> days</td>
-                </tr>
-                <tr>
-                    <td><strong>Description:</strong></td>
-                    <td><?= htmlspecialchars($schedule['description']) ?></td>
-                </tr>
-            </table>
-        </div>
-        
-        <div class="col-md-6">
-            <h6 class="text-primary mb-3">Schedule Timeline</h6>
-            <table class="table table-sm">
-                <tr>
-                    <td><strong>Planted:</strong></td>
-                    <td><?= date('M j, Y', strtotime($schedule['planting_date'])) ?></td>
-                </tr>
-                <tr>
-                    <td><strong>Expected Harvest:</strong></td>
-                    <td><?= date('M j, Y', strtotime($schedule['expected_harvest_date'])) ?></td>
-                </tr>
-                <?php if ($schedule['actual_harvest_date']): ?>
-                <tr>
-                    <td><strong>Actual Harvest:</strong></td>
-                    <td><?= date('M j, Y', strtotime($schedule['actual_harvest_date'])) ?></td>
-                </tr>
-                <?php endif; ?>
-                <tr>
-                    <td><strong>Days Since Planting:</strong></td>
-                    <td><?= $days_since_planting ?> days</td>
-                </tr>
-                <tr>
-                    <td><strong>Days Until Harvest:</strong></td>
-                    <td>
-                        <?php if ($days_until_harvest > 0): ?>
-                            <?= $days_until_harvest ?> days remaining
-                        <?php elseif ($days_until_harvest < 0): ?>
-                            <?= abs($days_until_harvest) ?> days overdue
-                        <?php else: ?>
-                            Harvest time!
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            </table>
-        </div>
+<div class="row">
+    <div class="col-md-6">
+        <h6 class="text-primary mb-3">Crop Information</h6>
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Crop Name:</strong></td>
+                <td><?= htmlspecialchars($schedule['crop_name']) ?></td>
+            </tr>
+            <tr>
+                <td><strong>Scientific Name:</strong></td>
+                <td><em><?= htmlspecialchars($schedule['scientific_name']) ?></em></td>
+            </tr>
+            <tr>
+                <td><strong>Expected Harvest Days:</strong></td>
+                <td><?= $schedule['harvest_days'] ?> days</td>
+            </tr>
+            <tr>
+                <td><strong>Description:</strong></td>
+                <td><?= htmlspecialchars($schedule['description']) ?></td>
+            </tr>
+        </table>
     </div>
-    
-    <div class="row mt-3">
-        <div class="col-12">
-            <h6 class="text-primary mb-3">Current Status</h6>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="text-center">
-                        <span class="badge bg-<?= 
+
+    <div class="col-md-6">
+        <h6 class="text-primary mb-3">Schedule Timeline</h6>
+        <table class="table table-sm">
+            <tr>
+                <td><strong>Planted:</strong></td>
+                <td><?= date('M j, Y', strtotime($schedule['planting_date'])) ?></td>
+            </tr>
+            <tr>
+                <td><strong>Expected Harvest:</strong></td>
+                <td><?= date('M j, Y', strtotime($schedule['expected_harvest_date'])) ?></td>
+            </tr>
+            <?php if ($schedule['actual_harvest_date']): ?>
+            <tr>
+                <td><strong>Actual Harvest:</strong></td>
+                <td><?= date('M j, Y', strtotime($schedule['actual_harvest_date'])) ?></td>
+            </tr>
+            <?php endif; ?>
+            <tr>
+                <td><strong>Days Since Planting:</strong></td>
+                <td><?= $days_since_planting ?> days</td>
+            </tr>
+            <tr>
+                <td><strong>Days Until Harvest:</strong></td>
+                <td>
+                    <?php if ($days_until_harvest > 0): ?>
+                    <?= $days_until_harvest ?> days remaining
+                    <?php elseif ($days_until_harvest < 0): ?>
+                    <?= abs($days_until_harvest) ?> days overdue
+                    <?php else: ?>
+                    Harvest time!
+                    <?php endif; ?>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <h6 class="text-primary mb-3">Current Status</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <span class="badge bg-<?= 
                             $schedule['status'] == 'planting' ? 'success' : 
                             ($schedule['status'] == 'vegetative' ? 'primary' : 
                             ($schedule['status'] == 'reproductive' ? 'warning' : 'danger'))
                         ?> fs-6"><?= ucfirst($schedule['status']) ?></span>
-                        <p class="small text-muted mt-1">Current Phase</p>
-                    </div>
+                    <p class="small text-muted mt-1">Current Phase</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="text-center">
-                        <span class="fs-4 text-primary"><?= $schedule['progress_percentage'] ?>%</span>
-                        <p class="small text-muted mt-1">Progress</p>
-                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <span class="fs-4 text-primary"><?= $schedule['progress_percentage'] ?>%</span>
+                    <p class="small text-muted mt-1">Progress</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="text-center">
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar bg-<?= 
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-<?= 
                                 $schedule['status'] == 'planting' ? 'success' : 
                                 ($schedule['status'] == 'vegetative' ? 'primary' : 
                                 ($schedule['status'] == 'reproductive' ? 'warning' : 'danger'))
                             ?>" role="progressbar" style="width: <?= $schedule['progress_percentage'] ?>%"></div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <?php if (!empty($schedule['notes'])): ?>
-    <div class="row mt-3">
-        <div class="col-12">
-            <h6 class="text-primary mb-3">Notes</h6>
-            <div class="alert alert-light">
-                <?= nl2br(htmlspecialchars($schedule['notes'])) ?>
-            </div>
+</div>
+
+<?php if (!empty($schedule['notes'])): ?>
+<div class="row mt-3">
+    <div class="col-12">
+        <h6 class="text-primary mb-3">Notes</h6>
+        <div class="alert alert-light">
+            <?= nl2br(htmlspecialchars($schedule['notes'])) ?>
         </div>
     </div>
-    <?php endif; ?>
-    
-    <?php if ($schedule['crop_condition']): ?>
-    <div class="row mt-3">
-        <div class="col-12">
-            <h6 class="text-primary mb-3">Feedback Submitted</h6>
-            <div class="alert alert-<?= 
+</div>
+<?php endif; ?>
+
+<?php if ($schedule['crop_condition']): ?>
+<div class="row mt-3">
+    <div class="col-12">
+        <h6 class="text-primary mb-3">Feedback Submitted</h6>
+        <div class="alert alert-<?= 
                 $schedule['crop_condition'] == 'success' ? 'success' : 
                 ($schedule['crop_condition'] == 'partial' ? 'warning' : 'danger')
             ?>">
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Performance:</strong> <?= ucfirst($schedule['crop_condition']) ?><br>
-                        <strong>Score:</strong> <?= $schedule['feedback_score'] ?>/5 stars<br>
-                        <strong>Date:</strong> <?= date('M j, Y', strtotime($schedule['feedback_date'])) ?>
-                    </div>
-                    <div class="col-md-6">
-                        <?php if ($schedule['challenges_encountered']): ?>
-                        <strong>Challenges:</strong><br>
-                        <?php 
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Performance:</strong> <?= ucfirst($schedule['crop_condition']) ?><br>
+                    <strong>Score:</strong> <?= $schedule['feedback_score'] ?>/5 stars<br>
+                    <strong>Date:</strong> <?= date('M j, Y', strtotime($schedule['feedback_date'])) ?>
+                </div>
+                <div class="col-md-6">
+                    <?php if ($schedule['challenges_encountered']): ?>
+                    <strong>Challenges:</strong><br>
+                    <?php 
                         $challenges = json_decode($schedule['challenges_encountered'], true);
                         foreach ($challenges as $challenge): 
                         ?>
-                            <span class="badge bg-secondary me-1"><?= ucwords(str_replace('_', ' ', $challenge)) ?></span>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
+                    <span class="badge bg-secondary me-1"><?= ucwords(str_replace('_', ' ', $challenge)) ?></span>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-                <?php if (!empty($schedule['feedback_remarks'])): ?>
-                <hr>
-                <strong>Remarks:</strong><br>
-                <?= nl2br(htmlspecialchars($schedule['feedback_remarks'])) ?>
-                <?php endif; ?>
             </div>
+            <?php if (!empty($schedule['feedback_remarks'])): ?>
+            <hr>
+            <strong>Remarks:</strong><br>
+            <?= nl2br(htmlspecialchars($schedule['feedback_remarks'])) ?>
+            <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
-    
-    <?php
+</div>
+<?php endif; ?>
+
+<?php
 } catch (Exception $e) {
     echo '<div class="alert alert-danger">Error loading schedule details: ' . $e->getMessage() . '</div>';
 }

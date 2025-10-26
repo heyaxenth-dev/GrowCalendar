@@ -12,6 +12,8 @@
         die("Database connection failed: " . mysqli_connect_error());
     }
     
+    $user_id = $_SESSION['user_id'];
+    
     // Initialize variables
     $soil_types = [];
     $recommendations = [];
@@ -187,7 +189,7 @@
                                 <div class="col-md-6">
                                     <label for="location" class="form-label">Location</label>
                                     <input type="text" class="form-control" id="location" name="location"
-                                        value="<?= $user_soil_preference['location'] ?? 'Antique, Philippines' ?>"
+                                        value="<?= $user_soil_preference['location'] ?? 'Barbaza, Antique' ?>"
                                         placeholder="Enter your location">
                                     <div class="form-text">Enter your city and country for accurate weather data.</div>
                                 </div>
@@ -342,9 +344,10 @@
                                             <p class="small text-muted mb-0"><?= $rec['crop']['marketability'] ?></p>
                                         </div>
                                         <?php endif; ?>
-                                        
+
                                         <div class="mt-3">
-                                            <button class="btn btn-primary btn-sm w-100" onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= $rec['crop']['name'] ?>', <?= $rec['crop']['harvest_days'] ?>)">
+                                            <button class="btn btn-primary btn-sm w-100"
+                                                onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= $rec['crop']['name'] ?>', <?= $rec['crop']['harvest_days'] ?>)">
                                                 <i class="bi bi-calendar-plus me-1"></i>Add to Schedule
                                             </button>
                                         </div>
@@ -373,7 +376,7 @@
 
     <!-- Add to Schedule Modal -->
     <div class="modal fade" id="addToScheduleModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add Crop to Schedule</h5>
@@ -383,25 +386,26 @@
                     <div class="modal-body">
                         <input type="hidden" id="cropId" name="crop_id">
                         <input type="hidden" id="recommendationId" name="recommendation_id">
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Crop Name</label>
                             <input type="text" class="form-control" id="cropName" readonly>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Planting Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="plantingDate" name="planting_date" required>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Expected Harvest Date</label>
                             <input type="date" class="form-control" id="harvestDate" readonly>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about this crop schedule..."></textarea>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                placeholder="Add any notes about this crop schedule..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -414,51 +418,51 @@
     </div>
 
     <script>
-        function addToSchedule(cropId, cropName, harvestDays) {
-            document.getElementById('cropId').value = cropId;
-            document.getElementById('cropName').value = cropName;
-            document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
-            
-            // Set today as default planting date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('plantingDate').value = today;
-            
-            // Calculate expected harvest date
-            const plantingDate = new Date(today);
-            const harvestDate = new Date(plantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
-            document.getElementById('harvestDate').value = harvestDate.toISOString().split('T')[0];
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('addToScheduleModal'));
-            modal.show();
-        }
-        
-        // Handle form submission
-        document.getElementById('addToScheduleForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            fetch('includes/add_crop_schedule.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Crop successfully added to your schedule!');
-                    bootstrap.Modal.getInstance(document.getElementById('addToScheduleModal')).hide();
-                    // Optionally redirect to crop schedule page
-                    // window.location.href = 'crop_schedule.php';
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while adding the crop to schedule.');
-            });
+function addToSchedule(cropId, cropName, harvestDays) {
+    document.getElementById('cropId').value = cropId;
+    document.getElementById('cropName').value = cropName;
+    document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
+
+    // Set today as default planting date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('plantingDate').value = today;
+
+    // Calculate expected harvest date
+    const plantingDate = new Date(today);
+    const harvestDate = new Date(plantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
+    document.getElementById('harvestDate').value = harvestDate.toISOString().split('T')[0];
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addToScheduleModal'));
+    modal.show();
+}
+
+// Handle form submission
+document.getElementById('addToScheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('./includes/add_crop_schedule.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Crop successfully added to your schedule!');
+                bootstrap.Modal.getInstance(document.getElementById('addToScheduleModal')).hide();
+                // Optionally redirect to crop schedule page
+                window.location.href = 'crop_schedule.php';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the crop to schedule.');
         });
+});
     </script>
 
     <?php 

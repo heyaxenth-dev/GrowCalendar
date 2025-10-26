@@ -48,6 +48,8 @@
 
     <!-- Template Main CSS File -->
     <link href="assets/css/style.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
 <body>
@@ -64,7 +66,7 @@
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
 
-        $user_id = $user['id'];
+        $_SESSION['user_id'] = $user['id'];
         $user_firstname = $user['firstname'];
         $user_lastname = $user['lastname'];
         $fname_initial = strtoupper(substr($user_firstname, 0, 1));

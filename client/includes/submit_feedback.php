@@ -5,7 +5,7 @@
  */
 
 // Include database configuration
-include '../database/config.php';
+include '../../database/config.php';
 
 // Start session
 session_start();

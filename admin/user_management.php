@@ -34,7 +34,7 @@
                                         </th>
                                         <th>Assigned Brgy</th>
                                         <th>Status</th>
-                                        <th data-type="date" data-format="YYYY/DD/MM">Last Login</th>
+                                        <th>Last Login</th>
                                         <th>Feedback Count</th>
                                         <th>Actions</th>
                                     </tr>
@@ -42,14 +42,14 @@
                                 <tbody>
                                     <?php 
                                         // Get user data from database
-                                        $sql = "SELECT firstname, lastname, barangay, status, last_login FROM users WHERE role = 'user' AND status = 'active'";
+                                        $sql = "SELECT id, firstname, lastname, barangay, status, last_login FROM users WHERE role = 'user' AND status = 'active'";
                                         $result = $conn->query($sql);
                                         while ($row = mysqli_fetch_assoc($result)) {
                                            //Get feedback count for each technologist
-                                           ;
+                                                $get_id = $row['id'];
                                              $feedback_sql = "SELECT COUNT(*) AS feedback_count FROM crop_feedback WHERE user_id = ?";
                                                 $feedback_stmt = $conn->prepare($feedback_sql);
-                                                $feedback_stmt->bind_param("i", $user_id);
+                                                $feedback_stmt->bind_param("i", $get_id);
                                                 $feedback_stmt->execute();
                                                 $feedback_result = $feedback_stmt->get_result();
                                                 $feedback_row = $feedback_result->fetch_assoc();

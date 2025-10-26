@@ -1,11 +1,16 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+header('Content-Type: application/json');
+
 /**
  * Add Crop to Schedule Handler
  * Handles adding selected crops to user's crop schedule
  */
 
 // Include database configuration
-include '../database/config.php';
+include '../../database/config.php';
 
 // Start session
 session_start();

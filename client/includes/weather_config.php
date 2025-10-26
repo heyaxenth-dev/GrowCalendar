@@ -11,17 +11,18 @@ define('WEATHER_API_TIMEOUT', 30);
 
 // Fallback weather data for when API is unavailable
 define('FALLBACK_WEATHER', [
-    'location' => 'Antique, Philippines',
-    'temperature' => 28.5,
-    'humidity' => 75.0,
-    'rainfall' => 0.0,
-    'wind_speed' => 5.2,
-    'weather_condition' => 'Clear',
-    'description' => 'Clear sky',
-    'pressure' => 1013.25,
-    'visibility' => 10000,
+    'location' => 'Barbaza, Antique, Philippines',
+    'temperature' => 29.3,
+    'humidity' => 78.0,
+    'rainfall' => 0.2,
+    'wind_speed' => 4.6,
+    'weather_condition' => 'Partly Cloudy',
+    'description' => 'Scattered clouds with light breeze',
+    'pressure' => 1011.8,
+    'visibility' => 9500,
     'api_source' => 'Fallback'
 ]);
+
 
 // Alternative weather APIs (for future implementation)
 define('ALTERNATIVE_APIS', [

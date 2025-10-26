@@ -131,7 +131,7 @@ class WeatherAPI {
 }
 
 // Fallback weather data for when API is not available
-function getFallbackWeatherData($location = 'Antique, Philippines') {
+function getFallbackWeatherData($location = 'Barbaza, Antique, Philippines') {
     return [
         'error' => false,
         'location' => $location,
