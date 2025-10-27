@@ -1,6 +1,8 @@
     <?php 
     include './authentication/authentication.php';
     include 'includes/header.php';
+    include 'includes/weather_api.php';
+    include 'includes/weather_config.php';
     ?>
     <script src="assets/js/sweetalert2.all.min.js"></script>
     <?php
@@ -333,84 +335,110 @@ Toast.fire({
 
                             <script>
                             document.addEventListener('DOMContentLoaded', () => {
-                                const options = {
-                                    series: [{
-                                            name: 'Temperature (°C)',
-                                            type: 'line',
-                                            data: [30, 31, 32, 30, 29, 33, 32],
-                                        },
-                                        {
-                                            name: 'Rain Chance (%)',
-                                            type: 'line',
-                                            data: [10, 5, 0, 20, 60, 25, 15],
-                                        },
-                                    ],
-                                    chart: {
-                                        height: 300,
-                                        type: 'line',
-                                        toolbar: {
-                                            show: false,
-                                        },
-                                    },
-                                    stroke: {
-                                        width: [3, 3],
-                                        curve: 'smooth',
-                                    },
-                                    colors: ['#008FFB', '#00E396'],
-                                    dataLabels: {
-                                        enabled: false,
-                                    },
-                                    markers: {
-                                        size: 4,
-                                    },
-                                    xaxis: {
-                                        categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                                    },
-                                    yaxis: [{
-                                            title: {
-                                                text: 'Temperature (°C)',
-                                            },
-                                            min: 0,
-                                            max: 36,
-                                        },
-                                        {
-                                            opposite: true,
-                                            title: {
-                                                text: 'Rain Chance (%)',
-                                            },
-                                            min: 0,
-                                            max: 60,
-                                        },
-                                    ],
-                                    tooltip: {
-                                        shared: true,
-                                        intersect: false,
-                                        x: {
-                                            show: true,
-                                        },
-                                        y: [{
-                                                formatter: (val) => val + ' °C',
-                                            },
-                                            {
-                                                formatter: (val) => val + ' %',
-                                            },
-                                        ],
-                                    },
-                                    grid: {
-                                        borderColor: '#e7e7e7',
-                                        row: {
-                                            colors: ['transparent', 'transparent'],
-                                            opacity: 0.5,
-                                        },
-                                    },
-                                    legend: {
-                                        position: 'top',
-                                    },
-                                };
+                                fetch('includes/get_weather_forecast.php')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.error) {
+                                            alert('Error loading forecast: ' + data.message);
+                                            return;
+                                        }
 
-                                new ApexCharts(document.querySelector("#weatherChart"), options).render();
+                                        const days = data.forecast.map(d => d.day);
+                                        const highTemps = data.forecast.map(d => d.high);
+                                        const lowTemps = data.forecast.map(d => d.low);
+                                        const rainChances = data.forecast.map(d => d.rain_chance);
+
+                                        const options = {
+                                            series: [{
+                                                    name: 'High (°C)',
+                                                    type: 'line',
+                                                    data: highTemps
+                                                },
+                                                {
+                                                    name: 'Low (°C)',
+                                                    type: 'line',
+                                                    data: lowTemps
+                                                },
+                                                {
+                                                    name: 'Rain Chance (%)',
+                                                    type: 'bar',
+                                                    data: rainChances
+                                                }
+                                            ],
+                                            chart: {
+                                                height: 300,
+                                                type: 'line',
+                                                toolbar: {
+                                                    show: false
+                                                }
+                                            },
+                                            stroke: {
+                                                width: [3, 3, 0],
+                                                curve: 'smooth'
+                                            },
+                                            colors: ['#ff7300', '#00bcd4', '#00e396'],
+                                            dataLabels: {
+                                                enabled: false
+                                            },
+                                            xaxis: {
+                                                categories: days
+                                            },
+                                            yaxis: [{
+                                                    title: {
+                                                        text: 'Temperature (°C)'
+                                                    },
+                                                    min: 20,
+                                                    max: 40
+                                                },
+                                                {
+                                                    opposite: true,
+                                                    title: {
+                                                        text: 'Rain Chance (%)'
+                                                    },
+                                                    min: 0,
+                                                    max: 100
+                                                }
+                                            ],
+                                            tooltip: {
+                                                shared: true,
+                                                intersect: false,
+                                                x: {
+                                                    show: true
+                                                },
+                                                y: [{
+                                                        formatter: (val) => val + ' °C'
+                                                    },
+                                                    {
+                                                        formatter: (val) => val + ' °C'
+                                                    },
+                                                    {
+                                                        formatter: (val) => val + ' %'
+                                                    }
+                                                ]
+                                            },
+                                            legend: {
+                                                position: 'top'
+                                            },
+                                            grid: {
+                                                borderColor: '#e7e7e7',
+                                                row: {
+                                                    colors: ['transparent', 'transparent'],
+                                                    opacity: 0.5
+                                                }
+                                            }
+                                        };
+
+                                        new ApexCharts(document.querySelector("#weatherChart"), options)
+                                            .render();
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        alert('Error loading forecast data.');
+                                    });
                             });
                             </script>
+
+
                             <!-- End Weather Chart -->
                         </div>
                     </div>
