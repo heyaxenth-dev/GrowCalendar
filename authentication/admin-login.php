@@ -82,12 +82,19 @@ session_start();
 
                                         <div class="col-12">
                                             <label for="yourPassword" class="form-label">Password</label>
-                                            <input type="password" name="password" class="form-control"
-                                                id="yourPassword" required />
-                                            <div class="invalid-feedback">
-                                                Please enter your password!
+                                            <div class="input-group">
+                                                <input type="password" name="password" class="form-control"
+                                                    id="yourPassword" required />
+                                                <a href="#" class="input-group-text text-decoration-none"
+                                                    id="togglePassword" tabindex="-1">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <div class="invalid-feedback">
+                                                    Please enter your password!
+                                                </div>
                                             </div>
                                         </div>
+
 
                                         <div class="col-12">
                                             <div class="form-check">
@@ -138,6 +145,7 @@ session_start();
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/password-icon.js"></script>
 </body>
 
 </html>

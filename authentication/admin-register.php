@@ -107,12 +107,37 @@ session_start();
                                             <div class="invalid-feedback">Please enter your password!</div>
                                         </div>
 
-                                        <div class="col-md-12">
+                                        <div class="col-md-12 mt-3">
                                             <label for="yourConfirmPassword" class="form-label">Confirm Password</label>
                                             <input type="password" name="confirm_password" class="form-control"
                                                 id="yourConfirmPassword" required>
                                             <div class="invalid-feedback">Please confirm your password!</div>
                                         </div>
+
+                                        <div class="col-md-12 mt-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="showPasswords">
+                                                <label class="form-check-label" for="showPasswords">
+                                                    Show Passwords
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const showPasswords = document.getElementById('showPasswords');
+                                            const password = document.getElementById('yourPassword');
+                                            const confirmPassword = document.getElementById(
+                                                'yourConfirmPassword');
+
+                                            showPasswords.addEventListener('change', function() {
+                                                const type = this.checked ? 'text' : 'password';
+                                                password.type = type;
+                                                confirmPassword.type = type;
+                                            });
+                                        });
+                                        </script>
+
 
                                         <div class="col-md-12">
                                             <div class="form-check">
