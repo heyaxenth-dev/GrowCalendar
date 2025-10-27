@@ -6,6 +6,7 @@
     include './authentication/authentication.php';
     include 'includes/header.php';
     include 'includes/sidebar.php';
+    // include 'alert.php';
     
     // Check database connection
     if (!$conn) {
@@ -417,6 +418,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>)
     <script>
 function addToSchedule(cropId, cropName, harvestDays) {
     document.getElementById('cropId').value = cropId;
@@ -449,21 +451,44 @@ document.getElementById('addToScheduleForm').addEventListener('submit', function
         })
         .then(response => response.json())
         .then(data => {
+            const modalEl = document.getElementById('addToScheduleModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+
             if (data.success) {
-                alert('Crop successfully added to your schedule!');
-                bootstrap.Modal.getInstance(document.getElementById('addToScheduleModal')).hide();
-                // Optionally redirect to crop schedule page
-                window.location.href = 'crop_schedule.php';
+                modal.hide();
+
+                Swal.fire({
+                    title: "Success!",
+                    text: "Crop successfully added to your schedule!",
+                    icon: "success",
+                    confirmButtonText: "Done",
+                    timer: 2500,
+                    timerProgressBar: true
+                }).then(() => {
+                    // Redirect only after user closes alert
+                    window.location.href = 'crop_schedule.php';
+                });
             } else {
-                alert('Error: ' + data.message);
+                Swal.fire({
+                    title: "Error!",
+                    text: data.message || "Failed to add crop to schedule.",
+                    icon: "error",
+                    confirmButtonText: "Retry"
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while adding the crop to schedule.');
+            Swal.fire({
+                title: "Error!",
+                text: "An error occurred while adding the crop to schedule.",
+                icon: "error",
+                confirmButtonText: "Retry"
+            });
         });
 });
     </script>
+
 
     <?php 
     include 'includes/footer.php';
