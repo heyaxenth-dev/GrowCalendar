@@ -50,6 +50,7 @@
                                                 cf.recommendation_id,
                                                 cr.crop_id,
                                                 cs.status AS phase_status,
+                                                cs.id,
                                                 c.name AS crop_name,
                                                 u.firstname,
                                                 u.lastname
@@ -115,10 +116,10 @@
                                         <td><?= date('M d, Y g:i A', strtotime($row['created_at'])) ?></td>
 
                                         <td>
-                                            <a href="feedback_details.php?id=<?= $row['feedback_id'] ?>"
-                                                class="btn btn-primary btn-sm">
-                                                <i class="bi bi-eye"></i> View
-                                            </a>
+                                            <button class="btn btn-outline-info btn-sm"
+                                                onclick="viewScheduleDetails(<?= $row['id'] ?>)">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php 
@@ -141,6 +142,45 @@
 
     </main>
     <!-- End #main -->
+
+    <!-- Schedule Details Modal -->
+    <div class="modal fade" id="scheduleDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crop Schedule Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="scheduleDetailsContent">
+                    <!-- Content will be loaded via AJAX -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+function viewScheduleDetails(scheduleId) {
+    fetch(`includes/get_schedule_details.php?id=${scheduleId}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('scheduleDetailsContent').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('scheduleDetailsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: "Error!",
+                text: "Unable to load schedule details.",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
+        });
+}
+    </script>
 
     <?php 
     include 'includes/footer.php';
