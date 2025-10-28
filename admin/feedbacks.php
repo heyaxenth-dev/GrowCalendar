@@ -47,17 +47,17 @@
                                                 cf.id AS feedback_id,
                                                 cf.crop_condition,
                                                 cf.created_at,
-                                                cf.recommendation_id,
                                                 cr.crop_id,
                                                 cs.status AS phase_status,
                                                 cs.id,
+                                                cs.crop_id,
                                                 c.name AS crop_name,
                                                 u.firstname,
                                                 u.lastname
                                             FROM crop_feedback AS cf
                                             LEFT JOIN crop_recommendations AS cr ON cr.id = cf.recommendation_id
-                                            LEFT JOIN crop_schedules AS cs ON cs.recommendation_id = cf.recommendation_id
-                                            LEFT JOIN crops AS c ON c.id = cr.crop_id
+                                            LEFT JOIN crop_schedules AS cs ON cs.id = cf.crop_schedule_id
+                                            LEFT JOIN crops AS c ON c.id = cs.crop_id
                                             LEFT JOIN users AS u ON u.id = cf.user_id
                                             ORDER BY cf.created_at DESC
                                         ";
@@ -99,11 +99,13 @@
                                                     echo '<span class="badge bg-success">Success</span>';
                                                     break;
                                                 case 'fair':
+                                                case 'partial':
                                                 case 'moderate':
                                                     echo '<span class="badge bg-warning text-dark">Fair</span>';
                                                     break;
                                                 case 'poor':
                                                 case 'diseased':
+                                                case 'failure':
                                                     echo '<span class="badge bg-danger">Poor</span>';
                                                     break;
                                                 default:
