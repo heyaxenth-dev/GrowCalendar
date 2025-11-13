@@ -35,21 +35,41 @@ Toast.fire({
 
 
         // Initialize weather API
-    $weather_api = new WeatherAPI(WEATHER_API_KEY);
+    $weather_api = new WeatherAPI(getWeatherApiKey());
+    $location = 'Barbaza, Antique, Philippines';
     
-    // Get current weather data (using fallback for demo)
-    $current_weather = getFallbackWeatherData('Antique, Philippines');
+    // Current weather with fallback
+    $current_result = $weather_api->getCurrentWeather($location);
+    if (!isset($current_result['error']) || $current_result['error'] === true) {
+        $current_weather = getFallbackWeatherData($location);
+    } else {
+        $current_weather = $current_result;
+    }
     
-    // Generate 7-day forecast data (demo data)
-    $forecast_data = [
-        ['day' => 'Today', 'high' => 31, 'low' => 24, 'condition' => 'Partly Cloudy', 'rain_chance' => 20, 'icon' => 'cloud-sun'],
-        ['day' => 'Tomorrow', 'high' => 32, 'low' => 25, 'condition' => 'Clear', 'rain_chance' => 0, 'icon' => 'sun'],
-        ['day' => 'Wednesday', 'high' => 30, 'low' => 25, 'condition' => 'Heavy Rain', 'rain_chance' => 80, 'icon' => 'cloud-rain'],
-        ['day' => 'Thursday', 'high' => 29, 'low' => 24, 'condition' => 'Heavy Rain', 'rain_chance' => 60, 'icon' => 'cloud-rain'],
-        ['day' => 'Friday', 'high' => 30, 'low' => 24, 'condition' => 'Light Rain', 'rain_chance' => 30, 'icon' => 'cloud-drizzle'],
-        ['day' => 'Saturday', 'high' => 31, 'low' => 25, 'condition' => 'Clear', 'rain_chance' => 10, 'icon' => 'sun'],
-        ['day' => 'Sunday', 'high' => 31, 'low' => 25, 'condition' => 'Clear', 'rain_chance' => 0, 'icon' => 'sun']
-    ];
+    // 7-day forecast with fallback (free tier compatible)
+    $forecast_result = $weather_api->get7DayForecast($location);
+    if (isset($forecast_result['error']) && $forecast_result['error'] === false && isset($forecast_result['daily'])) {
+        $forecast_data = $forecast_result['daily'];
+    } else {
+        $daysOfWeek = ['Today', 'Tomorrow', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $forecast_data = [];
+        foreach ($daysOfWeek as $dayLabel) {
+            $forecast_data[] = [
+                'day' => $dayLabel,
+                'high' => isset($current_weather['temperature']) ? round($current_weather['temperature'] + 1) : 30,
+                'low' => isset($current_weather['temperature']) ? round($current_weather['temperature'] - 3) : 24,
+                'condition' => $current_weather['weather_condition'] ?? 'Clear',
+                'rain_chance' => 20,
+                'icon' => 'cloud-sun'
+            ];
+        }
+    }
+    
+    // Prepare arrays for charts
+    $chart_days = array_map(function($d) { return $d['day']; }, $forecast_data);
+    $chart_highs = array_map(function($d) { return isset($d['high']) ? (int)$d['high'] : null; }, $forecast_data);
+    $chart_lows = array_map(function($d) { return isset($d['low']) ? (int)$d['low'] : null; }, $forecast_data);
+    $chart_rain = array_map(function($d) { return isset($d['rain_chance']) ? (int)$d['rain_chance'] : 0; }, $forecast_data);
     
     // Weather advisories
     $advisories = [
@@ -122,7 +142,8 @@ Toast.fire({
                                                 <div class="col-6">
                                                     <div class="border rounded p-2">
                                                         <i class="bi bi-wind text-success"></i>
-                                                        <div class="fw-bold"><?= $current_weather['wind_speed'] ?> km/h
+                                                        <?php $windKmh = isset($current_weather['wind_speed']) ? round($current_weather['wind_speed'] * 3.6) : 0; ?>
+                                                        <div class="fw-bold"><?= $windKmh ?> km/h
                                                         </div>
                                                         <small class="text-muted">Wind</small>
                                                     </div>
@@ -264,19 +285,21 @@ const tempCtx = document.getElementById('temperatureChart').getContext('2d');
 const tempChart = new Chart(tempCtx, {
     type: 'line',
     data: {
-        labels: ['Today', 'Tomorrow', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        labels: <?php echo json_encode($chart_days); ?>,
         datasets: [{
             label: 'High Temp',
-            data: [31, 32, 29, 30, 31, 31],
+            data: <?php echo json_encode($chart_highs); ?>,
             borderColor: 'rgb(255, 99, 132)',
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            tension: 0.1
+            tension: 0.25,
+            spanGaps: true
         }, {
             label: 'Low Temp',
-            data: [24, 25, 24, 24, 25, 25],
+            data: <?php echo json_encode($chart_lows); ?>,
             borderColor: 'rgb(54, 162, 235)',
             backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            tension: 0.1
+            tension: 0.25,
+            spanGaps: true
         }]
     },
     options: {
@@ -284,8 +307,8 @@ const tempChart = new Chart(tempCtx, {
         scales: {
             y: {
                 beginAtZero: false,
-                min: 20,
-                max: 35
+                suggestedMin: 15,
+                suggestedMax: 40
             }
         }
     }
@@ -296,10 +319,10 @@ const rainCtx = document.getElementById('rainfallChart').getContext('2d');
 const rainChart = new Chart(rainCtx, {
     type: 'bar',
     data: {
-        labels: ['Today', 'Wednesday', 'Friday', 'Sunday'],
+        labels: <?php echo json_encode($chart_days); ?>,
         datasets: [{
             label: 'Rainfall Probability',
-            data: [20, 80, 30, 0],
+            data: <?php echo json_encode($chart_rain); ?>,
             backgroundColor: 'rgba(54, 162, 235, 0.8)',
             borderColor: 'rgba(54, 162, 235, 1)',
             borderWidth: 1

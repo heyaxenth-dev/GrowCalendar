@@ -36,7 +36,7 @@ if (isset($_POST['create_user_acc']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['status_text'] = "Accoount created successfully! You can now log in.";
         $_SESSION['status_code'] = "success";
         $_SESSION['status_btn'] = "Login";
-        header("Location: ../user-login.php");
+        header("Location: ./user-login.php");
 
         // echo "<script>alert('Account created successfully! You can now log in.'); window.location.href = 'user-login.php';</script>";
     } else {
@@ -44,7 +44,8 @@ if (isset($_POST['create_user_acc']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['status_text'] = "Error creating account. Please try again.";
         $_SESSION['status_code'] = "error";
         $_SESSION['status_btn'] = "Back";
-        echo "<script>alert('Error creating account: " . $stmt->error . "'); window.location.href = '../user-register.php';</script>";
+        header("Location: ./user-register.php");
+        // echo "<script>alert('Error creating account: " . $stmt->error . "'); window.location.href = './user-register.php';</script>";
     }
 
     $stmt->close();

@@ -296,8 +296,8 @@
                             crops for your area:</p>
 
                         <div class="row">
-                            <?php foreach (array_slice($recommendations, 0, 6) as $index => $rec): ?>
-                            <div class="col-lg-4 col-md-6 mb-4">
+                            <?php foreach ($recommendations as $index => $rec): ?>
+                            <div class="col-lg-4 col-md-6 mb-4 recommendation-item <?= $index >= 6 ? 'd-none' : '' ?>">
                                 <div class="card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -348,7 +348,7 @@
 
                                         <div class="mt-3">
                                             <button class="btn btn-primary btn-sm w-100"
-                                                onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= $rec['crop']['name'] ?>', <?= $rec['crop']['harvest_days'] ?>)">
+                                                onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= htmlspecialchars($rec['crop']['name'], ENT_QUOTES) ?>', <?= $rec['crop']['harvest_days'] ?>)">
                                                 <i class="bi bi-calendar-plus me-1"></i>Add to Schedule
                                             </button>
                                         </div>
@@ -359,9 +359,9 @@
                         </div>
 
                         <?php if (count($recommendations) > 6): ?>
-                        <div class="text-center mt-4">
+                        <div class="text-center mt-4" id="showMoreButton">
                             <button class="btn btn-outline-primary" onclick="showAllRecommendations()">
-                                View All <?= count($recommendations) ?> Recommendations
+                                <i class="bi bi-chevron-down me-1"></i>View All <?= count($recommendations) ?> Recommendations
                             </button>
                         </div>
                         <?php endif; ?>
@@ -418,8 +418,33 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>)
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+function showAllRecommendations() {
+    // Show all hidden recommendation items
+    const hiddenItems = document.querySelectorAll('.recommendation-item.d-none');
+    hiddenItems.forEach(item => {
+        item.classList.remove('d-none');
+        // Add fade-in animation
+        item.style.opacity = '0';
+        item.style.transition = 'opacity 0.3s ease-in';
+        setTimeout(() => {
+            item.style.opacity = '1';
+        }, 10);
+    });
+    
+    // Hide the "View All" button
+    const showMoreButton = document.getElementById('showMoreButton');
+    if (showMoreButton) {
+        showMoreButton.style.display = 'none';
+    }
+    
+    // Smooth scroll to show the newly revealed items
+    if (hiddenItems.length > 0) {
+        hiddenItems[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
 function addToSchedule(cropId, cropName, harvestDays) {
     document.getElementById('cropId').value = cropId;
     document.getElementById('cropName').value = cropName;

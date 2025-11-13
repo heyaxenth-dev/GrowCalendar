@@ -47,7 +47,7 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['status_code'] = "error";
             $_SESSION['status_btn'] = "Retry";
 
-            header("Location: user-login.php");
+            header("Location: ./user-login.php");
             // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
             exit();
         }
@@ -57,7 +57,7 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['status_text'] = "Invalid username or password. Please try again.";
         $_SESSION['status_code'] = "error";
         $_SESSION['status_btn'] = "Retry";
-        header("Location: user-login.php");
+        header("Location: ./user-login.php");
         // echo "<script>alert('Invalid username or password. Please try again.'); window.location.href = 'user-login.php';</script>";
         exit();
     }
