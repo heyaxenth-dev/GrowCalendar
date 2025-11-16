@@ -87,7 +87,8 @@ session_start();
                                             <label for="yourEmail" class="form-label">Your Email</label>
                                             <input type="email" name="email" class="form-control" id="yourEmail"
                                                 required>
-                                            <div class="invalid-feedback">Please enter a valid Email adddress!</div>
+                                            <div class="invalid-feedback">Email is already registered!</div>
+                                            <div class="valid-feedback">Email is available.</div>
                                         </div>
 
                                         <div class="col-md-12">
@@ -95,7 +96,8 @@ session_start();
                                             <div class="input-group has-validation">
                                                 <input type="text" name="username" class="form-control"
                                                     id="yourUsername" required>
-                                                <div class="invalid-feedback">Please choose a username.</div>
+                                                <div class="invalid-feedback">Username is already taken!</div>
+                                                <div class="valid-feedback">Username is available.</div>
                                             </div>
                                         </div>
 
@@ -219,6 +221,7 @@ session_start();
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
     <script src="assets/js/password-validation.js"></script>
+    <script src="assets/js/email-username-validation.js"></script>
 
 </body>
 
