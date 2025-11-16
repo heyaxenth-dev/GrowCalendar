@@ -8,7 +8,7 @@ session_start();
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-    <title>User Login - GrowCalendar</title>
+    <title>Reset Password - GrowCalendar</title>
     <meta content="" name="description" />
     <meta content="" name="keywords" />
 
@@ -59,64 +59,67 @@ session_start();
                                 <div class="card-body">
                                     <div class="pt-4 pb-2">
                                         <h5 class="card-title text-center pb-0 fs-4">
-                                            Login to Your Account
+                                            Set a new password
                                         </h5>
                                         <p class="text-center small">
-                                            Enter your username & password to login
+                                            Please enter your new password below.
                                         </p>
                                     </div>
 
-                                    <form class="row g-3 needs-validation" action="./user-login-code.php" method="POST"
-                                        novalidate>
+                                    <form class="row g-3 needs-validation" action="./forgot-password-code.php"
+                                        method="POST" novalidate>
+                                        <input type="hidden" name="email"
+                                            value="<?php echo htmlspecialchars($_GET['email'] ?? '', ENT_QUOTES); ?>" />
                                         <div class="col-12">
-                                            <label for="yourUsername" class="form-label">Username</label>
+                                            <label for="password" class="form-label">New Password</label>
                                             <div class="input-group has-validation">
-                                                <input type="text" name="username" class="form-control"
-                                                    id="yourUsername" required />
-                                                <div class="invalid-feedback">
-                                                    Please enter your username.
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label for="yourPassword" class="form-label">Password</label>
-                                            <div class="input-group">
                                                 <input type="password" name="password" class="form-control"
-                                                    id="yourPassword" required />
-                                                <a href="#" class="input-group-text text-decoration-none"
-                                                    id="togglePassword" tabindex="-1">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
+                                                    id="password" required />
                                                 <div class="invalid-feedback">
-                                                    Please enter your password!
+                                                    Please enter your new password.
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="col-12">
-                                            <small><a name="forgot_password" id="forgotPassword"
-                                                    href="forgot-password.php">Forgot
-                                                    password?</a></small>
-                                        </div>
-
-                                        <div class="col-12">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="remember"
-                                                    value="true" id="rememberMe" />
-                                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                                            <label for="confirm_password" class="form-label">Confirm New
+                                                Password</label>
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="confirm_password" class="form-control"
+                                                    id="confirm_password" required />
+                                                <div class="invalid-feedback">
+                                                    Please enter your confirm password.
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="col-12">
-                                            <button class="btn btn-default w-100" name="login_user" type="submit">
-                                                Login
-                                            </button>
+                                        <div class="col-md-12 mt-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="showPasswords">
+                                                <label class="form-check-label" for="showPasswords">
+                                                    Show Passwords
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div class="col-12">
-                                            <p class="small mb-0">
-                                                Don't have account?
-                                                <a href="user-register.php">Create an account</a>
-                                            </p>
+
+                                        <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const showPasswords = document.getElementById('showPasswords');
+                                            const password = document.getElementById('password');
+                                            const confirmPassword = document.getElementById(
+                                                'confirm_password');
+
+                                            showPasswords.addEventListener('change', function() {
+                                                const type = this.checked ? 'text' : 'password';
+                                                password.type = type;
+                                                confirmPassword.type = type;
+                                            });
+                                        });
+                                        </script>
+
+                                        <div class="col-12 mt-4 mb-2">
+                                            <button class="btn btn-default w-100" name="resetPassword" type="submit">
+                                                Reset Password
+                                            </button>
+                                            <a href="forgot-password.php" class="btn btn-link">Back</a>
                                         </div>
                                     </form>
                                 </div>
