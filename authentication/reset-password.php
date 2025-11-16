@@ -40,6 +40,13 @@ session_start();
     // sweet alert
     include 'alert.php';
     ?>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner-overlay">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <p>Resetting Password...</p>
+        </div>
+    </div>
     <main>
         <div class="container">
             <section
@@ -67,19 +74,45 @@ session_start();
                                     </div>
 
                                     <form class="row g-3 needs-validation" action="./forgot-password-code.php"
-                                        method="POST" novalidate>
+                                        method="POST" novalidate onsubmit="showLoadingSpinner()">
                                         <input type="hidden" name="email"
                                             value="<?php echo htmlspecialchars($_GET['email'] ?? '', ENT_QUOTES); ?>" />
-                                        <div class="col-12">
+
+                                        <div class="col-md-12 password-wrapper">
                                             <label for="password" class="form-label">New Password</label>
-                                            <div class="input-group has-validation">
-                                                <input type="password" name="password" class="form-control"
-                                                    id="password" required />
-                                                <div class="invalid-feedback">
-                                                    Please enter your new password.
-                                                </div>
+                                            <input type="password" name="password" class="form-control" id="password"
+                                                required />
+                                            <div class="invalid-feedback">Please enter your password!</div>
+
+                                            <!-- Strength Bar -->
+                                            <div class="progress mt-2 d-none" id="passwordStrengthBar">
+                                                <div class="progress-bar" role="progressbar"></div>
+                                            </div>
+
+                                            <!-- Hidden password rules -->
+                                            <div class="password-rules d-none mt-2">
+                                                <small class="rule p-length">
+                                                    <span class="icon"></span> Minimum 8 characters
+                                                </small><br>
+
+                                                <small class="rule p-upper">
+                                                    <span class="icon"></span> Contains uppercase letter
+                                                </small><br>
+
+                                                <small class="rule p-lower">
+                                                    <span class="icon"></span> Contains lowercase letter
+                                                </small><br>
+
+                                                <small class="rule p-number">
+                                                    <span class="icon"></span> Contains at least 1 number
+                                                </small><br>
+
+                                                <small class="rule p-special">
+                                                    <span class="icon"></span> Contains special character
+                                                </small>
                                             </div>
                                         </div>
+
                                         <div class="col-12">
                                             <label for="confirm_password" class="form-label">Confirm New
                                                 Password</label>
@@ -87,7 +120,7 @@ session_start();
                                                 <input type="password" name="confirm_password" class="form-control"
                                                     id="confirm_password" required />
                                                 <div class="invalid-feedback">
-                                                    Please enter your confirm password.
+                                                    Passwords do not match!
                                                 </div>
                                             </div>
                                         </div>
@@ -152,7 +185,21 @@ session_start();
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
-    <script src="assets/js/password-icon.js"></script>
+    <!-- <script src="assets/js/password-icon.js"></script> -->
+    <script src="assets/js/password-validation.js"></script>
+
+    <!-- Loading Spinner Script -->
+    <script>
+    function showLoadingSpinner() {
+        document.getElementById('loadingSpinner').style.display = 'flex';
+    }
+
+    // Hide spinner if page loads (in case of error or redirect)
+    window.addEventListener('load', function() {
+        // Don't hide immediately; let PHP handle the redirect
+        // The spinner will remain visible during the processing
+    });
+    </script>
 </body>
 
 </html>

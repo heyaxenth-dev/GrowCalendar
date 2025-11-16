@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-	const passwordInput = document.getElementById('yourPassword');
+	const passwordInput =
+		document.getElementById('yourPassword') ||
+		document.getElementById('password');
 	const wrapper = passwordInput.closest('.password-wrapper');
 	const rules = wrapper.querySelector('.password-rules');
 	const strengthBar = document.getElementById('passwordStrengthBar');
@@ -14,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		rules.classList.remove('d-none');
 		strengthBar.classList.remove('d-none');
 		validatePassword();
+		validateConfirmPassword();
 	});
 
 	passwordInput.addEventListener('blur', () => {
@@ -86,5 +89,51 @@ document.addEventListener('DOMContentLoaded', () => {
 			'bg-success'
 		);
 		bar.classList.add(classes[score]);
+	}
+
+	// Confirm Password Validation
+	const confirmPasswordInput =
+		document.getElementById('yourConfirmPassword') ||
+		document.getElementById('confirm_password');
+
+	if (confirmPasswordInput) {
+		confirmPasswordInput.addEventListener('input', validateConfirmPassword);
+		confirmPasswordInput.addEventListener('blur', validateConfirmPassword);
+	}
+
+	function validateConfirmPassword() {
+		const confirmPasswordInput =
+			document.getElementById('yourConfirmPassword') ||
+			document.getElementById('confirm_password');
+
+		if (!confirmPasswordInput) return;
+
+		const passwordValue = passwordInput.value;
+		const confirmPasswordValue = confirmPasswordInput.value;
+
+		const feedbackElement =
+			confirmPasswordInput.parentElement.querySelector('.invalid-feedback') ||
+			confirmPasswordInput.parentElement.parentElement.querySelector(
+				'.invalid-feedback'
+			);
+
+		if (confirmPasswordValue === '') {
+			confirmPasswordInput.classList.remove('is-valid');
+			confirmPasswordInput.classList.remove('is-invalid');
+		} else if (passwordValue === confirmPasswordValue) {
+			confirmPasswordInput.classList.remove('is-invalid');
+			confirmPasswordInput.classList.add('is-valid');
+			if (feedbackElement) {
+				feedbackElement.textContent = 'Passwords match!';
+				feedbackElement.style.display = 'none';
+			}
+		} else {
+			confirmPasswordInput.classList.remove('is-valid');
+			confirmPasswordInput.classList.add('is-invalid');
+			if (feedbackElement) {
+				feedbackElement.textContent = 'Passwords do not match!';
+				feedbackElement.style.display = 'block';
+			}
+		}
 	}
 });

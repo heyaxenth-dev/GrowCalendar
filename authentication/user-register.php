@@ -141,9 +141,11 @@ session_start();
 
                                         <div class="col-md-12 mt-3">
                                             <label for="yourConfirmPassword" class="form-label">Confirm Password</label>
-                                            <input type="password" name="confirm_password" class="form-control"
-                                                id="yourConfirmPassword" required>
-                                            <div class="invalid-feedback">Please confirm your password!</div>
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="confirm_password" class="form-control"
+                                                    id="yourConfirmPassword" required>
+                                                <div class="invalid-feedback">Passwords do not match!</div>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-12 mt-3">

@@ -40,6 +40,13 @@ session_start();
     // sweet alert
     include 'alert.php';
     ?>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner-overlay">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <p>Verifying OTP...</p>
+        </div>
+    </div>
     <main>
         <div class="container">
             <section
@@ -67,7 +74,7 @@ session_start();
                                     </div>
 
                                     <form class="row g-3 needs-validation" action="./forgot-password-code.php"
-                                        method="POST" novalidate>
+                                        method="POST" novalidate onsubmit="showLoadingSpinner()">
                                         <div class="col-12">
                                             <label for="yourEmail" class="form-label">Email</label>
                                             <div class="input-group has-validation">
@@ -126,6 +133,19 @@ session_start();
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
     <script src="assets/js/password-icon.js"></script>
+
+    <!-- Loading Spinner Script -->
+    <script>
+    function showLoadingSpinner() {
+        document.getElementById('loadingSpinner').style.display = 'flex';
+    }
+
+    // Hide spinner if page loads (in case of error or redirect)
+    window.addEventListener('load', function() {
+        // Don't hide immediately; let PHP handle the redirect
+        // The spinner will remain visible during the mail sending process
+    });
+    </script>
 </body>
 
 </html>
