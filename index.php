@@ -46,7 +46,7 @@ session_start();
                 <ul>
                     <li><a href="#hero" class="active">Home</a></li>
                     <li><a href="#about">About</a></li>
-                    <li><a href="#services">Key Features</a></li>
+                    <li><a href="#keyfeatures">Key Features</a></li>
                     <li><a href="#contact">Contact</a></li>
                     <li><a href="./authentication/admin-login.php"><i class="bi bi-person"></i></a></li>
                 </ul>
@@ -127,11 +127,11 @@ session_start();
 
                     <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
                         <p>
-                            <span class="fw-bold fst-italic h2">Mission:</span> <br>
+                            <span class="fw-bold fst-italic h2" style="color: #0d3d02;">Mission:</span> <br>
                             To empower farmers and agricultural workers by providing accurate, localized, and
                             data-driven crop recommendations that improve productivity and sustainability.
                             <br><br>
-                            <span class="fw-bold fst-italic h2">Vision:</span><br>
+                            <span class="fw-bold fst-italic h2" style="color: #0d3d02;">Vision:</span><br>
                             A future where every Filipino farmer can plan effectively, harvest efficiently, and adapt
                             easily to seasonal and environmental changes.
                         </p>
@@ -143,7 +143,7 @@ session_start();
         <!-- /About Section -->
 
         <!-- Key Features Section -->
-        <section id="services" class="services section light-background">
+        <section id="keyfeatures" class="keyfeatures section light-background">
             <!-- Section Title -->
             <div class="container section-title" data-aos="fade-up">
                 <h2>Key Features</h2>

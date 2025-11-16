@@ -1212,9 +1212,9 @@ section,
 }
 
 /*--------------------------------------------------------------
-# Services Section
+# Key Features Section
 --------------------------------------------------------------*/
-.services .service-item {
+.keyfeatures .service-item {
 	background-color: var(--surface-color);
 	box-shadow: 0px 5px 90px 0px rgba(0, 0, 0, 0.1);
 	padding: 50px 30px;
@@ -1222,38 +1222,38 @@ section,
 	height: 100%;
 }
 
-.services .service-item .icon {
+.keyfeatures .service-item .icon {
 	margin-bottom: 10px;
 }
 
-.services .service-item .icon i {
+.keyfeatures .service-item .icon i {
 	color: var(--accent-color);
 	font-size: 36px;
 	transition: 0.3s;
 }
 
-.services .service-item h4 {
+.keyfeatures .service-item h4 {
 	font-weight: 700;
 	margin-bottom: 15px;
 	font-size: 20px;
 }
 
-.services .service-item h4 a {
+.keyfeatures .service-item h4 a {
 	color: var(--heading-color);
 	transition: ease-in-out 0.3s;
 }
 
-.services .service-item p {
+.keyfeatures .service-item p {
 	line-height: 24px;
 	font-size: 14px;
 	margin-bottom: 0;
 }
 
-.services .service-item:hover {
+.keyfeatures .service-item:hover {
 	transform: translateY(-10px);
 }
 
-.services .service-item:hover h4 a {
+.keyfeatures .service-item:hover h4 a {
 	color: var(--accent-color);
 }
 
@@ -2329,14 +2329,14 @@ section,
 /*--------------------------------------------------------------
 # Service Details Section
 --------------------------------------------------------------*/
-.service-details .services-list {
+.service-details .keyfeatures-list {
 	background-color: var(--surface-color);
 	padding: 10px 30px;
 	border: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
 	margin-bottom: 20px;
 }
 
-.service-details .services-list a {
+.service-details .keyfeatures-list a {
 	display: block;
 	line-height: 1;
 	padding: 8px 0 8px 15px;
@@ -2347,17 +2347,17 @@ section,
 	transition: 0.3s;
 }
 
-.service-details .services-list a.active {
+.service-details .keyfeatures-list a.active {
 	color: var(--heading-color);
 	font-weight: 700;
 	border-color: var(--accent-color);
 }
 
-.service-details .services-list a:hover {
+.service-details .keyfeatures-list a:hover {
 	border-color: var(--accent-color);
 }
 
-.service-details .services-img {
+.service-details .keyfeatures-img {
 	margin-bottom: 20px;
 }
 

@@ -598,6 +598,51 @@ h6 {
 }
 
 /*--------------------------------------------------------------
+# Password Validation Animations
+--------------------------------------------------------------*/
+
+/* Icon default state */
+.rule .icon {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-right: 6px;
+	vertical-align: middle;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Animation for check */
+.rule.valid .icon::before {
+	content: '✔';
+	color: green;
+	opacity: 1;
+	transform: scale(1);
+}
+
+.rule.invalid .icon::before {
+	content: '✖';
+	color: red;
+	opacity: 0.6;
+	transform: scale(0.7);
+}
+
+/* Smooth grow animation on becoming valid */
+.rule.valid {
+	animation: pop 0.25s ease-in-out;
+}
+
+@keyframes pop {
+	0% {
+		transform: scale(0.9);
+		opacity: 0.5;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/*--------------------------------------------------------------
 # Sidebar
 --------------------------------------------------------------*/
 .sidebar {

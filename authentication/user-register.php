@@ -99,12 +99,43 @@ session_start();
                                             </div>
                                         </div>
 
-                                        <div class="col-md-12">
+                                        <div class="col-md-12 password-wrapper">
                                             <label for="yourPassword" class="form-label">Password</label>
+
                                             <input type="password" name="password" class="form-control"
                                                 id="yourPassword" required>
+
                                             <div class="invalid-feedback">Please enter your password!</div>
+
+                                            <!-- Strength Bar -->
+                                            <div class="progress mt-2 d-none" id="passwordStrengthBar">
+                                                <div class="progress-bar" role="progressbar"></div>
+                                            </div>
+
+                                            <!-- Hidden password rules -->
+                                            <div class="password-rules d-none mt-2">
+                                                <small class="rule p-length">
+                                                    <span class="icon"></span> Minimum 8 characters
+                                                </small><br>
+
+                                                <small class="rule p-upper">
+                                                    <span class="icon"></span> Contains uppercase letter
+                                                </small><br>
+
+                                                <small class="rule p-lower">
+                                                    <span class="icon"></span> Contains lowercase letter
+                                                </small><br>
+
+                                                <small class="rule p-number">
+                                                    <span class="icon"></span> Contains at least 1 number
+                                                </small><br>
+
+                                                <small class="rule p-special">
+                                                    <span class="icon"></span> Contains special character
+                                                </small>
+                                            </div>
                                         </div>
+
 
                                         <div class="col-md-12 mt-3">
                                             <label for="yourConfirmPassword" class="form-label">Confirm Password</label>
@@ -187,6 +218,7 @@ session_start();
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/password-validation.js"></script>
 
 </body>
 
