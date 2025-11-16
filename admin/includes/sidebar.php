@@ -36,13 +36,13 @@
             </li>
             <!-- End Feedbacks Page Nav -->
 
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'history') ? '' : 'collapsed' ?>"
                     href="<?= get_page_link('history') ?>">
                     <i class="bi bi-bar-chart-line"></i>
                     <span>Recommendation History</span>
                 </a>
-            </li>
+            </li> -->
             <!-- End Recommendation History Page Nav -->
 
             <li class="nav-item">
