@@ -111,22 +111,26 @@ Toast.fire({
 
     // Fetch Market Demand Data (Based on recommendations, schedules, and success rates)
     $demand_query = "
+        SELECT *
+    FROM (
         SELECT 
             c.id,
             c.name,
-            COUNT(DISTINCT cr.id) as recommendation_count,
-            COUNT(DISTINCT cs.id) as schedule_count,
-            COUNT(DISTINCT cf.id) as feedback_count,
-            SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) as success_count,
-            AVG(cf.feedback_score) as avg_score
+            COUNT(DISTINCT cr.id) AS recommendation_count,
+            COUNT(DISTINCT cs.id) AS schedule_count,
+            COUNT(DISTINCT cf.id) AS feedback_count,
+            SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) AS success_count,
+            AVG(cf.feedback_score) AS avg_score
         FROM crops c
         LEFT JOIN crop_recommendations cr ON c.id = cr.crop_id
         LEFT JOIN crop_schedules cs ON c.id = cs.crop_id
         LEFT JOIN crop_feedback cf ON cs.id = cf.crop_schedule_id
         GROUP BY c.id, c.name
-        HAVING recommendation_count > 0 OR schedule_count > 0
-        ORDER BY (recommendation_count * 2 + schedule_count + COALESCE(success_count, 0) * 3) DESC
-        LIMIT 10
+    ) AS t
+    WHERE t.recommendation_count > 0 OR t.schedule_count > 0
+    ORDER BY (t.recommendation_count * 2 + t.schedule_count + t.success_count * 3) DESC
+    LIMIT 10;
+
     ";
     $demand_result = @$conn->query($demand_query);
     $demand_crops = [];
@@ -372,10 +376,14 @@ Toast.fire({
 
                                     <script>
                                     document.addEventListener('DOMContentLoaded', () => {
-                                        const performanceMonths = <?php echo json_encode($performance_months); ?>;
-                                        const performanceSchedules = <?php echo json_encode($performance_schedules); ?>;
-                                        const performanceFeedbacks = <?php echo json_encode($performance_feedbacks); ?>;
-                                        const performanceScores = <?php echo json_encode($performance_scores); ?>;
+                                        const performanceMonths =
+                                            <?php echo json_encode($performance_months); ?>;
+                                        const performanceSchedules =
+                                            <?php echo json_encode($performance_schedules); ?>;
+                                        const performanceFeedbacks =
+                                            <?php echo json_encode($performance_feedbacks); ?>;
+                                        const performanceScores =
+                                            <?php echo json_encode($performance_scores); ?>;
 
                                         new ApexCharts(document.querySelector('#reportsChart'), {
                                             series: [{
@@ -433,7 +441,9 @@ Toast.fire({
                                             },
                                             tooltip: {
                                                 y: {
-                                                    formatter: function(val, { seriesIndex }) {
+                                                    formatter: function(val, {
+                                                        seriesIndex
+                                                    }) {
                                                         if (seriesIndex === 2) {
                                                             return val + '%';
                                                         }
