@@ -598,6 +598,51 @@ h6 {
 }
 
 /*--------------------------------------------------------------
+# Password Validation Animations
+--------------------------------------------------------------*/
+
+/* Icon default state */
+.rule .icon {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-right: 6px;
+	vertical-align: middle;
+	transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Animation for check */
+.rule.valid .icon::before {
+	content: '✔';
+	color: green;
+	opacity: 1;
+	transform: scale(1);
+}
+
+.rule.invalid .icon::before {
+	content: '✖';
+	color: red;
+	opacity: 0.6;
+	transform: scale(0.7);
+}
+
+/* Smooth grow animation on becoming valid */
+.rule.valid {
+	animation: pop 0.25s ease-in-out;
+}
+
+@keyframes pop {
+	0% {
+		transform: scale(0.9);
+		opacity: 0.5;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/*--------------------------------------------------------------
 # Sidebar
 --------------------------------------------------------------*/
 .sidebar {
@@ -1231,4 +1276,49 @@ h6 {
 	text-align: center;
 	font-size: 13px;
 	color: #0d3d02;
+}
+
+/* Loading Spinner Styles */
+.spinner-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 9999;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.spinner-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+}
+
+.spinner {
+	width: 60px;
+	height: 60px;
+	border: 5px solid rgba(255, 255, 255, 0.3);
+	border-top: 5px solid #ffffff;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.spinner-overlay p {
+	color: #ffffff;
+	font-size: 18px;
+	font-family: 'Nunito', sans-serif;
+	margin: 0;
+	font-weight: 600;
 }

@@ -1,8 +1,8 @@
     <?php 
     include './authentication/authentication.php';
     include 'includes/header.php';
-    include 'includes/weather_api.php';
     include 'includes/weather_config.php';
+    include 'includes/weather_api.php';
     ?>
     <script src="assets/js/sweetalert2.all.min.js"></script>
     <?php
@@ -32,7 +32,154 @@ Toast.fire({
             unset($_SESSION['logged']);
 }
     include 'includes/sidebar.php';
+
+    // Initialize weather API
+    $weather_api = new WeatherAPI(getWeatherApiKey());
+    $location = 'Barbaza, Antique, Philippines';
+    
+    // Current weather with fallback
+    $current_result = $weather_api->getCurrentWeather($location);
+    if (!isset($current_result['error']) || $current_result['error'] === true) {
+        $current_weather = getFallbackWeatherData($location);
+    } else {
+        $current_weather = $current_result;
+    }
+    
+    // 7-day forecast with fallback (free tier compatible)
+    $forecast_result = $weather_api->get7DayForecast($location);
+    if (isset($forecast_result['error']) && $forecast_result['error'] === false && isset($forecast_result['daily'])) {
+        $forecast_data = $forecast_result['daily'];
+    } else {
+        $daysOfWeek = ['Today', 'Tomorrow', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $forecast_data = [];
+        foreach ($daysOfWeek as $dayLabel) {
+            $forecast_data[] = [
+                'day' => $dayLabel,
+                'high' => isset($current_weather['temperature']) ? round($current_weather['temperature'] + 1) : 30,
+                'low' => isset($current_weather['temperature']) ? round($current_weather['temperature'] - 3) : 24,
+                'condition' => $current_weather['weather_condition'] ?? 'Clear',
+                'rain_chance' => 20,
+                'icon' => 'cloud-sun'
+            ];
+        }
+    }
+    
+    // Prepare arrays for charts
+    $chart_days = array_map(function($d) { return $d['day']; }, $forecast_data);
+    $chart_highs = array_map(function($d) { return isset($d['high']) ? (int)$d['high'] : null; }, $forecast_data);
+    $chart_lows = array_map(function($d) { return isset($d['low']) ? (int)$d['low'] : null; }, $forecast_data);
+    $chart_rain = array_map(function($d) { return isset($d['rain_chance']) ? (int)$d['rain_chance'] : 0; }, $forecast_data);
+
     include 'alert.php';
+
+    // Fetch Crop Performance Trends Data (Last 7 months)
+    $performance_trends_query = "
+        SELECT 
+            DATE_FORMAT(cs.created_at, '%Y-%m') as month,
+            DATE_FORMAT(cs.created_at, '%b %Y') as month_label,
+            COUNT(DISTINCT cs.id) as total_schedules,
+            COUNT(DISTINCT cf.id) as total_feedbacks,
+            AVG(cf.feedback_score) as avg_score,
+            SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) as success_count,
+            ROUND(AVG(cs.progress_percentage), 1) as avg_progress
+        FROM crop_schedules cs
+        LEFT JOIN crop_feedback cf ON cs.id = cf.crop_schedule_id
+        WHERE cs.created_at >= DATE_SUB(NOW(), INTERVAL 7 MONTH)
+        GROUP BY DATE_FORMAT(cs.created_at, '%Y-%m'), DATE_FORMAT(cs.created_at, '%b %Y')
+        ORDER BY month ASC
+    ";
+    $performance_result = @$conn->query($performance_trends_query);
+    $performance_months = [];
+    $performance_schedules = [];
+    $performance_feedbacks = [];
+    $performance_scores = [];
+    
+    if ($performance_result && $performance_result->num_rows > 0) {
+        while ($row = $performance_result->fetch_assoc()) {
+            $performance_months[] = $row['month_label'];
+            $performance_schedules[] = (int)$row['total_schedules'];
+            $performance_feedbacks[] = (int)$row['total_feedbacks'];
+            $performance_scores[] = $row['avg_score'] ? round($row['avg_score'] * 20, 1) : 0; // Convert 1-5 to 0-100
+        }
+    } else {
+        // Default data if no records
+        $performance_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
+        $performance_schedules = [5, 8, 12, 10, 15, 18, 20];
+        $performance_feedbacks = [3, 5, 8, 7, 10, 12, 15];
+        $performance_scores = [75, 80, 82, 78, 85, 88, 90];
+    }
+
+    // Fetch Market Demand Data (Based on recommendations, schedules, and success rates)
+    $demand_query = "
+        SELECT 
+            c.id,
+            c.name,
+            COUNT(DISTINCT cr.id) as recommendation_count,
+            COUNT(DISTINCT cs.id) as schedule_count,
+            COUNT(DISTINCT cf.id) as feedback_count,
+            SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) as success_count,
+            AVG(cf.feedback_score) as avg_score
+        FROM crops c
+        LEFT JOIN crop_recommendations cr ON c.id = cr.crop_id
+        LEFT JOIN crop_schedules cs ON c.id = cs.crop_id
+        LEFT JOIN crop_feedback cf ON cs.id = cf.crop_schedule_id
+        GROUP BY c.id, c.name
+        HAVING recommendation_count > 0 OR schedule_count > 0
+        ORDER BY (recommendation_count * 2 + schedule_count + COALESCE(success_count, 0) * 3) DESC
+        LIMIT 10
+    ";
+    $demand_result = @$conn->query($demand_query);
+    $demand_crops = [];
+    $demand_levels = [];
+    
+    if ($demand_result && $demand_result->num_rows > 0) {
+        // Get max values for normalization
+        $max_recommendations = 0;
+        $max_schedules = 0;
+        $max_success = 0;
+        $rows_data = [];
+        
+        while ($row = $demand_result->fetch_assoc()) {
+            $rows_data[] = $row;
+            $max_recommendations = max($max_recommendations, (int)$row['recommendation_count']);
+            $max_schedules = max($max_schedules, (int)$row['schedule_count']);
+            $max_success = max($max_success, (int)$row['success_count']);
+        }
+        
+        // Calculate demand level for each crop
+        foreach ($rows_data as $row) {
+            $recommendation_count = (int)$row['recommendation_count'];
+            $schedule_count = (int)$row['schedule_count'];
+            $success_count = (int)$row['success_count'];
+            $avg_score = $row['avg_score'] ? (float)$row['avg_score'] : 0;
+            
+            // Normalize each component to 0-100 scale
+            $rec_score = $max_recommendations > 0 ? ($recommendation_count / $max_recommendations) * 100 : 0;
+            $sched_score = $max_schedules > 0 ? ($schedule_count / $max_schedules) * 100 : 0;
+            $success_score = $max_success > 0 ? ($success_count / $max_success) * 100 : 0;
+            $score_component = $avg_score * 20; // Convert 1-5 scale to 0-100
+            
+            // Weighted average: recommendations (40%), schedules (30%), success (20%), score (10%)
+            $demand_level = round(
+                ($rec_score * 0.4) + 
+                ($sched_score * 0.3) + 
+                ($success_score * 0.2) + 
+                ($score_component * 0.1)
+            );
+            
+            // Ensure minimum of 20% if there's any activity
+            if ($recommendation_count > 0 || $schedule_count > 0) {
+                $demand_level = max(20, $demand_level);
+            }
+            
+            $demand_crops[] = $row['name'];
+            $demand_levels[] = min(100, $demand_level);
+        }
+    } else {
+        // Default data if no records
+        $demand_crops = ['Rice', 'Corn', 'Tomatoes', 'Onions', 'Garlic'];
+        $demand_levels = [90, 75, 95, 70, 80];
+    }
 
 ?>
 
@@ -198,7 +345,7 @@ Toast.fire({
 
 
                 <!-- Left side columns -->
-                <div class="col-lg-6">
+                <div class="col-lg-12">
                     <div class="row">
                         <!-- Crop Performance Trends -->
                         <div class="col-12">
@@ -225,18 +372,23 @@ Toast.fire({
 
                                     <script>
                                     document.addEventListener('DOMContentLoaded', () => {
+                                        const performanceMonths = <?php echo json_encode($performance_months); ?>;
+                                        const performanceSchedules = <?php echo json_encode($performance_schedules); ?>;
+                                        const performanceFeedbacks = <?php echo json_encode($performance_feedbacks); ?>;
+                                        const performanceScores = <?php echo json_encode($performance_scores); ?>;
+
                                         new ApexCharts(document.querySelector('#reportsChart'), {
                                             series: [{
-                                                    name: 'Sales',
-                                                    data: [31, 40, 28, 51, 42, 82, 56],
+                                                    name: 'Active Schedules',
+                                                    data: performanceSchedules,
                                                 },
                                                 {
-                                                    name: 'Revenue',
-                                                    data: [11, 32, 45, 32, 34, 52, 41],
+                                                    name: 'Feedbacks Received',
+                                                    data: performanceFeedbacks,
                                                 },
                                                 {
-                                                    name: 'Customers',
-                                                    data: [15, 11, 32, 18, 9, 24, 11],
+                                                    name: 'Performance Score (%)',
+                                                    data: performanceScores,
                                                 },
                                             ],
                                             chart: {
@@ -263,29 +415,17 @@ Toast.fire({
                                             },
                                             colors: ['#4154f1', '#2eca6a', '#ff771d'],
                                             xaxis: {
-                                                categories: [
-                                                    '2018-09-19T00:00:00.000Z',
-                                                    '2018-09-19T01:30:00.000Z',
-                                                    '2018-09-19T02:30:00.000Z',
-                                                    '2018-09-19T03:30:00.000Z',
-                                                    '2018-09-19T04:30:00.000Z',
-                                                    '2018-09-19T05:30:00.000Z',
-                                                    '2018-09-19T06:30:00.000Z',
-                                                ],
+                                                categories: performanceMonths,
                                                 labels: {
                                                     rotate: -45,
-                                                    formatter: function(val) {
-                                                        const date = new Date(val);
-                                                        return date.toLocaleTimeString([], {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        });
-                                                    },
+                                                    style: {
+                                                        fontSize: '12px'
+                                                    }
                                                 },
                                             },
                                             yaxis: {
                                                 title: {
-                                                    text: 'Value',
+                                                    text: 'Count / Score',
                                                 },
                                             },
                                             fill: {
@@ -293,10 +433,16 @@ Toast.fire({
                                             },
                                             tooltip: {
                                                 y: {
-                                                    formatter: function(val) {
-                                                        return val + ' units';
+                                                    formatter: function(val, { seriesIndex }) {
+                                                        if (seriesIndex === 2) {
+                                                            return val + '%';
+                                                        }
+                                                        return val;
                                                     },
                                                 },
+                                            },
+                                            legend: {
+                                                position: 'top',
                                             },
                                         }).render();
                                     });
@@ -312,7 +458,7 @@ Toast.fire({
                 <!-- End Left side columns -->
 
                 <!-- Right side columns -->
-                <div class="col-lg-6">
+                <div class="col-lg-12">
                     <!-- Weather Forecast (7 Days) -->
                     <div class="card">
                         <div class="filter">
@@ -335,106 +481,93 @@ Toast.fire({
 
                             <script>
                             document.addEventListener('DOMContentLoaded', () => {
-                                fetch('includes/get_weather_forecast.php')
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.error) {
-                                            alert('Error loading forecast: ' + data.message);
-                                            return;
+                                const days = <?php echo json_encode($chart_days); ?>;
+                                const highTemps = <?php echo json_encode($chart_highs); ?>;
+                                const lowTemps = <?php echo json_encode($chart_lows); ?>;
+                                const rainChances = <?php echo json_encode($chart_rain); ?>;
+
+                                const options = {
+                                    series: [{
+                                            name: 'High (°C)',
+                                            type: 'line',
+                                            data: highTemps
+                                        },
+                                        {
+                                            name: 'Low (°C)',
+                                            type: 'line',
+                                            data: lowTemps
+                                        },
+                                        {
+                                            name: 'Rain Chance (%)',
+                                            type: 'bar',
+                                            data: rainChances
                                         }
-
-                                        const days = data.forecast.map(d => d.day);
-                                        const highTemps = data.forecast.map(d => d.high);
-                                        const lowTemps = data.forecast.map(d => d.low);
-                                        const rainChances = data.forecast.map(d => d.rain_chance);
-
-                                        const options = {
-                                            series: [{
-                                                    name: 'High (°C)',
-                                                    type: 'line',
-                                                    data: highTemps
-                                                },
-                                                {
-                                                    name: 'Low (°C)',
-                                                    type: 'line',
-                                                    data: lowTemps
-                                                },
-                                                {
-                                                    name: 'Rain Chance (%)',
-                                                    type: 'bar',
-                                                    data: rainChances
-                                                }
-                                            ],
-                                            chart: {
-                                                height: 300,
-                                                type: 'line',
-                                                toolbar: {
-                                                    show: false
-                                                }
+                                    ],
+                                    chart: {
+                                        height: 300,
+                                        type: 'line',
+                                        toolbar: {
+                                            show: false
+                                        }
+                                    },
+                                    stroke: {
+                                        width: [3, 3, 0],
+                                        curve: 'smooth'
+                                    },
+                                    colors: ['#ff7300', '#00bcd4', '#00e396'],
+                                    dataLabels: {
+                                        enabled: false
+                                    },
+                                    xaxis: {
+                                        categories: days
+                                    },
+                                    yaxis: [{
+                                            title: {
+                                                text: 'Temperature (°C)'
                                             },
-                                            stroke: {
-                                                width: [3, 3, 0],
-                                                curve: 'smooth'
+                                            min: 20,
+                                            max: 40
+                                        },
+                                        {
+                                            opposite: true,
+                                            title: {
+                                                text: 'Rain Chance (%)'
                                             },
-                                            colors: ['#ff7300', '#00bcd4', '#00e396'],
-                                            dataLabels: {
-                                                enabled: false
+                                            min: 0,
+                                            max: 100
+                                        }
+                                    ],
+                                    tooltip: {
+                                        shared: true,
+                                        intersect: false,
+                                        x: {
+                                            show: true
+                                        },
+                                        y: [{
+                                                formatter: (val) => val + ' °C'
                                             },
-                                            xaxis: {
-                                                categories: days
+                                            {
+                                                formatter: (val) => val + ' °C'
                                             },
-                                            yaxis: [{
-                                                    title: {
-                                                        text: 'Temperature (°C)'
-                                                    },
-                                                    min: 20,
-                                                    max: 40
-                                                },
-                                                {
-                                                    opposite: true,
-                                                    title: {
-                                                        text: 'Rain Chance (%)'
-                                                    },
-                                                    min: 0,
-                                                    max: 100
-                                                }
-                                            ],
-                                            tooltip: {
-                                                shared: true,
-                                                intersect: false,
-                                                x: {
-                                                    show: true
-                                                },
-                                                y: [{
-                                                        formatter: (val) => val + ' °C'
-                                                    },
-                                                    {
-                                                        formatter: (val) => val + ' °C'
-                                                    },
-                                                    {
-                                                        formatter: (val) => val + ' %'
-                                                    }
-                                                ]
-                                            },
-                                            legend: {
-                                                position: 'top'
-                                            },
-                                            grid: {
-                                                borderColor: '#e7e7e7',
-                                                row: {
-                                                    colors: ['transparent', 'transparent'],
-                                                    opacity: 0.5
-                                                }
+                                            {
+                                                formatter: (val) => val + ' %'
                                             }
-                                        };
+                                        ]
+                                    },
+                                    legend: {
+                                        position: 'top'
+                                    },
+                                    grid: {
+                                        borderColor: '#e7e7e7',
+                                        row: {
+                                            colors: ['transparent', 'transparent'],
+                                            opacity: 0.5
+                                        }
+                                    }
+                                };
 
-                                        new ApexCharts(document.querySelector("#weatherChart"), options)
-                                            .render();
-                                    })
-                                    .catch(error => {
-                                        console.error('Error:', error);
-                                        alert('Error loading forecast data.');
-                                    });
+                                new ApexCharts(document.querySelector("#weatherChart"), options)
+                                    .render();
                             });
                             </script>
 
@@ -455,10 +588,13 @@ Toast.fire({
 
                             <script>
                             document.addEventListener("DOMContentLoaded", () => {
+                                const demandCrops = <?php echo json_encode($demand_crops); ?>;
+                                const demandLevels = <?php echo json_encode($demand_levels); ?>;
+
                                 const options = {
                                     series: [{
                                         name: "Demand Level",
-                                        data: [90, 75, 95, 70, 80], // sample data
+                                        data: demandLevels,
                                     }],
                                     chart: {
                                         type: "bar",
@@ -475,16 +611,24 @@ Toast.fire({
                                         },
                                     },
                                     dataLabels: {
-                                        enabled: false,
+                                        enabled: true,
+                                        formatter: function(val) {
+                                            return val + "%";
+                                        },
                                     },
                                     colors: ["#f39c12"], // orange bars
                                     xaxis: {
-                                        categories: ["Rice", "Corn", "Tomatoes", "Onions", "Garlic"],
+                                        categories: demandCrops,
                                         title: {
                                             text: "Demand Level (%)",
                                         },
                                         min: 0,
                                         max: 100,
+                                    },
+                                    yaxis: {
+                                        title: {
+                                            text: "Crops",
+                                        },
                                     },
                                     grid: {
                                         borderColor: "#e7e7e7",

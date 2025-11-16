@@ -87,31 +87,64 @@ session_start();
                                             <label for="yourEmail" class="form-label">Your Email</label>
                                             <input type="email" name="email" class="form-control" id="yourEmail"
                                                 required>
-                                            <div class="invalid-feedback">Please enter a valid Email adddress!</div>
+                                            <div class="invalid-feedback">Email is already registered!</div>
+                                            <div class="valid-feedback">Email is available.</div>
                                         </div>
 
                                         <div class="col-md-12">
                                             <label for="yourUsername" class="form-label">Username</label>
                                             <div class="input-group has-validation">
-                                                <span class="input-group-text" id="inputGroupPrepend">@</span>
                                                 <input type="text" name="username" class="form-control"
                                                     id="yourUsername" required>
-                                                <div class="invalid-feedback">Please choose a username.</div>
+                                                <div class="invalid-feedback">Username is already taken!</div>
+                                                <div class="valid-feedback">Username is available.</div>
                                             </div>
                                         </div>
 
-                                        <div class="col-md-12">
+                                        <div class="col-md-12 password-wrapper">
                                             <label for="yourPassword" class="form-label">Password</label>
+
                                             <input type="password" name="password" class="form-control"
                                                 id="yourPassword" required>
+
                                             <div class="invalid-feedback">Please enter your password!</div>
+
+                                            <!-- Strength Bar -->
+                                            <div class="progress mt-2 d-none" id="passwordStrengthBar">
+                                                <div class="progress-bar" role="progressbar"></div>
+                                            </div>
+
+                                            <!-- Hidden password rules -->
+                                            <div class="password-rules d-none mt-2">
+                                                <small class="rule p-length">
+                                                    <span class="icon"></span> Minimum 8 characters
+                                                </small><br>
+
+                                                <small class="rule p-upper">
+                                                    <span class="icon"></span> Contains uppercase letter
+                                                </small><br>
+
+                                                <small class="rule p-lower">
+                                                    <span class="icon"></span> Contains lowercase letter
+                                                </small><br>
+
+                                                <small class="rule p-number">
+                                                    <span class="icon"></span> Contains at least 1 number
+                                                </small><br>
+
+                                                <small class="rule p-special">
+                                                    <span class="icon"></span> Contains special character
+                                                </small>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-12 mt-3">
                                             <label for="yourConfirmPassword" class="form-label">Confirm Password</label>
-                                            <input type="password" name="confirm_password" class="form-control"
-                                                id="yourConfirmPassword" required>
-                                            <div class="invalid-feedback">Please confirm your password!</div>
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="confirm_password" class="form-control"
+                                                    id="yourConfirmPassword" required>
+                                                <div class="invalid-feedback">Passwords do not match!</div>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-12 mt-3">
@@ -189,6 +222,8 @@ session_start();
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/password-validation.js"></script>
+    <script src="assets/js/email-username-validation.js"></script>
 
 </body>
 

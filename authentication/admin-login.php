@@ -71,7 +71,6 @@ session_start();
                                         <div class="col-12">
                                             <label for="yourUsername" class="form-label">Username</label>
                                             <div class="input-group has-validation">
-                                                <span class="input-group-text" id="inputGroupPrepend">@</span>
                                                 <input type="text" name="username" class="form-control"
                                                     id="yourUsername" required />
                                                 <div class="invalid-feedback">
@@ -95,6 +94,11 @@ session_start();
                                             </div>
                                         </div>
 
+                                        <div class="col-12">
+                                            <small><a name="forgot_password" id="forgotPassword"
+                                                    href="forgot-password.php">Forgot
+                                                    password?</a></small>
+                                        </div>
 
                                         <div class="col-12">
                                             <div class="form-check">
