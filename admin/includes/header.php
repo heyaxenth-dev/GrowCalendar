@@ -9,8 +9,8 @@
     $renamed_pages = [
         'homepage' => 'Dashboard',
         'feedbacks' => 'Feedbacks',
-        'marketability' => 'Marketability',
-        'analytics' => 'Analytics',
+        'history' => 'Recommendation History',
+        'analytics' => 'Crop Reports & Analytics',
         'water_availability' => 'Water Availability',
         'user_management' => 'User Management',
     ];

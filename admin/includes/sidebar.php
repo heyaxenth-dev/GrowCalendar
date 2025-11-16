@@ -37,19 +37,19 @@
             <!-- End Feedbacks Page Nav -->
 
             <li class="nav-item">
-                <a class="nav-link <?= ($current_page == 'marketability') ? '' : 'collapsed' ?>"
-                    href="<?= get_page_link('marketability') ?>">
+                <a class="nav-link <?= ($current_page == 'history') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('history') ?>">
                     <i class="bi bi-bar-chart-line"></i>
-                    <span>Marketability</span>
+                    <span>Recommendation History</span>
                 </a>
             </li>
-            <!-- End Marketability Page Nav -->
+            <!-- End Recommendation History Page Nav -->
 
             <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'analytics') ? '' : 'collapsed' ?>"
                     href="<?= get_page_link('analytics') ?>">
                     <i class="bi bi-graph-up"></i>
-                    <span>Analytics</span>
+                    <span>Crop Reports & Analytics</span>
                 </a>
             </li>
             <!-- End Analytics Page Nav -->
