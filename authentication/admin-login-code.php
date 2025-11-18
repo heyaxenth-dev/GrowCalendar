@@ -25,7 +25,7 @@ if (isset($_POST['login_admin']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (password_verify($password, $admin['password'])) {
             // Password is correct, set session variables
             $_SESSION['admin_authenticated'] = true;
-            // $_SESSION['admin_id'] = $admin['id'];
+            $_SESSION['admin_id'] = $admin['id'];
             $_SESSION['username'] = $admin['username'];
             $_SESSION['email'] = $admin['email'];
             $_SESSION['role'] = $admin['role'];

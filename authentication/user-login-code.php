@@ -30,7 +30,7 @@ if (isset($_POST['login_user']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $update_stmt->execute();
 
             $_SESSION['user_authenticated'] = true;
-            // $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['role'] = $user['role'];

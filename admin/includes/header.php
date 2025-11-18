@@ -1,7 +1,25 @@
 <?php 
     // Database connection
     include '../database/config.php';
-    
+
+    // Get the current admin details from the session
+    $user_id = $_SESSION['admin_id'];
+    $user_role = $_SESSION['role'];
+
+    // Use username to fetch more admin details from the database if needed
+    $get_user = "SELECT * FROM users WHERE id = '$user_id' AND role = '$user_role'";
+    $stmt = $conn->prepare($get_user);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $admin = $result->fetch_assoc();
+
+    $user_firstname = $admin['firstname'];
+    $user_lastname = $admin['lastname'];
+    $email = $admin['email'];
+    $username = $admin['username'];
+    $fname_initial = strtoupper(substr($user_firstname, 0, 1));
+    $user_role = $admin['role'];
+
     // Get the current script name
     $current_page = basename($_SERVER['PHP_SELF'], ".php");
 
@@ -13,8 +31,11 @@
         'analytics' => 'Crop Reports & Analytics',
         'water_availability' => 'Water Availability',
         'user_management' => 'User Management',
+        'users-profile' => $user_firstname . " " . $user_lastname . "'s Profile",
+        'crop_management' => 'Crop Management',
     ];
-?>
+    
+    ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -54,25 +75,7 @@
 </head>
 
 <body>
-    <?php 
-        // Get the current admin details from the session
-        $username = $_SESSION['username'];
-        $email = $_SESSION['email'];
-        $user_role = $_SESSION['role'];
 
-        // Use username to fetch more admin details from the database if needed
-        $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email' AND role = '$user_role'";
-        $stmt = $conn->prepare($get_user);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $admin = $result->fetch_assoc();
-
-        $user_id = $admin['id'];
-        $user_firstname = $admin['firstname'];
-        $user_lastname = $admin['lastname'];
-        $fname_initial = strtoupper(substr($user_firstname, 0, 1));
-    
-    ?>
     <!-- ======= Header ======= -->
     <header id="header" class="header fixed-top d-flex align-items-center">
         <div class="d-flex align-items-center justify-content-between">
@@ -104,7 +107,7 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
+                            <a class="dropdown-item d-flex align-items-center" href="users-profile">
                                 <i class="bi bi-person"></i>
                                 <span>My Profile</span>
                             </a>
@@ -114,7 +117,7 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
+                            <a class="dropdown-item d-flex align-items-center" href="users-profile">
                                 <i class="bi bi-gear"></i>
                                 <span>Account Settings</span>
                             </a>
@@ -123,7 +126,7 @@
                             <hr class="dropdown-divider" />
                         </li>
 
-                        <li>
+                        <!-- <li>
                             <a class="dropdown-item d-flex align-items-center" href="pages-faq.html">
                                 <i class="bi bi-question-circle"></i>
                                 <span>Need Help?</span>
@@ -131,7 +134,7 @@
                         </li>
                         <li>
                             <hr class="dropdown-divider" />
-                        </li>
+                        </li> -->
 
                         <li>
                             <a class="dropdown-item d-flex align-items-center"

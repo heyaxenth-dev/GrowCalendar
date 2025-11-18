@@ -1,7 +1,23 @@
 <?php 
     // Include database configuration
     include '../database/config.php';
-    
+
+    // Get the current user details from the session
+    $username = $_SESSION['username'];
+    $email = $_SESSION['email'];
+    $user_role = $_SESSION['role'];
+
+    // Use username to fetch more user details from the database if needed
+    $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email' AND role = '$user_role'";
+    $stmt = $conn->prepare($get_user);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+
+    $_SESSION['user_id'] = $user['id'];
+    $user_firstname = $user['firstname'];
+    $user_lastname = $user['lastname'];
+    $fname_initial = strtoupper(substr($user_firstname, 0, 1));
     
     // Get the current script name
     $current_page = basename($_SERVER['PHP_SELF'], ".php");
@@ -14,6 +30,7 @@
     'feedback' => 'Feedback',
     'weather_insights' => 'Weather Insights',
     'reports' => 'Reports',
+    'users-profile' => $user_firstname . " " . $user_lastname . "'s Profile",
 ];
 ?>
 <!DOCTYPE html>
@@ -53,25 +70,6 @@
 </head>
 
 <body>
-    <?php 
-        // Get the current user details from the session
-        $username = $_SESSION['username'];
-        $email = $_SESSION['email'];
-        $user_role = $_SESSION['role'];
-
-        // Use username to fetch more user details from the database if needed
-        $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email' AND role = '$user_role'";
-        $stmt = $conn->prepare($get_user);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-
-        $_SESSION['user_id'] = $user['id'];
-        $user_firstname = $user['firstname'];
-        $user_lastname = $user['lastname'];
-        $fname_initial = strtoupper(substr($user_firstname, 0, 1));
-    
-    ?>
     <!-- ======= Header ======= -->
     <header id="header" class="header fixed-top d-flex align-items-center">
         <div class="d-flex align-items-center justify-content-between">
@@ -103,7 +101,7 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
+                            <a class="dropdown-item d-flex align-items-center" href="users-profile">
                                 <i class="bi bi-person"></i>
                                 <span>My Profile</span>
                             </a>
@@ -113,19 +111,9 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
+                            <a class="dropdown-item d-flex align-items-center" href="users-profile">
                                 <i class="bi bi-gear"></i>
                                 <span>Account Settings</span>
-                            </a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider" />
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center" href="pages-faq.html">
-                                <i class="bi bi-question-circle"></i>
-                                <span>Need Help?</span>
                             </a>
                         </li>
                         <li>

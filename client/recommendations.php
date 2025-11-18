@@ -361,7 +361,8 @@
                         <?php if (count($recommendations) > 6): ?>
                         <div class="text-center mt-4" id="showMoreButton">
                             <button class="btn btn-outline-primary" onclick="showAllRecommendations()">
-                                <i class="bi bi-chevron-down me-1"></i>View All <?= count($recommendations) ?> Recommendations
+                                <i class="bi bi-chevron-down me-1"></i>View All <?= count($recommendations) ?>
+                                Recommendations
                             </button>
                         </div>
                         <?php endif; ?>
@@ -432,16 +433,19 @@ function showAllRecommendations() {
             item.style.opacity = '1';
         }, 10);
     });
-    
+
     // Hide the "View All" button
     const showMoreButton = document.getElementById('showMoreButton');
     if (showMoreButton) {
         showMoreButton.style.display = 'none';
     }
-    
+
     // Smooth scroll to show the newly revealed items
     if (hiddenItems.length > 0) {
-        hiddenItems[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        hiddenItems[0].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
     }
 }
 
