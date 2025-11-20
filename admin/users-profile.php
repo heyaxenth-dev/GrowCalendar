@@ -156,6 +156,7 @@
                                             <label class="col-md-4 col-lg-3 col-form-label">New Password</label>
                                             <div class="col-md-8 col-lg-9">
                                                 <input name="new_pw" type="password" class="form-control" required>
+                                                <small id="pwMessage" class="text-danger"></small>
                                             </div>
                                         </div>
 
@@ -163,11 +164,12 @@
                                             <label class="col-md-4 col-lg-3 col-form-label">Confirm New Password</label>
                                             <div class="col-md-8 col-lg-9">
                                                 <input name="confirm_pw" type="password" class="form-control" required>
+                                                <small id="confirmMessage" class="text-danger"></small>
                                             </div>
                                         </div>
-
                                         <div class="text-center">
-                                            <button type="submit" name="change_password" class="btn btn-primary">Change
+                                            <button id="changePwBtn" type="button" name="change_password"
+                                                class="btn btn-primary">Change
                                                 Password</button>
                                         </div>
 
@@ -186,6 +188,89 @@
         </section>
 
     </main><!-- End #main -->
+
+    <!-- Password Filtering -->
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const pw = document.getElementById("newPassword");
+    const cpw = document.getElementById("confirmPassword");
+    const pwMsg = document.getElementById("pwMessage");
+    const cpwMsg = document.getElementById("confirmMessage");
+    const submitBtn = document.getElementById("changePwBtn");
+
+    function validatePassword() {
+        const password = pw.value;
+
+        const rules = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
+        if (!password) {
+            pwMsg.textContent = "";
+            updateButtonState();
+            return false;
+        }
+
+        if (!rules.length) {
+            pwMsg.textContent = "Password must be at least 8 characters.";
+        } else if (!rules.uppercase) {
+            pwMsg.textContent = "Password must contain at least 1 uppercase letter.";
+        } else if (!rules.lowercase) {
+            pwMsg.textContent = "Password must contain at least 1 lowercase letter.";
+        } else if (!rules.number) {
+            pwMsg.textContent = "Password must contain at least 1 number.";
+        } else if (!rules.special) {
+            pwMsg.textContent = "Password must contain at least 1 special character.";
+        } else {
+            pwMsg.textContent = "";
+            updateButtonState();
+            return true;
+        }
+
+        updateButtonState();
+        return false;
+    }
+
+    function confirmPassword() {
+        if (!cpw.value) {
+            cpwMsg.textContent = "";
+            updateButtonState();
+            return false;
+        }
+
+        if (pw.value !== cpw.value) {
+            cpwMsg.textContent = "Passwords do not match.";
+            updateButtonState();
+            return false;
+        } else {
+            cpwMsg.textContent = "";
+            updateButtonState();
+            return true;
+        }
+    }
+
+    function updateButtonState() {
+        const isValidPw = validatePassword();
+        const isMatch = pw.value === cpw.value && cpw.value !== "";
+
+        if (isValidPw && isMatch) {
+            submitBtn.type = "submit"; // allow submission
+        } else {
+            submitBtn.type = "button"; // block form submission
+        }
+    }
+
+    pw.addEventListener("input", updateButtonState);
+    cpw.addEventListener("input", updateButtonState);
+
+});
+    </script>
+
 
     <?php 
     include 'includes/footer.php';
