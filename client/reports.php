@@ -941,13 +941,67 @@ async function exportToPDF(button) {
         // Wait for charts to render
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Convert to canvas
-        const canvas = await html2canvas(reportContent, {
+        // Get the same content as print function - exactly the same
+        const printContent = reportContent.innerHTML;
+        
+        // Create a hidden iframe with the same HTML structure as print function
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '210mm';
+        iframe.style.height = '297mm';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+
+        // Write the same HTML structure as printReport function
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>GrowCalendar Analytics Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
+                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    table th { background-color: #f2f2f2; font-weight: bold; }
+                    h2, h4 { color: #333; }
+                    .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+                    .alert-info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
+                    .border-top { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px; }
+                    .text-center { text-align: center; }
+                    .mb-3 { margin-bottom: 15px; }
+                    .mt-3 { margin-top: 15px; }
+                    .mt-4 { margin-top: 20px; }
+                    .mb-4 { margin-bottom: 20px; }
+                    .p-3 { padding: 15px; }
+                    .border { border: 1px solid #ddd; }
+                    .rounded { border-radius: 4px; }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+            </body>
+            </html>
+        `);
+        iframe.contentDocument.close();
+
+        // Wait for iframe content to load and render
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Convert iframe body to canvas - same content as print
+        const canvas = await html2canvas(iframe.contentDocument.body, {
             scale: 2,
             useCORS: true,
             logging: false,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            width: iframe.contentDocument.body.scrollWidth,
+            height: iframe.contentDocument.body.scrollHeight
         });
+
+        // Remove the temporary iframe
+        document.body.removeChild(iframe);
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
