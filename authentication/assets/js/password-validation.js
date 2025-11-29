@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (hasSpecial) score++;
 
 		updateStrengthBar(score);
+
+		// Return whether all rules are satisfied
+		return hasLength && hasUpper && hasLower && hasNumber && hasSpecial;
 	}
 
 	function toggle(element, condition) {
@@ -106,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			document.getElementById('yourConfirmPassword') ||
 			document.getElementById('confirm_password');
 
-		if (!confirmPasswordInput) return;
+		if (!confirmPasswordInput) return false;
 
 		const passwordValue = passwordInput.value;
 		const confirmPasswordValue = confirmPasswordInput.value;
@@ -120,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (confirmPasswordValue === '') {
 			confirmPasswordInput.classList.remove('is-valid');
 			confirmPasswordInput.classList.remove('is-invalid');
+			return false;
 		} else if (passwordValue === confirmPasswordValue) {
 			confirmPasswordInput.classList.remove('is-invalid');
 			confirmPasswordInput.classList.add('is-valid');
@@ -127,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				feedbackElement.textContent = 'Passwords match!';
 				feedbackElement.style.display = 'none';
 			}
+			return true;
 		} else {
 			confirmPasswordInput.classList.remove('is-valid');
 			confirmPasswordInput.classList.add('is-invalid');
@@ -134,6 +139,24 @@ document.addEventListener('DOMContentLoaded', () => {
 				feedbackElement.textContent = 'Passwords do not match!';
 				feedbackElement.style.display = 'block';
 			}
+			return false;
 		}
+	}
+
+	// Prevent form submission unless password meets all rules and matches confirmation
+	const form = passwordInput.closest('form');
+	if (form) {
+		form.addEventListener('submit', (event) => {
+			const isPasswordValid = validatePassword();
+			const isConfirmValid = validateConfirmPassword();
+
+			// Trigger browser/Bootstrap validation styling
+			form.classList.add('was-validated');
+
+			if (!isPasswordValid || !isConfirmValid) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		});
 	}
 });

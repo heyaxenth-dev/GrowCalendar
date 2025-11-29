@@ -155,7 +155,7 @@
                                         <div class="row mb-3">
                                             <label class="col-md-4 col-lg-3 col-form-label">New Password</label>
                                             <div class="col-md-8 col-lg-9">
-                                                <input name="new_pw" type="password" class="form-control" required>
+                                                <input id="newPassword" name="new_pw" type="password" class="form-control" required>
                                                 <small id="pwMessage" class="text-danger"></small>
                                             </div>
                                         </div>
@@ -163,12 +163,24 @@
                                         <div class="row mb-3">
                                             <label class="col-md-4 col-lg-3 col-form-label">Confirm New Password</label>
                                             <div class="col-md-8 col-lg-9">
-                                                <input name="confirm_pw" type="password" class="form-control" required>
+                                                <input id="confirmPassword" name="confirm_pw" type="password" class="form-control" required>
                                                 <small id="confirmMessage" class="text-danger"></small>
                                             </div>
                                         </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-8 col-lg-9 offset-md-4 offset-lg-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="showPasswords">
+                                                    <label class="form-check-label" for="showPasswords">
+                                                        Show Passwords
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="text-center">
-                                            <button id="changePwBtn" type="button" name="change_password"
+                                            <button id="changePwBtn" type="submit" name="change_password"
                                                 class="btn btn-primary">Change
                                                 Password</button>
                                         </div>
@@ -189,86 +201,99 @@
 
     </main><!-- End #main -->
 
-    <!-- Password Filtering -->
+    <!-- Password rule validation for admin change password -->
     <script>
-document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("#profile-change-password form");
+        if (!form) return;
 
-    const pw = document.getElementById("newPassword");
-    const cpw = document.getElementById("confirmPassword");
-    const pwMsg = document.getElementById("pwMessage");
-    const cpwMsg = document.getElementById("confirmMessage");
-    const submitBtn = document.getElementById("changePwBtn");
+        const pw = document.getElementById("newPassword");
+        const cpw = document.getElementById("confirmPassword");
+        const currentPw = form.querySelector('input[name="current_pw"]');
+        const pwMsg = document.getElementById("pwMessage");
+        const cpwMsg = document.getElementById("confirmMessage");
+        const showPasswords = document.getElementById("showPasswords");
 
-    function validatePassword() {
-        const password = pw.value;
+        if (!pw || !cpw) return;
 
-        const rules = {
-            length: password.length >= 8,
-            uppercase: /[A-Z]/.test(password),
-            lowercase: /[a-z]/.test(password),
-            number: /[0-9]/.test(password),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-        };
+        // Show/Hide passwords functionality
+        if (showPasswords) {
+            showPasswords.addEventListener('change', function() {
+                const type = this.checked ? 'text' : 'password';
+                if (currentPw) currentPw.type = type;
+                pw.type = type;
+                cpw.type = type;
+            });
+        }
 
-        if (!password) {
-            pwMsg.textContent = "";
-            updateButtonState();
+        function validatePasswordRules() {
+            const password = pw.value;
+
+            const rules = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+            };
+
+            if (!password) {
+                if (pwMsg) pwMsg.textContent = "";
+                return false;
+            }
+
+            if (!rules.length) {
+                if (pwMsg) pwMsg.textContent = "Password must be at least 8 characters.";
+            } else if (!rules.uppercase) {
+                if (pwMsg) pwMsg.textContent = "Password must contain at least 1 uppercase letter.";
+            } else if (!rules.lowercase) {
+                if (pwMsg) pwMsg.textContent = "Password must contain at least 1 lowercase letter.";
+            } else if (!rules.number) {
+                if (pwMsg) pwMsg.textContent = "Password must contain at least 1 number.";
+            } else if (!rules.special) {
+                if (pwMsg) pwMsg.textContent = "Password must contain at least 1 special character.";
+            } else {
+                if (pwMsg) pwMsg.textContent = "";
+                return true;
+            }
+
             return false;
         }
 
-        if (!rules.length) {
-            pwMsg.textContent = "Password must be at least 8 characters.";
-        } else if (!rules.uppercase) {
-            pwMsg.textContent = "Password must contain at least 1 uppercase letter.";
-        } else if (!rules.lowercase) {
-            pwMsg.textContent = "Password must contain at least 1 lowercase letter.";
-        } else if (!rules.number) {
-            pwMsg.textContent = "Password must contain at least 1 number.";
-        } else if (!rules.special) {
-            pwMsg.textContent = "Password must contain at least 1 special character.";
-        } else {
-            pwMsg.textContent = "";
-            updateButtonState();
-            return true;
+        function validateConfirmPassword() {
+            if (!cpw.value) {
+                if (cpwMsg) cpwMsg.textContent = "";
+                return false;
+            }
+
+            if (pw.value !== cpw.value) {
+                if (cpwMsg) cpwMsg.textContent = "Passwords do not match.";
+                return false;
+            } else {
+                if (cpwMsg) cpwMsg.textContent = "";
+                return true;
+            }
         }
 
-        updateButtonState();
-        return false;
-    }
+        pw.addEventListener("input", function () {
+            validatePasswordRules();
+            validateConfirmPassword();
+        });
 
-    function confirmPassword() {
-        if (!cpw.value) {
-            cpwMsg.textContent = "";
-            updateButtonState();
-            return false;
-        }
+        cpw.addEventListener("input", function () {
+            validateConfirmPassword();
+        });
 
-        if (pw.value !== cpw.value) {
-            cpwMsg.textContent = "Passwords do not match.";
-            updateButtonState();
-            return false;
-        } else {
-            cpwMsg.textContent = "";
-            updateButtonState();
-            return true;
-        }
-    }
+        form.addEventListener("submit", function (event) {
+            const rulesOk = validatePasswordRules();
+            const confirmOk = validateConfirmPassword();
 
-    function updateButtonState() {
-        const isValidPw = validatePassword();
-        const isMatch = pw.value === cpw.value && cpw.value !== "";
-
-        if (isValidPw && isMatch) {
-            submitBtn.type = "submit"; // allow submission
-        } else {
-            submitBtn.type = "button"; // block form submission
-        }
-    }
-
-    pw.addEventListener("input", updateButtonState);
-    cpw.addEventListener("input", updateButtonState);
-
-});
+            if (!rulesOk || !confirmOk) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+    });
     </script>
 
 

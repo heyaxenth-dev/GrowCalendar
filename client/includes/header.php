@@ -2,21 +2,22 @@
     // Include database configuration
     include '../database/config.php';
 
-    // Get the current user details from the session
-    $username = $_SESSION['username'];
-    $email = $_SESSION['email'];
+    // Get the current admin details from the session
+    $user_id = $_SESSION['user_id'];
     $user_role = $_SESSION['role'];
 
-    // Use username to fetch more user details from the database if needed
-    $get_user = "SELECT * FROM users WHERE username = '$username' AND email = '$email' AND role = '$user_role'";
+    // Use username to fetch more admin details from the database if needed
+    $get_user = "SELECT * FROM users WHERE id = '$user_id' AND role = '$user_role'";
     $stmt = $conn->prepare($get_user);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
-    $_SESSION['user_id'] = $user['id'];
     $user_firstname = $user['firstname'];
     $user_lastname = $user['lastname'];
+    $email = $user['email'];
+    $user_role = $user['role'];
+    $username = $user['username'];
     $fname_initial = strtoupper(substr($user_firstname, 0, 1));
     
     // Get the current script name
