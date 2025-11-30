@@ -31,12 +31,6 @@
                         <option value="<?= htmlspecialchars($season) ?>"><?= htmlspecialchars($season) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <select class="form-select form-select-sm" style="width: auto;" id="filterRegion">
-                        <option value="">Region</option>
-                        <option value="Antique">Antique</option>
-                        <option value="Iloilo">Iloilo</option>
-                        <option value="Capiz">Capiz</option>
-                    </select>
                     <select class="form-select form-select-sm" style="width: auto;" id="filterCrop">
                         <option value="">Crop</option>
                         <?php foreach ($all_crops as $crop): ?>
@@ -943,7 +937,7 @@ async function exportToPDF(button) {
 
         // Get the same content as print function - exactly the same
         const printContent = reportContent.innerHTML;
-        
+
         // Create a hidden iframe with the same HTML structure as print function
         const iframe = document.createElement('iframe');
         iframe.style.position = 'absolute';
@@ -951,7 +945,7 @@ async function exportToPDF(button) {
         iframe.style.width = '210mm';
         iframe.style.height = '297mm';
         iframe.style.border = 'none';
-        
+
         document.body.appendChild(iframe);
 
         // Write the same HTML structure as printReport function

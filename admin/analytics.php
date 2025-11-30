@@ -13,7 +13,8 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1>Crop Reports & Analytics</h1>
-                    <p class="text-muted text-small">View, compare, and analyze seasonal, forecasted, and performance-based crop data.</p>
+                    <p class="text-muted text-small">View, compare, and analyze seasonal, forecasted, and
+                        performance-based crop data.</p>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                     <!-- Filters -->
@@ -27,19 +28,14 @@
                     <select class="form-select form-select-sm" style="width: auto;" id="filterSeason">
                         <option value="">Season</option>
                         <?php foreach ($seasons as $season): ?>
-                            <option value="<?= htmlspecialchars($season) ?>"><?= htmlspecialchars($season) ?></option>
+                        <option value="<?= htmlspecialchars($season) ?>"><?= htmlspecialchars($season) ?></option>
                         <?php endforeach; ?>
-                    </select>
-                    <select class="form-select form-select-sm" style="width: auto;" id="filterRegion">
-                        <option value="">Region</option>
-                        <option value="Antique">Antique</option>
-                        <option value="Iloilo">Iloilo</option>
-                        <option value="Capiz">Capiz</option>
                     </select>
                     <select class="form-select form-select-sm" style="width: auto;" id="filterCrop">
                         <option value="">Crop</option>
                         <?php foreach ($all_crops as $crop): ?>
-                            <option value="<?= htmlspecialchars($crop['name']) ?>"><?= htmlspecialchars($crop['name']) ?></option>
+                        <option value="<?= htmlspecialchars($crop['name']) ?>"><?= htmlspecialchars($crop['name']) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -71,22 +67,25 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Seasonal Crop Availability</h5>
-                            <p class="text-muted small">Displays what crops are available each season for planning and resource allocation.</p>
-                            
+                            <p class="text-muted small">Displays what crops are available each season for planning and
+                                resource allocation.</p>
+
                             <!-- Tabs -->
                             <ul class="nav nav-tabs" id="availabilityTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-view" type="button" role="tab">
+                                    <button class="nav-link active" id="table-tab" data-bs-toggle="tab"
+                                        data-bs-target="#table-view" type="button" role="tab">
                                         Table View
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart-view" type="button" role="tab">
+                                    <button class="nav-link" id="chart-tab" data-bs-toggle="tab"
+                                        data-bs-target="#chart-view" type="button" role="tab">
                                         Chart View
                                     </button>
                                 </li>
                             </ul>
-                            
+
                             <div class="tab-content mt-3" id="availabilityTabContent">
                                 <!-- Table View -->
                                 <div class="tab-pane fade show active" id="table-view" role="tabpanel">
@@ -105,11 +104,11 @@
                                                 foreach ($seasonal_availability as $item): 
                                                     if ($display_count >= 5) break;
                                                 ?>
-                                                    <tr>
-                                                        <td><?= htmlspecialchars($item['season']) ?></td>
-                                                        <td><?= htmlspecialchars($item['crop']) ?></td>
-                                                        <td><strong><?= $item['availability'] ?>%</strong></td>
-                                                    </tr>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($item['season']) ?></td>
+                                                    <td><?= htmlspecialchars($item['crop']) ?></td>
+                                                    <td><strong><?= $item['availability'] ?>%</strong></td>
+                                                </tr>
                                                 <?php 
                                                     $display_count++;
                                                 endforeach; 
@@ -117,34 +116,37 @@
                                                 // If no data, show sample data
                                                 if (empty($seasonal_availability)):
                                                 ?>
-                                                    <tr>
-                                                        <td>Dry</td>
-                                                        <td>Rice</td>
-                                                        <td><strong>95%</strong></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Wet</td>
-                                                        <td>Corn</td>
-                                                        <td><strong>80%</strong></td>
-                                                    </tr>
+                                                <tr>
+                                                    <td>Dry</td>
+                                                    <td>Rice</td>
+                                                    <td><strong>95%</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Wet</td>
+                                                    <td>Corn</td>
+                                                    <td><strong>80%</strong></td>
+                                                </tr>
                                                 <?php endif; ?>
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Chart View -->
                                 <div class="tab-pane fade" id="chart-view" role="tabpanel">
                                     <div id="availabilityChart" style="height: 250px;"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- Quick Insights -->
                             <div class="mt-3 pt-3 border-top">
                                 <h6 class="small fw-bold">Quick Insights</h6>
                                 <ul class="small mb-0">
-                                    <li>Top Available Crop: <strong><?= htmlspecialchars($top_available) ?></strong></li>
-                                    <li>Next Planting Season: <strong><?= htmlspecialchars($next_planting_season) ?></strong></li>
+                                    <li>Top Available Crop: <strong><?= htmlspecialchars($top_available) ?></strong>
+                                    </li>
+                                    <li>Next Planting Season:
+                                        <strong><?= htmlspecialchars($next_planting_season) ?></strong>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -157,42 +159,49 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Forecasted Yield Trends</h5>
-                            <p class="text-muted small">Predicts future yields to support decision-making and logistics.</p>
-                            
+                            <p class="text-muted small">Predicts future yields to support decision-making and logistics.
+                            </p>
+
                             <!-- Tabs -->
                             <ul class="nav nav-tabs" id="forecastTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current-forecast" type="button" role="tab">
+                                    <button class="nav-link active" id="current-tab" data-bs-toggle="tab"
+                                        data-bs-target="#current-forecast" type="button" role="tab">
                                         Current Forecast
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="historical-tab" data-bs-toggle="tab" data-bs-target="#historical-comparison" type="button" role="tab">
+                                    <button class="nav-link" id="historical-tab" data-bs-toggle="tab"
+                                        data-bs-target="#historical-comparison" type="button" role="tab">
                                         Historical Comparison
                                     </button>
                                 </li>
                             </ul>
-                            
+
                             <div class="tab-content mt-3" id="forecastTabContent">
                                 <!-- Current Forecast -->
                                 <div class="tab-pane fade show active" id="current-forecast" role="tabpanel">
                                     <div id="forecastChart" style="height: 200px;"></div>
-                                    
+
                                     <div class="mt-3">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="small">Expected Total Yield:</span>
                                             <strong><?= number_format($expected_total_yield) ?> tons</strong>
-                                            <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip" title="Based on current forecast data"></i>
+                                            <i class="bi bi-question-circle text-muted" data-bs-toggle="tooltip"
+                                                title="Based on current forecast data"></i>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-2 alert alert-warning alert-dismissible fade show py-2" role="alert">
-                                        <small><strong>Risk Alert:</strong> Corn yield may drop by 15% due to rainfall forecast.</small>
-                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip" title="Based on weather forecast analysis"></i>
-                                        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                                        <small><strong>Risk Alert:</strong> Corn yield may drop by 15% due to rainfall
+                                            forecast.</small>
+                                        <i class="bi bi-question-circle ms-1" data-bs-toggle="tooltip"
+                                            title="Based on weather forecast analysis"></i>
+                                        <button type="button" class="btn-close btn-close-sm"
+                                            data-bs-dismiss="alert"></button>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Historical Comparison -->
                                 <div class="tab-pane fade" id="historical-comparison" role="tabpanel">
                                     <div id="historicalChart" style="height: 200px;"></div>
@@ -209,9 +218,9 @@
                         <div class="card-body">
                             <h5 class="card-title">Average Yield Performance</h5>
                             <p class="text-muted small">Analyzes productivity to identify top-performing crops.</p>
-                            
+
                             <div id="performanceChart" style="height: 250px;"></div>
-                            
+
                             <!-- Summary -->
                             <div class="mt-3 pt-3 border-top">
                                 <h6 class="small fw-bold">Summary</h6>
@@ -283,7 +292,8 @@
                     <div class="text-center mb-4 pb-3 border-bottom">
                         <h2 class="mb-2">GrowCalendar Analytics Report</h2>
                         <p class="text-muted mb-1">Crop Reports & Analytics</p>
-                        <p class="small text-muted">Period: <?= htmlspecialchars($data_period) ?> | Total Crops Monitored: <?= $total_crops_monitored ?></p>
+                        <p class="small text-muted">Period: <?= htmlspecialchars($data_period) ?> | Total Crops
+                            Monitored: <?= $total_crops_monitored ?></p>
                     </div>
 
                     <!-- Seasonal Crop Availability Section -->
@@ -303,25 +313,25 @@
                                     if (!empty($seasonal_availability)) {
                                         foreach ($seasonal_availability as $item): 
                                     ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($item['season']) ?></td>
-                                            <td><?= htmlspecialchars($item['crop']) ?></td>
-                                            <td><strong><?= $item['availability'] ?>%</strong></td>
-                                        </tr>
+                                    <tr>
+                                        <td><?= htmlspecialchars($item['season']) ?></td>
+                                        <td><?= htmlspecialchars($item['crop']) ?></td>
+                                        <td><strong><?= $item['availability'] ?>%</strong></td>
+                                    </tr>
                                     <?php 
                                         endforeach; 
                                     } else {
                                     ?>
-                                        <tr>
-                                            <td>Dry</td>
-                                            <td>Rice</td>
-                                            <td><strong>95%</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Wet</td>
-                                            <td>Corn</td>
-                                            <td><strong>80%</strong></td>
-                                        </tr>
+                                    <tr>
+                                        <td>Dry</td>
+                                        <td>Rice</td>
+                                        <td><strong>95%</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Wet</td>
+                                        <td>Corn</td>
+                                        <td><strong>80%</strong></td>
+                                    </tr>
                                     <?php } ?>
                                 </tbody>
                             </table>
@@ -333,7 +343,9 @@
                             <p><strong>Quick Insights:</strong></p>
                             <ul>
                                 <li>Top Available Crop: <strong><?= htmlspecialchars($top_available) ?></strong></li>
-                                <li>Next Planting Season: <strong><?= htmlspecialchars($next_planting_season) ?></strong></li>
+                                <li>Next Planting Season:
+                                    <strong><?= htmlspecialchars($next_planting_season) ?></strong>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -366,25 +378,26 @@
                                     if (!empty($crop_performance)) {
                                         foreach ($crop_performance as $perf): 
                                     ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($perf['name']) ?></td>
-                                            <td><strong><?= number_format($perf['score'], 1) ?>%</strong></td>
-                                            <td><?= isset($perf['success_rate']) ? number_format($perf['success_rate'], 1) . '%' : 'N/A' ?></td>
-                                        </tr>
+                                    <tr>
+                                        <td><?= htmlspecialchars($perf['name']) ?></td>
+                                        <td><strong><?= number_format($perf['score'], 1) ?>%</strong></td>
+                                        <td><?= isset($perf['success_rate']) ? number_format($perf['success_rate'], 1) . '%' : 'N/A' ?>
+                                        </td>
+                                    </tr>
                                     <?php 
                                         endforeach; 
                                     } else {
                                     ?>
-                                        <tr>
-                                            <td>Rice</td>
-                                            <td><strong>92%</strong></td>
-                                            <td>88%</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Corn</td>
-                                            <td><strong>78%</strong></td>
-                                            <td>75%</td>
-                                        </tr>
+                                    <tr>
+                                        <td>Rice</td>
+                                        <td><strong>92%</strong></td>
+                                        <td>88%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Corn</td>
+                                        <td><strong>78%</strong></td>
+                                        <td>75%</td>
+                                    </tr>
                                     <?php } ?>
                                 </tbody>
                             </table>
@@ -450,211 +463,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
-    // Store chart instances for report modal
-    let reportCharts = {
-        availability: null,
-        forecast: null,
-        historical: null,
-        performance: null
-    };
+// Store chart instances for report modal
+let reportCharts = {
+    availability: null,
+    forecast: null,
+    historical: null,
+    performance: null
+};
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // Seasonal Availability Chart
-        const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
-        const availabilityChartOptions = {
-            series: [{
-                name: 'Availability (%)',
-                data: availabilityData.length > 0 ? availabilityData.map(item => item.availability) : [95, 80]
-            }],
-            chart: {
-                type: 'bar',
-                height: 250,
-                toolbar: { show: false }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    borderRadius: 4
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function(val) {
-                    return val + '%';
-                }
-            },
-            xaxis: {
-                categories: availabilityData.length > 0 
-                    ? availabilityData.map(item => item.crop + ' (' + item.season + ')')
-                    : ['Rice (Dry)', 'Corn (Wet)'],
-                max: 100
-            },
-            colors: ['#2eca6a']
-        };
-        
-        if (availabilityData.length > 0) {
-            new ApexCharts(document.querySelector("#availabilityChart"), availabilityChartOptions).render();
-        } else {
-            new ApexCharts(document.querySelector("#availabilityChart"), {
-                series: [{ name: 'Availability (%)', data: [95, 80] }],
-                chart: { type: 'bar', height: 250, toolbar: { show: false } },
-                plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
-                dataLabels: { enabled: true, formatter: (val) => val + '%' },
-                xaxis: { categories: ['Rice (Dry)', 'Corn (Wet)'], max: 100 },
-                colors: ['#2eca6a']
-            }).render();
-        }
-
-        // Forecast Chart
-        const forecastData = <?php echo json_encode($forecast_yields); ?>;
-        const forecastChartOptions = {
-            series: [{
-                name: 'Yield (tons)',
-                data: forecastData.map(item => item.yield)
-            }],
-            chart: {
-                type: 'line',
-                height: 200,
-                toolbar: { show: false }
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            xaxis: {
-                categories: forecastData.map(item => item.month)
-            },
-            yaxis: {
-                title: { text: 'Tons' }
-            },
-            colors: ['#4154f1'],
-            dataLabels: {
-                enabled: false
-            }
-        };
-        new ApexCharts(document.querySelector("#forecastChart"), forecastChartOptions).render();
-
-        // Historical Comparison Chart
-        const historicalChartOptions = {
-            series: [{
-                name: 'Current Year',
-                data: forecastData.map(item => item.yield)
-            }, {
-                name: 'Previous Year',
-                data: forecastData.map(item => item.yield * 0.9)
-            }],
-            chart: {
-                type: 'line',
-                height: 200,
-                toolbar: { show: false }
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            xaxis: {
-                categories: forecastData.map(item => item.month)
-            },
-            yaxis: {
-                title: { text: 'Tons' }
-            },
-            colors: ['#4154f1', '#ff771d'],
-            legend: {
-                position: 'top'
-            }
-        };
-        new ApexCharts(document.querySelector("#historicalChart"), historicalChartOptions).render();
-
-        // Performance Chart
-        const performanceData = <?php echo json_encode($crop_performance); ?>;
-        const performanceChartOptions = {
-            series: [{
-                name: 'Performance Score',
-                data: performanceData.length > 0 
-                    ? performanceData.map(item => item.score)
-                    : [92, 78]
-            }],
-            chart: {
-                type: 'bar',
-                height: 250,
-                toolbar: { show: false }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    borderRadius: 4
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function(val) {
-                    return val + '%';
-                }
-            },
-            xaxis: {
-                categories: performanceData.length > 0
-                    ? performanceData.map(item => item.name)
-                    : ['Rice', 'Corn'],
-                max: 100
-            },
-            colors: ['#ff771d']
-        };
-        
-        if (performanceData.length > 0) {
-            new ApexCharts(document.querySelector("#performanceChart"), performanceChartOptions).render();
-        } else {
-            new ApexCharts(document.querySelector("#performanceChart"), {
-                series: [{ name: 'Performance Score', data: [92, 78] }],
-                chart: { type: 'bar', height: 250, toolbar: { show: false } },
-                plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
-                dataLabels: { enabled: true, formatter: (val) => val + '%' },
-                xaxis: { categories: ['Rice', 'Corn'], max: 100 },
-                colors: ['#ff771d']
-            }).render();
-        }
-
-        // Initialize report charts when modal is shown
-        $('#reportModal').on('shown.bs.modal', function() {
-            initializeReportCharts();
-        });
-
-        // Clean up charts when modal is hidden
-        $('#reportModal').on('hidden.bs.modal', function() {
-            Object.values(reportCharts).forEach(chart => {
-                if (chart) chart.destroy();
-            });
-            reportCharts = {
-                availability: null,
-                forecast: null,
-                historical: null,
-                performance: null
-            };
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    function initializeReportCharts() {
-        const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
-        const forecastData = <?php echo json_encode($forecast_yields); ?>;
-        const performanceData = <?php echo json_encode($crop_performance); ?>;
+    // Seasonal Availability Chart
+    const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
+    const availabilityChartOptions = {
+        series: [{
+            name: 'Availability (%)',
+            data: availabilityData.length > 0 ? availabilityData.map(item => item.availability) : [
+                95, 80
+            ]
+        }],
+        chart: {
+            type: 'bar',
+            height: 250,
+            toolbar: {
+                show: false
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return val + '%';
+            }
+        },
+        xaxis: {
+            categories: availabilityData.length > 0 ?
+                availabilityData.map(item => item.crop + ' (' + item.season + ')') : ['Rice (Dry)',
+                    'Corn (Wet)'
+                ],
+            max: 100
+        },
+        colors: ['#2eca6a']
+    };
 
-        // Availability Chart for Report
-        const availabilityChartOptions = {
+    if (availabilityData.length > 0) {
+        new ApexCharts(document.querySelector("#availabilityChart"), availabilityChartOptions).render();
+    } else {
+        new ApexCharts(document.querySelector("#availabilityChart"), {
             series: [{
                 name: 'Availability (%)',
-                data: availabilityData.length > 0 
-                    ? availabilityData.map(item => item.availability)
-                    : [95, 80]
+                data: [95, 80]
             }],
             chart: {
                 type: 'bar',
-                height: 300,
-                toolbar: { show: false }
+                height: 250,
+                toolbar: {
+                    show: false
+                }
             },
             plotOptions: {
                 bar: {
@@ -664,108 +539,133 @@
             },
             dataLabels: {
                 enabled: true,
-                formatter: function(val) {
-                    return val + '%';
-                }
+                formatter: (val) => val + '%'
             },
             xaxis: {
-                categories: availabilityData.length > 0
-                    ? availabilityData.map(item => item.crop + ' (' + item.season + ')')
-                    : ['Rice (Dry)', 'Corn (Wet)'],
+                categories: ['Rice (Dry)', 'Corn (Wet)'],
                 max: 100
             },
             colors: ['#2eca6a']
-        };
-        reportCharts.availability = new ApexCharts(document.querySelector("#reportAvailabilityChart"), availabilityChartOptions);
-        reportCharts.availability.render();
+        }).render();
+    }
 
-        // Forecast Chart for Report
-        const forecastChartOptions = {
-            series: [{
-                name: 'Yield (tons)',
-                data: forecastData.map(item => item.yield)
-            }],
-            chart: {
-                type: 'line',
-                height: 300,
-                toolbar: { show: false }
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            xaxis: {
-                categories: forecastData.map(item => item.month)
-            },
-            yaxis: {
-                title: { text: 'Tons' }
-            },
-            colors: ['#4154f1'],
-            dataLabels: {
-                enabled: false
-            },
-            title: {
-                text: 'Current Forecast',
-                style: {
-                    fontSize: '16px',
-                    fontWeight: 'bold'
-                }
+    // Forecast Chart
+    const forecastData = <?php echo json_encode($forecast_yields); ?>;
+    const forecastChartOptions = {
+        series: [{
+            name: 'Yield (tons)',
+            data: forecastData.map(item => item.yield)
+        }],
+        chart: {
+            type: 'line',
+            height: 200,
+            toolbar: {
+                show: false
             }
-        };
-        reportCharts.forecast = new ApexCharts(document.querySelector("#reportForecastChart"), forecastChartOptions);
-        reportCharts.forecast.render();
-
-        // Historical Chart for Report
-        const historicalChartOptions = {
-            series: [{
-                name: 'Current Year',
-                data: forecastData.map(item => item.yield)
-            }, {
-                name: 'Previous Year',
-                data: forecastData.map(item => item.yield * 0.9)
-            }],
-            chart: {
-                type: 'line',
-                height: 300,
-                toolbar: { show: false }
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            xaxis: {
-                categories: forecastData.map(item => item.month)
-            },
-            yaxis: {
-                title: { text: 'Tons' }
-            },
-            colors: ['#4154f1', '#ff771d'],
-            legend: {
-                position: 'top'
-            },
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: forecastData.map(item => item.month)
+        },
+        yaxis: {
             title: {
-                text: 'Historical Comparison',
-                style: {
-                    fontSize: '16px',
-                    fontWeight: 'bold'
-                }
+                text: 'Tons'
             }
-        };
-        reportCharts.historical = new ApexCharts(document.querySelector("#reportHistoricalChart"), historicalChartOptions);
-        reportCharts.historical.render();
+        },
+        colors: ['#4154f1'],
+        dataLabels: {
+            enabled: false
+        }
+    };
+    new ApexCharts(document.querySelector("#forecastChart"), forecastChartOptions).render();
 
-        // Performance Chart for Report
-        const performanceChartOptions = {
+    // Historical Comparison Chart
+    const historicalChartOptions = {
+        series: [{
+            name: 'Current Year',
+            data: forecastData.map(item => item.yield)
+        }, {
+            name: 'Previous Year',
+            data: forecastData.map(item => item.yield * 0.9)
+        }],
+        chart: {
+            type: 'line',
+            height: 200,
+            toolbar: {
+                show: false
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: forecastData.map(item => item.month)
+        },
+        yaxis: {
+            title: {
+                text: 'Tons'
+            }
+        },
+        colors: ['#4154f1', '#ff771d'],
+        legend: {
+            position: 'top'
+        }
+    };
+    new ApexCharts(document.querySelector("#historicalChart"), historicalChartOptions).render();
+
+    // Performance Chart
+    const performanceData = <?php echo json_encode($crop_performance); ?>;
+    const performanceChartOptions = {
+        series: [{
+            name: 'Performance Score',
+            data: performanceData.length > 0 ?
+                performanceData.map(item => item.score) : [92, 78]
+        }],
+        chart: {
+            type: 'bar',
+            height: 250,
+            toolbar: {
+                show: false
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return val + '%';
+            }
+        },
+        xaxis: {
+            categories: performanceData.length > 0 ?
+                performanceData.map(item => item.name) : ['Rice', 'Corn'],
+            max: 100
+        },
+        colors: ['#ff771d']
+    };
+
+    if (performanceData.length > 0) {
+        new ApexCharts(document.querySelector("#performanceChart"), performanceChartOptions).render();
+    } else {
+        new ApexCharts(document.querySelector("#performanceChart"), {
             series: [{
                 name: 'Performance Score',
-                data: performanceData.length > 0
-                    ? performanceData.map(item => item.score)
-                    : [92, 78]
+                data: [92, 78]
             }],
             chart: {
                 type: 'bar',
-                height: 300,
-                toolbar: { show: false }
+                height: 250,
+                toolbar: {
+                    show: false
+                }
             },
             plotOptions: {
                 bar: {
@@ -775,32 +675,208 @@
             },
             dataLabels: {
                 enabled: true,
-                formatter: function(val) {
-                    return val + '%';
-                }
+                formatter: (val) => val + '%'
             },
             xaxis: {
-                categories: performanceData.length > 0
-                    ? performanceData.map(item => item.name)
-                    : ['Rice', 'Corn'],
+                categories: ['Rice', 'Corn'],
                 max: 100
             },
             colors: ['#ff771d']
+        }).render();
+    }
+
+    // Initialize report charts when modal is shown
+    $('#reportModal').on('shown.bs.modal', function() {
+        initializeReportCharts();
+    });
+
+    // Clean up charts when modal is hidden
+    $('#reportModal').on('hidden.bs.modal', function() {
+        Object.values(reportCharts).forEach(chart => {
+            if (chart) chart.destroy();
+        });
+        reportCharts = {
+            availability: null,
+            forecast: null,
+            historical: null,
+            performance: null
         };
-        reportCharts.performance = new ApexCharts(document.querySelector("#reportPerformanceChart"), performanceChartOptions);
-        reportCharts.performance.render();
-    }
+    });
+});
 
-    function generateReport() {
-        const modal = new bootstrap.Modal(document.getElementById('reportModal'));
-        modal.show();
-    }
+function initializeReportCharts() {
+    const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
+    const forecastData = <?php echo json_encode($forecast_yields); ?>;
+    const performanceData = <?php echo json_encode($crop_performance); ?>;
 
-    function printReport() {
-        const printContent = document.getElementById('reportContent').innerHTML;
-        const printWindow = window.open('', '_blank');
-        
-        printWindow.document.write(`
+    // Availability Chart for Report
+    const availabilityChartOptions = {
+        series: [{
+            name: 'Availability (%)',
+            data: availabilityData.length > 0 ?
+                availabilityData.map(item => item.availability) : [95, 80]
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: {
+                show: false
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return val + '%';
+            }
+        },
+        xaxis: {
+            categories: availabilityData.length > 0 ?
+                availabilityData.map(item => item.crop + ' (' + item.season + ')') : ['Rice (Dry)', 'Corn (Wet)'],
+            max: 100
+        },
+        colors: ['#2eca6a']
+    };
+    reportCharts.availability = new ApexCharts(document.querySelector("#reportAvailabilityChart"),
+        availabilityChartOptions);
+    reportCharts.availability.render();
+
+    // Forecast Chart for Report
+    const forecastChartOptions = {
+        series: [{
+            name: 'Yield (tons)',
+            data: forecastData.map(item => item.yield)
+        }],
+        chart: {
+            type: 'line',
+            height: 300,
+            toolbar: {
+                show: false
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: forecastData.map(item => item.month)
+        },
+        yaxis: {
+            title: {
+                text: 'Tons'
+            }
+        },
+        colors: ['#4154f1'],
+        dataLabels: {
+            enabled: false
+        },
+        title: {
+            text: 'Current Forecast',
+            style: {
+                fontSize: '16px',
+                fontWeight: 'bold'
+            }
+        }
+    };
+    reportCharts.forecast = new ApexCharts(document.querySelector("#reportForecastChart"), forecastChartOptions);
+    reportCharts.forecast.render();
+
+    // Historical Chart for Report
+    const historicalChartOptions = {
+        series: [{
+            name: 'Current Year',
+            data: forecastData.map(item => item.yield)
+        }, {
+            name: 'Previous Year',
+            data: forecastData.map(item => item.yield * 0.9)
+        }],
+        chart: {
+            type: 'line',
+            height: 300,
+            toolbar: {
+                show: false
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        xaxis: {
+            categories: forecastData.map(item => item.month)
+        },
+        yaxis: {
+            title: {
+                text: 'Tons'
+            }
+        },
+        colors: ['#4154f1', '#ff771d'],
+        legend: {
+            position: 'top'
+        },
+        title: {
+            text: 'Historical Comparison',
+            style: {
+                fontSize: '16px',
+                fontWeight: 'bold'
+            }
+        }
+    };
+    reportCharts.historical = new ApexCharts(document.querySelector("#reportHistoricalChart"), historicalChartOptions);
+    reportCharts.historical.render();
+
+    // Performance Chart for Report
+    const performanceChartOptions = {
+        series: [{
+            name: 'Performance Score',
+            data: performanceData.length > 0 ?
+                performanceData.map(item => item.score) : [92, 78]
+        }],
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: {
+                show: false
+            }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: function(val) {
+                return val + '%';
+            }
+        },
+        xaxis: {
+            categories: performanceData.length > 0 ?
+                performanceData.map(item => item.name) : ['Rice', 'Corn'],
+            max: 100
+        },
+        colors: ['#ff771d']
+    };
+    reportCharts.performance = new ApexCharts(document.querySelector("#reportPerformanceChart"),
+        performanceChartOptions);
+    reportCharts.performance.render();
+}
+
+function generateReport() {
+    const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+    modal.show();
+}
+
+function printReport() {
+    const printContent = document.getElementById('reportContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+
+    printWindow.document.write(`
             <!DOCTYPE html>
             <html>
             <head>
@@ -833,46 +909,48 @@
             </body>
             </html>
         `);
-        
-        printWindow.document.close();
-        printWindow.focus();
-        
-        // Wait for content to load, then print
-        setTimeout(() => {
-            printWindow.print();
-        }, 500);
-    }
 
-    async function exportToPDF(button) {
-        const { jsPDF } = window.jspdf;
-        const reportContent = document.getElementById('reportContent');
-        
-        // Show loading
-        const loadingBtn = button || event.target;
-        const originalText = loadingBtn.innerHTML;
-        loadingBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
-        loadingBtn.disabled = true;
+    printWindow.document.close();
+    printWindow.focus();
 
-        try {
-            // Wait for charts to render
-            await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for content to load, then print
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
+}
 
-            // Get the same content as print function - exactly the same
-            const printContent = reportContent.innerHTML;
-            
-            // Create a hidden iframe with the same HTML structure as print function
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.left = '-9999px';
-            iframe.style.width = '210mm';
-            iframe.style.height = '297mm';
-            iframe.style.border = 'none';
-            
-            document.body.appendChild(iframe);
+async function exportToPDF(button) {
+    const {
+        jsPDF
+    } = window.jspdf;
+    const reportContent = document.getElementById('reportContent');
 
-            // Write the same HTML structure as printReport function
-            iframe.contentDocument.open();
-            iframe.contentDocument.write(`
+    // Show loading
+    const loadingBtn = button || event.target;
+    const originalText = loadingBtn.innerHTML;
+    loadingBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating PDF...';
+    loadingBtn.disabled = true;
+
+    try {
+        // Wait for charts to render
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Get the same content as print function - exactly the same
+        const printContent = reportContent.innerHTML;
+
+        // Create a hidden iframe with the same HTML structure as print function
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '210mm';
+        iframe.style.height = '297mm';
+        iframe.style.border = 'none';
+
+        document.body.appendChild(iframe);
+
+        // Write the same HTML structure as printReport function
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -901,80 +979,80 @@
                 </body>
                 </html>
             `);
-            iframe.contentDocument.close();
+        iframe.contentDocument.close();
 
-            // Wait for iframe content to load and render
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for iframe content to load and render
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Convert iframe body to canvas - same content as print
-            const canvas = await html2canvas(iframe.contentDocument.body, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                width: iframe.contentDocument.body.scrollWidth,
-                height: iframe.contentDocument.body.scrollHeight
-            });
+        // Convert iframe body to canvas - same content as print
+        const canvas = await html2canvas(iframe.contentDocument.body, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            width: iframe.contentDocument.body.scrollWidth,
+            height: iframe.contentDocument.body.scrollHeight
+        });
 
-            // Remove the temporary iframe
-            document.body.removeChild(iframe);
+        // Remove the temporary iframe
+        document.body.removeChild(iframe);
 
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 210; // A4 width in mm
-            const pageHeight = 297; // A4 height in mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
 
-            // Add first page
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Add additional pages if needed
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-
-            // Add additional pages if needed
-            while (heightLeft > 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            // Save PDF
-            const fileName = 'GrowCalendar_Report_' + new Date().toISOString().split('T')[0] + '.pdf';
-            pdf.save(fileName);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('Error generating PDF. Please try again.');
-        } finally {
-            loadingBtn.innerHTML = originalText;
-            loadingBtn.disabled = false;
         }
-    }
 
-    function downloadPDF() {
-        generateReport();
-        // Wait for modal to show, then trigger PDF export
-        setTimeout(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
-            if (modal) {
-                // Trigger PDF export after modal is shown and charts are rendered
-                setTimeout(() => {
-                    const pdfBtn = document.querySelector('#reportModal .btn-success');
-                    if (pdfBtn) {
-                        exportToPDF(pdfBtn);
-                    }
-                }, 2500);
-            }
-        }, 100);
+        // Save PDF
+        const fileName = 'GrowCalendar_Report_' + new Date().toISOString().split('T')[0] + '.pdf';
+        pdf.save(fileName);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+    } finally {
+        loadingBtn.innerHTML = originalText;
+        loadingBtn.disabled = false;
     }
+}
 
-    function shareReport() {
-        alert('Share feature will be implemented soon.');
-    }
+function downloadPDF() {
+    generateReport();
+    // Wait for modal to show, then trigger PDF export
+    setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+        if (modal) {
+            // Trigger PDF export after modal is shown and charts are rendered
+            setTimeout(() => {
+                const pdfBtn = document.querySelector('#reportModal .btn-success');
+                if (pdfBtn) {
+                    exportToPDF(pdfBtn);
+                }
+            }, 2500);
+        }
+    }, 100);
+}
 
-    function generateConsolidatedReport() {
-        generateReport();
-    }
+function shareReport() {
+    alert('Share feature will be implemented soon.');
+}
+
+function generateConsolidatedReport() {
+    generateReport();
+}
     </script>
 
     <?php 
