@@ -70,72 +70,46 @@
                             <p class="text-muted small">Displays what crops are available each season for planning and
                                 resource allocation.</p>
 
-                            <!-- Tabs -->
-                            <ul class="nav nav-tabs" id="availabilityTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="table-tab" data-bs-toggle="tab"
-                                        data-bs-target="#table-view" type="button" role="tab">
-                                        Table View
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="chart-tab" data-bs-toggle="tab"
-                                        data-bs-target="#chart-view" type="button" role="tab">
-                                        Chart View
-                                    </button>
-                                </li>
-                            </ul>
-
-                            <div class="tab-content mt-3" id="availabilityTabContent">
-                                <!-- Table View -->
-                                <div class="tab-pane fade show active" id="table-view" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Season</th>
-                                                    <th>Crop</th>
-                                                    <th>Availability (%)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php 
-                                                $display_count = 0;
-                                                foreach ($seasonal_availability as $item): 
-                                                    if ($display_count >= 5) break;
-                                                ?>
-                                                <tr>
-                                                    <td><?= htmlspecialchars($item['season']) ?></td>
-                                                    <td><?= htmlspecialchars($item['crop']) ?></td>
-                                                    <td><strong><?= $item['availability'] ?>%</strong></td>
-                                                </tr>
-                                                <?php 
-                                                    $display_count++;
-                                                endforeach; 
-                                                
-                                                // If no data, show sample data
-                                                if (empty($seasonal_availability)):
-                                                ?>
-                                                <tr>
-                                                    <td>Dry</td>
-                                                    <td>Rice</td>
-                                                    <td><strong>95%</strong></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Wet</td>
-                                                    <td>Corn</td>
-                                                    <td><strong>80%</strong></td>
-                                                </tr>
-                                                <?php endif; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <!-- Chart View -->
-                                <div class="tab-pane fade" id="chart-view" role="tabpanel">
-                                    <div id="availabilityChart" style="height: 250px;"></div>
-                                </div>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Season</th>
+                                            <th>Crop</th>
+                                            <th>Availability (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $display_count = 0;
+                                        foreach ($seasonal_availability as $item): 
+                                            if ($display_count >= 5) break;
+                                        ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($item['season']) ?></td>
+                                            <td><?= htmlspecialchars($item['crop']) ?></td>
+                                            <td><strong><?= $item['availability'] ?>%</strong></td>
+                                        </tr>
+                                        <?php 
+                                            $display_count++;
+                                        endforeach; 
+                                        
+                                        // If no data, show sample data
+                                        if (empty($seasonal_availability)):
+                                        ?>
+                                        <tr>
+                                            <td>Dry</td>
+                                            <td>Rice</td>
+                                            <td><strong>95%</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Wet</td>
+                                            <td>Corn</td>
+                                            <td><strong>80%</strong></td>
+                                        </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
                             </div>
 
                             <!-- Quick Insights -->
@@ -477,77 +451,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-
-    // Seasonal Availability Chart
-    const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
-    const availabilityChartOptions = {
-        series: [{
-            name: 'Availability (%)',
-            data: availabilityData.length > 0 ? availabilityData.map(item => item.availability) : [
-                95, 80
-            ]
-        }],
-        chart: {
-            type: 'bar',
-            height: 250,
-            toolbar: {
-                show: false
-            }
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true,
-                borderRadius: 4
-            }
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: function(val) {
-                return val + '%';
-            }
-        },
-        xaxis: {
-            categories: availabilityData.length > 0 ?
-                availabilityData.map(item => item.crop + ' (' + item.season + ')') : ['Rice (Dry)',
-                    'Corn (Wet)'
-                ],
-            max: 100
-        },
-        colors: ['#2eca6a']
-    };
-
-    if (availabilityData.length > 0) {
-        new ApexCharts(document.querySelector("#availabilityChart"), availabilityChartOptions).render();
-    } else {
-        new ApexCharts(document.querySelector("#availabilityChart"), {
-            series: [{
-                name: 'Availability (%)',
-                data: [95, 80]
-            }],
-            chart: {
-                type: 'bar',
-                height: 250,
-                toolbar: {
-                    show: false
-                }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    borderRadius: 4
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: (val) => val + '%'
-            },
-            xaxis: {
-                categories: ['Rice (Dry)', 'Corn (Wet)'],
-                max: 100
-            },
-            colors: ['#2eca6a']
-        }).render();
-    }
 
     // Forecast Chart
     const forecastData = <?php echo json_encode($forecast_yields); ?>;
