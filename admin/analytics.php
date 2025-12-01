@@ -311,9 +311,6 @@
                             </table>
                         </div>
                         <div class="mt-3">
-                            <div id="reportAvailabilityChart" style="height: 300px;"></div>
-                        </div>
-                        <div class="mt-3">
                             <p><strong>Quick Insights:</strong></p>
                             <ul>
                                 <li>Top Available Crop: <strong><?= htmlspecialchars($top_available) ?></strong></li>
@@ -327,8 +324,6 @@
                     <!-- Forecasted Yield Trends Section -->
                     <div class="mb-4">
                         <h4 class="mb-3">Forecasted Yield Trends</h4>
-                        <div id="reportForecastChart" style="height: 300px;" class="mb-3"></div>
-                        <div id="reportHistoricalChart" style="height: 300px;" class="mb-3"></div>
                         <div class="alert alert-info">
                             <strong>Expected Total Yield:</strong> <?= number_format($expected_total_yield) ?> tons
                         </div>
@@ -337,7 +332,6 @@
                     <!-- Average Yield Performance Section -->
                     <div class="mb-4">
                         <h4 class="mb-3">Average Yield Performance</h4>
-                        <div id="reportPerformanceChart" style="height: 300px;" class="mb-3"></div>
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm">
                                 <thead class="table-light">
@@ -608,166 +602,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeReportCharts() {
-    const availabilityData = <?php echo json_encode($seasonal_availability); ?>;
-    const forecastData = <?php echo json_encode($forecast_yields); ?>;
-    const performanceData = <?php echo json_encode($crop_performance); ?>;
-
-    // Availability Chart for Report
-    const availabilityChartOptions = {
-        series: [{
-            name: 'Availability (%)',
-            data: availabilityData.length > 0 ?
-                availabilityData.map(item => item.availability) : [95, 80]
-        }],
-        chart: {
-            type: 'bar',
-            height: 300,
-            toolbar: {
-                show: false
-            }
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true,
-                borderRadius: 4
-            }
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: function(val) {
-                return val + '%';
-            }
-        },
-        xaxis: {
-            categories: availabilityData.length > 0 ?
-                availabilityData.map(item => item.crop + ' (' + item.season + ')') : ['Rice (Dry)', 'Corn (Wet)'],
-            max: 100
-        },
-        colors: ['#2eca6a']
-    };
-    reportCharts.availability = new ApexCharts(document.querySelector("#reportAvailabilityChart"),
-        availabilityChartOptions);
-    reportCharts.availability.render();
-
-    // Forecast Chart for Report
-    const forecastChartOptions = {
-        series: [{
-            name: 'Yield (tons)',
-            data: forecastData.map(item => item.yield)
-        }],
-        chart: {
-            type: 'line',
-            height: 300,
-            toolbar: {
-                show: false
-            }
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 3
-        },
-        xaxis: {
-            categories: forecastData.map(item => item.month)
-        },
-        yaxis: {
-            title: {
-                text: 'Tons'
-            }
-        },
-        colors: ['#4154f1'],
-        dataLabels: {
-            enabled: false
-        },
-        title: {
-            text: 'Current Forecast',
-            style: {
-                fontSize: '16px',
-                fontWeight: 'bold'
-            }
-        }
-    };
-    reportCharts.forecast = new ApexCharts(document.querySelector("#reportForecastChart"), forecastChartOptions);
-    reportCharts.forecast.render();
-
-    // Historical Chart for Report
-    const historicalChartOptions = {
-        series: [{
-            name: 'Current Year',
-            data: forecastData.map(item => item.yield)
-        }, {
-            name: 'Previous Year',
-            data: forecastData.map(item => item.yield * 0.9)
-        }],
-        chart: {
-            type: 'line',
-            height: 300,
-            toolbar: {
-                show: false
-            }
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 3
-        },
-        xaxis: {
-            categories: forecastData.map(item => item.month)
-        },
-        yaxis: {
-            title: {
-                text: 'Tons'
-            }
-        },
-        colors: ['#4154f1', '#ff771d'],
-        legend: {
-            position: 'top'
-        },
-        title: {
-            text: 'Historical Comparison',
-            style: {
-                fontSize: '16px',
-                fontWeight: 'bold'
-            }
-        }
-    };
-    reportCharts.historical = new ApexCharts(document.querySelector("#reportHistoricalChart"), historicalChartOptions);
-    reportCharts.historical.render();
-
-    // Performance Chart for Report
-    const performanceChartOptions = {
-        series: [{
-            name: 'Performance Score',
-            data: performanceData.length > 0 ?
-                performanceData.map(item => item.score) : [92, 78]
-        }],
-        chart: {
-            type: 'bar',
-            height: 300,
-            toolbar: {
-                show: false
-            }
-        },
-        plotOptions: {
-            bar: {
-                horizontal: true,
-                borderRadius: 4
-            }
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: function(val) {
-                return val + '%';
-            }
-        },
-        xaxis: {
-            categories: performanceData.length > 0 ?
-                performanceData.map(item => item.name) : ['Rice', 'Corn'],
-            max: 100
-        },
-        colors: ['#ff771d']
-    };
-    reportCharts.performance = new ApexCharts(document.querySelector("#reportPerformanceChart"),
-        performanceChartOptions);
-    reportCharts.performance.render();
+    // Charts removed from report preview
+    // All chart initialization code has been removed
 }
 
 function generateReport() {

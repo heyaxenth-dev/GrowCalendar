@@ -64,6 +64,49 @@
         $error_message = "Error: " . $e->getMessage();
     }
     
+    // Define available locations (Barangays in Barbaza, Antique)
+    $locations = [
+        'Bagarhi, Barbaza, Antique',
+        'Bahuyan, Barbaza, Antique',
+        'Beri, Barbaza, Antique',
+        'Biga-a, Barbaza, Antique',
+        'Binangbang, Barbaza, Antique',
+        'Binangbang Centro, Barbaza, Antique',
+        'Binanu-an, Barbaza, Antique',
+        'Cadiao, Barbaza, Antique',
+        'Calapadan, Barbaza, Antique',
+        'Capoyuan, Barbaza, Antique',
+        'Cubay, Barbaza, Antique',
+        'Esparar, Barbaza, Antique',
+        'Gua, Barbaza, Antique',
+        'Idao, Barbaza, Antique',
+        'Igpalge, Barbaza, Antique',
+        'Igtunarum, Barbaza, Antique',
+        'Embrangga-an, Barbaza, Antique',
+        'Integasan, Barbaza, Antique',
+        'Ipil, Barbaza, Antique',
+        'Jinalinan, Barbaza, Antique',
+        'Lanas, Barbaza, Antique',
+        'Langcaon (Evelio Javier), Barbaza, Antique',
+        'Lisub, Barbaza, Antique',
+        'Lombuyan, Barbaza, Antique',
+        'Mablad, Barbaza, Antique',
+        'Magtulis, Barbaza, Antique',
+        'Marigne, Barbaza, Antique',
+        'Mayabay, Barbaza, Antique',
+        'Mayos, Barbaza, Antique',
+        'Nalusdan, Barbaza, Antique',
+        'Narirong, Barbaza, Antique',
+        'Palma, Barbaza, Antique',
+        'Poblacion, Barbaza, Antique',
+        'San Antonio, Barbaza, Antique',
+        'San Ramon, Barbaza, Antique',
+        'Soligao, Barbaza, Antique',
+        'Tabongtabong, Barbaza, Antique',
+        'Tig-Alaran, Barbaza, Antique',
+        'Yapo, Barbaza, Antique'
+    ];
+    
     // Get user's current soil preference (only if engine is available)
     $user_soil_preference = null;
     if ($recommendation_engine) {
@@ -74,7 +117,7 @@
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $recommendation_engine) {
         if (isset($_POST['get_recommendations'])) {
             $selected_soil_id = $_POST['soil_type'];
-            $location = $_POST['location'] ?? 'Barbaza, Antique';
+            $location = $_POST['location'] ?? 'Poblacion, Barbaza, Antique';
             
             try {
                 // Get weather data
@@ -189,10 +232,20 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="location" class="form-label">Location</label>
-                                    <input type="text" class="form-control" id="location" name="location"
-                                        value="<?= $user_soil_preference['location'] ?? 'Barbaza, Antique' ?>"
-                                        placeholder="Enter your location">
-                                    <div class="form-text">Enter your city and country for accurate weather data.</div>
+                                    <select class="form-select" id="location" name="location" required>
+                                        <option value="">Select Location</option>
+                                        <?php 
+                                        $selected_location = $user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique';
+                                        foreach ($locations as $loc): 
+                                        ?>
+                                        <option value="<?= htmlspecialchars($loc) ?>"
+                                            <?= ($selected_location === $loc) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($loc) ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="form-text">Select your city and province for accurate weather data.
+                                    </div>
                                 </div>
                             </div>
 
@@ -347,7 +400,7 @@
                                         <?php endif; ?>
 
                                         <div class="mt-3">
-                                            <button class="btn btn-primary btn-sm w-100"
+                                            <button class="btn btn-primary btn-sm"
                                                 onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= htmlspecialchars($rec['crop']['name'], ENT_QUOTES) ?>', <?= $rec['crop']['harvest_days'] ?>)">
                                                 <i class="bi bi-calendar-plus me-1"></i>Add to Schedule
                                             </button>

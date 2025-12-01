@@ -67,6 +67,49 @@ try {
 } catch (Exception $e) {
     $error_message = "Error: " . $e->getMessage();
 }
+
+// Define available locations (Barangays in Barbaza, Antique)
+$locations = [
+    'Bagarhi, Barbaza, Antique',
+    'Bahuyan, Barbaza, Antique',
+    'Beri, Barbaza, Antique',
+    'Biga-a, Barbaza, Antique',
+    'Binangbang, Barbaza, Antique',
+    'Binangbang Centro, Barbaza, Antique',
+    'Binanu-an, Barbaza, Antique',
+    'Cadiao, Barbaza, Antique',
+    'Calapadan, Barbaza, Antique',
+    'Capoyuan, Barbaza, Antique',
+    'Cubay, Barbaza, Antique',
+    'Esparar, Barbaza, Antique',
+    'Gua, Barbaza, Antique',
+    'Idao, Barbaza, Antique',
+    'Igpalge, Barbaza, Antique',
+    'Igtunarum, Barbaza, Antique',
+    'Embrangga-an, Barbaza, Antique',
+    'Integasan, Barbaza, Antique',
+    'Ipil, Barbaza, Antique',
+    'Jinalinan, Barbaza, Antique',
+    'Lanas, Barbaza, Antique',
+    'Langcaon (Evelio Javier), Barbaza, Antique',
+    'Lisub, Barbaza, Antique',
+    'Lombuyan, Barbaza, Antique',
+    'Mablad, Barbaza, Antique',
+    'Magtulis, Barbaza, Antique',
+    'Marigne, Barbaza, Antique',
+    'Mayabay, Barbaza, Antique',
+    'Mayos, Barbaza, Antique',
+    'Nalusdan, Barbaza, Antique',
+    'Narirong, Barbaza, Antique',
+    'Palma, Barbaza, Antique',
+    'Poblacion, Barbaza, Antique',
+    'San Antonio, Barbaza, Antique',
+    'San Ramon, Barbaza, Antique',
+    'Soligao, Barbaza, Antique',
+    'Tabongtabong, Barbaza, Antique',
+    'Tig-Alaran, Barbaza, Antique',
+    'Yapo, Barbaza, Antique'
+];
 ?>
 
 <main id="main" class="main">
@@ -83,149 +126,156 @@ try {
 
     <!-- Error Messages -->
     <?php if ($error_message): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-octagon me-1"></i>
-            <?= $error_message ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Setup Required</h5>
-                        <p class="card-text">The crop recommendation system needs to be set up first.</p>
-                        
-                        <div class="d-grid gap-2 d-md-flex">
-                            <a href="../database/setup_recommendations.php" class="btn btn-primary">
-                                <i class="bi bi-gear me-1"></i>Run Initial Setup
-                            </a>
-                            <a href="../database/update_to_comprehensive_data.php" class="btn btn-success">
-                                <i class="bi bi-arrow-up-circle me-1"></i>Update to Full Dataset
-                            </a>
-                        </div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-octagon me-1"></i>
+        <?= $error_message ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Setup Required</h5>
+                    <p class="card-text">The crop recommendation system needs to be set up first.</p>
+
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="../database/setup_recommendations.php" class="btn btn-primary">
+                            <i class="bi bi-gear me-1"></i>Run Initial Setup
+                        </a>
+                        <a href="../database/update_to_comprehensive_data.php" class="btn btn-success">
+                            <i class="bi bi-arrow-up-circle me-1"></i>Update to Full Dataset
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <?php else: ?>
-        <!-- Success Messages -->
-        <?php if ($success_message): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle me-1"></i>
-                <?= $success_message ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
+    <!-- Success Messages -->
+    <?php if ($success_message): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i>
+        <?= $success_message ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php endif; ?>
 
-        <!-- System Status -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">System Status</h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <i class="bi bi-database text-success" style="font-size: 2rem;"></i>
-                                    <h6 class="mt-2">Database</h6>
-                                    <p class="mb-0">Connected</p>
-                                </div>
+    <!-- System Status -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">System Status</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="bi bi-database text-success" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Database</h6>
+                                <p class="mb-0">Connected</p>
                             </div>
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <i class="bi bi-seed text-primary" style="font-size: 2rem;"></i>
-                                    <h6 class="mt-2">Crops</h6>
-                                    <p class="mb-0"><?= $crops_count ?> available</p>
-                                </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="bi bi-seed text-primary" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Crops</h6>
+                                <p class="mb-0"><?= $crops_count ?> available</p>
                             </div>
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <i class="bi bi-layers text-info" style="font-size: 2rem;"></i>
-                                    <h6 class="mt-2">Soil Types</h6>
-                                    <p class="mb-0"><?= count($soil_types) ?> available</p>
-                                </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="bi bi-layers text-info" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Soil Types</h6>
+                                <p class="mb-0"><?= count($soil_types) ?> available</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Recommendation Form -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Get Crop Recommendations</h5>
-                        <p class="card-text">Select your soil type and location to get personalized crop recommendations based on current weather conditions.</p>
-                        
-                        <form method="POST" action="">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="soil_type" class="form-label">Soil Type</label>
-                                    <select class="form-select" id="soil_type" name="soil_type" required>
-                                        <option value="">Select Soil Type</option>
-                                        <?php foreach ($soil_types as $soil): ?>
-                                            <option value="<?= $soil['id'] ?>">
-                                                <?= $soil['name'] ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="form-text">Choose the soil type that best describes your farming area.</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="location" class="form-label">Location</label>
-                                    <input type="text" class="form-control" id="location" name="location" 
-                                           value="Barbaza, Antique" 
-                                           placeholder="Enter your location">
-                                    <div class="form-text">Enter your city and country for accurate weather data.</div>
-                                </div>
+    <!-- Recommendation Form -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Get Crop Recommendations</h5>
+                    <p class="card-text">Select your soil type and location to get personalized crop recommendations
+                        based on current weather conditions.</p>
+
+                    <form method="POST" action="">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="soil_type" class="form-label">Soil Type</label>
+                                <select class="form-select" id="soil_type" name="soil_type" required>
+                                    <option value="">Select Soil Type</option>
+                                    <?php foreach ($soil_types as $soil): ?>
+                                    <option value="<?= $soil['id'] ?>">
+                                        <?= $soil['name'] ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Choose the soil type that best describes your farming area.</div>
                             </div>
-                            
-                            <div class="text-center">
-                                <button type="submit" name="get_recommendations" class="btn btn-primary">
-                                    <i class="bi bi-search me-1"></i>Get Recommendations
-                                </button>
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">Location</label>
+                                <select class="form-select" id="location" name="location" required>
+                                    <option value="">Select Location</option>
+                                    <?php foreach ($locations as $loc): ?>
+                                    <option value="<?= htmlspecialchars($loc) ?>"
+                                        <?= ('Poblacion, Barbaza, Antique' === $loc) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($loc) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Select your city and province for accurate weather data.</div>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" name="get_recommendations" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Get Recommendations
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Sample Crops Display -->
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Available Crops</h5>
-                        <p class="card-text">Here are some of the crops available in the system:</p>
-                        
-                        <?php
+    <!-- Sample Crops Display -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Available Crops</h5>
+                    <p class="card-text">Here are some of the crops available in the system:</p>
+
+                    <?php
                         // Show sample crops
                         $sample_crops_sql = "SELECT name, marketability, planting_season FROM crops ORDER BY name LIMIT 10";
                         $sample_result = $conn->query($sample_crops_sql);
                         if ($sample_result && $sample_result->num_rows > 0):
                         ?>
-                        <div class="row">
-                            <?php while ($crop = $sample_result->fetch_assoc()): ?>
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h6 class="card-title"><?= $crop['name'] ?></h6>
-                                        <p class="card-text small text-muted"><?= $crop['planting_season'] ?></p>
-                                        <p class="card-text small"><?= $crop['marketability'] ?></p>
-                                    </div>
+                    <div class="row">
+                        <?php while ($crop = $sample_result->fetch_assoc()): ?>
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title"><?= $crop['name'] ?></h6>
+                                    <p class="card-text small text-muted"><?= $crop['planting_season'] ?></p>
+                                    <p class="card-text small"><?= $crop['marketability'] ?></p>
                                 </div>
                             </div>
-                            <?php endwhile; ?>
                         </div>
-                        <?php endif; ?>
+                        <?php endwhile; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
+    </div>
     <?php endif; ?>
 
 </main>
