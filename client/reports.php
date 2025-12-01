@@ -621,25 +621,96 @@ function printReport() {
             <head>
                 <title>GrowCalendar Analytics Report</title>
                 <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    table th { background-color: #f2f2f2; font-weight: bold; }
-                    h2, h4 { color: #333; }
-                    .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
-                    .alert-info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
-                    .border-top { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px; }
+                    * { box-sizing: border-box; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        padding: 15mm; 
+                        margin: 0;
+                        font-size: 11pt;
+                        line-height: 1.4;
+                    }
+                    h2 { 
+                        color: #333; 
+                        font-size: 20pt;
+                        margin-top: 0;
+                        margin-bottom: 10pt;
+                        page-break-after: avoid;
+                    }
+                    h4 { 
+                        color: #333; 
+                        font-size: 14pt;
+                        margin-top: 15pt;
+                        margin-bottom: 8pt;
+                        page-break-after: avoid;
+                    }
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 12pt 0;
+                        page-break-inside: auto;
+                    }
+                    table th, table td { 
+                        border: 1px solid #ddd; 
+                        padding: 6pt 8pt; 
+                        text-align: left;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    table th { 
+                        background-color: #f2f2f2; 
+                        font-weight: bold;
+                    }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                    tfoot { display: table-footer-group; }
+                    .alert { 
+                        padding: 10pt; 
+                        margin: 10pt 0; 
+                        border-radius: 4px;
+                        page-break-inside: avoid;
+                    }
+                    .alert-info { 
+                        background-color: #d1ecf1; 
+                        border: 1px solid #bee5eb; 
+                    }
+                    .border-top { 
+                        border-top: 1px solid #ddd; 
+                        padding-top: 15pt; 
+                        margin-top: 15pt;
+                        page-break-inside: avoid;
+                    }
                     .text-center { text-align: center; }
-                    .mb-3 { margin-bottom: 15px; }
-                    .mt-3 { margin-top: 15px; }
-                    .mt-4 { margin-top: 20px; }
-                    .mb-4 { margin-bottom: 20px; }
-                    .p-3 { padding: 15px; }
+                    .mb-3 { margin-bottom: 12pt; }
+                    .mt-3 { margin-top: 12pt; }
+                    .mt-4 { margin-top: 16pt; }
+                    .mb-4 { margin-bottom: 16pt; }
+                    .p-3 { padding: 12pt; }
                     .border { border: 1px solid #ddd; }
                     .rounded { border-radius: 4px; }
+                    ul, ol { 
+                        margin: 8pt 0;
+                        padding-left: 20pt;
+                        page-break-inside: avoid;
+                    }
+                    li { 
+                        margin: 4pt 0;
+                        page-break-inside: avoid;
+                    }
+                    p { 
+                        margin: 8pt 0;
+                        page-break-inside: avoid;
+                    }
+                    .mb-0 { margin-bottom: 0 !important; }
+                    .mb-1 { margin-bottom: 4pt !important; }
+                    .mb-2 { margin-bottom: 8pt !important; }
+                    .pb-3 { padding-bottom: 12pt; }
                     @media print {
-                        body { padding: 0; }
+                        body { padding: 10mm; }
                         .no-print { display: none; }
+                        @page {
+                            size: A4;
+                            margin: 15mm;
+                        }
                     }
                 </style>
             </head>
@@ -682,7 +753,8 @@ async function exportToPDF(button) {
         iframe.style.position = 'absolute';
         iframe.style.left = '-9999px';
         iframe.style.width = '210mm';
-        iframe.style.height = '297mm';
+        iframe.style.height = 'auto';
+        iframe.style.minHeight = '297mm';
         iframe.style.border = 'none';
 
         document.body.appendChild(iframe);
@@ -694,24 +766,91 @@ async function exportToPDF(button) {
             <html>
             <head>
                 <title>GrowCalendar Analytics Report</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
-                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    table th { background-color: #f2f2f2; font-weight: bold; }
-                    h2, h4 { color: #333; }
-                    .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
-                    .alert-info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
-                    .border-top { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px; }
-                    .text-center { text-align: center; }
-                    .mb-3 { margin-bottom: 15px; }
-                    .mt-3 { margin-top: 15px; }
-                    .mt-4 { margin-top: 20px; }
-                    .mb-4 { margin-bottom: 20px; }
-                    .p-3 { padding: 15px; }
-                    .border { border: 1px solid #ddd; }
-                    .rounded { border-radius: 4px; }
-                </style>
+                    <style>
+                        * { box-sizing: border-box; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 15mm; 
+                            margin: 0;
+                            font-size: 11pt;
+                            line-height: 1.4;
+                        }
+                        h2 { 
+                            color: #333; 
+                            font-size: 20pt;
+                            margin-top: 0;
+                            margin-bottom: 10pt;
+                            page-break-after: avoid;
+                        }
+                        h4 { 
+                            color: #333; 
+                            font-size: 14pt;
+                            margin-top: 15pt;
+                            margin-bottom: 8pt;
+                            page-break-after: avoid;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin: 12pt 0;
+                            page-break-inside: auto;
+                        }
+                        table th, table td { 
+                            border: 1px solid #ddd; 
+                            padding: 6pt 8pt; 
+                            text-align: left;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        }
+                        table th { 
+                            background-color: #f2f2f2; 
+                            font-weight: bold;
+                        }
+                        tr { page-break-inside: avoid; page-break-after: auto; }
+                        thead { display: table-header-group; }
+                        tfoot { display: table-footer-group; }
+                        .alert { 
+                            padding: 10pt; 
+                            margin: 10pt 0; 
+                            border-radius: 4px;
+                            page-break-inside: avoid;
+                        }
+                        .alert-info { 
+                            background-color: #d1ecf1; 
+                            border: 1px solid #bee5eb; 
+                        }
+                        .border-top { 
+                            border-top: 1px solid #ddd; 
+                            padding-top: 15pt; 
+                            margin-top: 15pt;
+                            page-break-inside: avoid;
+                        }
+                        .text-center { text-align: center; }
+                        .mb-3 { margin-bottom: 12pt; }
+                        .mt-3 { margin-top: 12pt; }
+                        .mt-4 { margin-top: 16pt; }
+                        .mb-4 { margin-bottom: 16pt; }
+                        .p-3 { padding: 12pt; }
+                        .border { border: 1px solid #ddd; }
+                        .rounded { border-radius: 4px; }
+                        ul, ol { 
+                            margin: 8pt 0;
+                            padding-left: 20pt;
+                            page-break-inside: avoid;
+                        }
+                        li { 
+                            margin: 4pt 0;
+                            page-break-inside: avoid;
+                        }
+                        p { 
+                            margin: 8pt 0;
+                            page-break-inside: avoid;
+                        }
+                        .mb-0 { margin-bottom: 0 !important; }
+                        .mb-1 { margin-bottom: 4pt !important; }
+                        .mb-2 { margin-bottom: 8pt !important; }
+                        .pb-3 { padding-bottom: 12pt; }
+                    </style>
             </head>
             <body>
                 ${printContent}
@@ -723,6 +862,9 @@ async function exportToPDF(button) {
         // Wait for iframe content to load and render
         await new Promise(resolve => setTimeout(resolve, 1000));
 
+        // Wait a bit more for content to fully render
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Convert iframe body to canvas - same content as print
         const canvas = await html2canvas(iframe.contentDocument.body, {
             scale: 2,
@@ -730,7 +872,9 @@ async function exportToPDF(button) {
             logging: false,
             backgroundColor: '#ffffff',
             width: iframe.contentDocument.body.scrollWidth,
-            height: iframe.contentDocument.body.scrollHeight
+            height: iframe.contentDocument.body.scrollHeight,
+            windowWidth: iframe.contentDocument.body.scrollWidth,
+            windowHeight: iframe.contentDocument.body.scrollHeight
         });
 
         // Remove the temporary iframe
@@ -740,20 +884,22 @@ async function exportToPDF(button) {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgWidth = 210; // A4 width in mm
         const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const margin = 15; // Margin in mm
+        const contentWidth = imgWidth - (margin * 2);
+        const imgHeight = (canvas.height * contentWidth) / canvas.width;
         let heightLeft = imgHeight;
-        let position = 0;
+        let position = -margin;
 
         // Add first page
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
 
         // Add additional pages if needed
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
+            position = -margin - (imgHeight - heightLeft);
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
         }
 
         // Save PDF
