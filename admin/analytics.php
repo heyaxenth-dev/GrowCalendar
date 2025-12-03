@@ -648,21 +648,41 @@ function printReport() {
                         border-collapse: collapse; 
                         margin: 12pt 0;
                         page-break-inside: auto;
+                        margin-top: 15pt;
+                        margin-bottom: 15pt;
                     }
                     table th, table td { 
                         border: 1px solid #ddd; 
-                        padding: 6pt 8pt; 
+                        padding: 8pt 10pt; 
                         text-align: left;
                         word-wrap: break-word;
                         overflow-wrap: break-word;
+                        vertical-align: top;
                     }
                     table th { 
                         background-color: #f2f2f2; 
                         font-weight: bold;
                     }
-                    tr { page-break-inside: avoid; page-break-after: auto; }
-                    thead { display: table-header-group; }
-                    tfoot { display: table-footer-group; }
+                    tr { 
+                        page-break-inside: avoid; 
+                        page-break-after: auto;
+                        min-height: 30pt;
+                    }
+                    tbody tr {
+                        page-break-inside: avoid;
+                    }
+                    thead { 
+                        display: table-header-group; 
+                        page-break-after: avoid;
+                    }
+                    tfoot { 
+                        display: table-footer-group; 
+                        page-break-before: avoid;
+                    }
+                    .table-responsive {
+                        page-break-inside: avoid;
+                        margin: 15pt 0;
+                    }
                     .alert { 
                         padding: 10pt; 
                         margin: 10pt 0; 
@@ -756,6 +776,7 @@ async function exportToPDF(button) {
         iframe.style.height = 'auto';
         iframe.style.minHeight = '297mm';
         iframe.style.border = 'none';
+        iframe.style.overflow = 'visible';
 
         document.body.appendChild(iframe);
 
@@ -794,21 +815,41 @@ async function exportToPDF(button) {
                             border-collapse: collapse; 
                             margin: 12pt 0;
                             page-break-inside: auto;
+                            margin-top: 15pt;
+                            margin-bottom: 15pt;
                         }
                         table th, table td { 
                             border: 1px solid #ddd; 
-                            padding: 6pt 8pt; 
+                            padding: 8pt 10pt; 
                             text-align: left;
                             word-wrap: break-word;
                             overflow-wrap: break-word;
+                            vertical-align: top;
                         }
                         table th { 
                             background-color: #f2f2f2; 
                             font-weight: bold;
                         }
-                        tr { page-break-inside: avoid; page-break-after: auto; }
-                        thead { display: table-header-group; }
-                        tfoot { display: table-footer-group; }
+                        tr { 
+                            page-break-inside: avoid; 
+                            page-break-after: auto;
+                            min-height: 30pt;
+                        }
+                        tbody tr {
+                            page-break-inside: avoid;
+                        }
+                        thead { 
+                            display: table-header-group; 
+                            page-break-after: avoid;
+                        }
+                        tfoot { 
+                            display: table-footer-group; 
+                            page-break-before: avoid;
+                        }
+                        .table-responsive {
+                            page-break-inside: avoid;
+                            margin: 15pt 0;
+                        }
                         .alert { 
                             padding: 10pt; 
                             margin: 10pt 0; 
@@ -850,6 +891,14 @@ async function exportToPDF(button) {
                         .mb-1 { margin-bottom: 4pt !important; }
                         .mb-2 { margin-bottom: 8pt !important; }
                         .pb-3 { padding-bottom: 12pt; }
+                        @media print {
+                            body { padding: 10mm; }
+                            .no-print { display: none; }
+                            @page {
+                                size: A4;
+                                margin: 15mm;
+                            }
+                        }
                     </style>
                 </head>
                 <body>
@@ -860,46 +909,86 @@ async function exportToPDF(button) {
         iframe.contentDocument.close();
 
         // Wait for iframe content to load and render
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Wait a bit more for content to fully render
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for content to fully render
+        await new Promise(resolve => {
+            iframe.onload = resolve;
+            if (iframe.contentDocument.readyState === 'complete') {
+                resolve();
+            }
+        });
 
         // Convert iframe body to canvas - same content as print
-        const canvas = await html2canvas(iframe.contentDocument.body, {
+        const bodyElement = iframe.contentDocument.body;
+        const canvas = await html2canvas(bodyElement, {
             scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            width: iframe.contentDocument.body.scrollWidth,
-            height: iframe.contentDocument.body.scrollHeight,
-            windowWidth: iframe.contentDocument.body.scrollWidth,
-            windowHeight: iframe.contentDocument.body.scrollHeight
+            width: bodyElement.scrollWidth,
+            height: bodyElement.scrollHeight,
+            windowWidth: bodyElement.scrollWidth,
+            windowHeight: bodyElement.scrollHeight,
+            allowTaint: false
         });
 
         // Remove the temporary iframe
         document.body.removeChild(iframe);
 
-        const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL('image/png', 1.0);
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210; // A4 width in mm
+        const pageWidth = 210; // A4 width in mm
         const pageHeight = 297; // A4 height in mm
-        const margin = 15; // Margin in mm
-        const contentWidth = imgWidth - (margin * 2);
-        const imgHeight = (canvas.height * contentWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = -margin;
+        const margin = 10; // Margin in mm (reduced for more content space)
+        const contentWidth = pageWidth - (margin * 2);
 
-        // Add first page
-        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
-        heightLeft -= (pageHeight - margin * 2);
+        // Calculate image dimensions maintaining aspect ratio
+        const imgWidth = contentWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Add additional pages if needed
-        while (heightLeft > 0) {
-            position = -margin - (imgHeight - heightLeft);
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
-            heightLeft -= (pageHeight - margin * 2);
+        // Calculate how many pages we need with buffer to avoid cutting content
+        const contentHeightPerPage = pageHeight - (margin * 2);
+        const bufferZone = 5; // Buffer in mm to avoid cutting through content
+        const usableHeightPerPage = contentHeightPerPage - bufferZone;
+        const totalPages = Math.ceil(imgHeight / usableHeightPerPage);
+
+        let sourceY = 0;
+        let remainingHeight = imgHeight;
+        let currentPageY = 0;
+
+        // Add pages with smart splitting
+        for (let page = 0; page < totalPages; page++) {
+            if (page > 0) {
+                pdf.addPage();
+                currentPageY = 0;
+            }
+
+            // Calculate how much of the image to show on this page
+            // Use buffer zone to avoid cutting through content
+            const pageImageHeight = Math.min(usableHeightPerPage, remainingHeight);
+            const sourceHeight = (pageImageHeight / imgHeight) * canvas.height;
+
+            // Create a temporary canvas for this page
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = sourceHeight;
+            const pageCtx = pageCanvas.getContext('2d');
+
+            // Draw with anti-aliasing for better quality
+            pageCtx.imageSmoothingEnabled = true;
+            pageCtx.imageSmoothingQuality = 'high';
+            pageCtx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+
+            const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+
+            // Add some top margin on first page, regular margin on others
+            const topMargin = page === 0 ? margin : margin;
+            pdf.addImage(pageImgData, 'PNG', margin, topMargin, imgWidth, pageImageHeight);
+
+            sourceY += sourceHeight;
+            remainingHeight -= pageImageHeight;
+            currentPageY += pageImageHeight;
         }
 
         // Save PDF
