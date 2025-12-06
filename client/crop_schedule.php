@@ -130,6 +130,11 @@
                                                 <i class="bi bi-chat-dots me-1"></i>Feedback
                                             </button>
                                             <?php endif; ?>
+                                            <button class="btn btn-outline-danger btn-sm"
+                                                onclick="deleteSchedule(<?= $schedule['id'] ?>, '<?= htmlspecialchars($schedule['crop_name'], ENT_QUOTES) ?>')"
+                                                title="Delete Schedule">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -354,6 +359,62 @@ function giveFeedback(scheduleId, cropName) {
 
     const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
     modal.show();
+}
+
+function deleteSchedule(scheduleId, cropName) {
+    Swal.fire({
+        title: 'Delete Crop Schedule?',
+        html: `Are you sure you want to delete the schedule for <strong>${cropName}</strong>?<br><br>This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create form data
+            const formData = new FormData();
+            formData.append('schedule_id', scheduleId);
+
+            // Send delete request
+            fetch('includes/delete_crop_schedule.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: "Deleted!",
+                            text: "Crop schedule has been deleted successfully.",
+                            icon: "success",
+                            confirmButtonText: "Done",
+                            timer: 2000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "Error!",
+                            text: data.message || "Failed to delete schedule.",
+                            icon: "error",
+                            confirmButtonText: "OK"
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: "Error!",
+                        text: "An unexpected error occurred while deleting the schedule.",
+                        icon: "error",
+                        confirmButtonText: "OK"
+                    });
+                });
+        }
+    });
 }
 
 // Update progress value display

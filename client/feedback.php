@@ -6,6 +6,16 @@
     
     // Get user's completed crop schedules that can receive feedback
     $user_id = $_SESSION['user_id'];
+    
+    // Get user's name (technologist name)
+    $user_name_query = "SELECT firstname, lastname FROM users WHERE id = ?";
+    $user_name_stmt = $conn->prepare($user_name_query);
+    $user_name_stmt->bind_param("i", $user_id);
+    $user_name_stmt->execute();
+    $user_name_result = $user_name_stmt->get_result();
+    $user_name_data = $user_name_result->fetch_assoc();
+    $technologist_name = trim(($user_name_data['firstname'] ?? '') . ' ' . ($user_name_data['lastname'] ?? ''));
+    
     $feedback_query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days,
                        CASE 
                            WHEN cf.id IS NOT NULL THEN 'feedback_given'
@@ -189,6 +199,14 @@
                         <div class="mb-3">
                             <label class="form-label">Crop Name</label>
                             <input type="text" class="form-control" id="feedbackCropName" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Technologist Name</label>
+                            <input type="text" class="form-control" id="feedbackTechnologistName"
+                                value="<?= htmlspecialchars($technologist_name) ?>" readonly>
+                            <small class="form-text text-muted">Your name will be included with the feedback
+                                submission.</small>
                         </div>
 
                         <div class="mb-3">

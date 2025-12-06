@@ -36,6 +36,21 @@ if (!$schedule_id || !$crop_condition) {
 }
 
 try {
+    // Get user's name (technologist name)
+    $user_query = "SELECT firstname, lastname FROM users WHERE id = ?";
+    $user_stmt = $conn->prepare($user_query);
+    $user_stmt->bind_param("i", $_SESSION['user_id']);
+    $user_stmt->execute();
+    $user_result = $user_stmt->get_result();
+    
+    if ($user_result->num_rows === 0) {
+        echo json_encode(['success' => false, 'message' => 'User not found']);
+        exit;
+    }
+    
+    $user = $user_result->fetch_assoc();
+    $technologist_name = trim($user['firstname'] . ' ' . $user['lastname']);
+    
     // Verify the schedule belongs to the user and get crop info
     $verify_query = "SELECT cs.*, c.id as crop_id, c.name as crop_name 
                      FROM crop_schedules cs 
@@ -56,6 +71,14 @@ try {
     // Convert challenges array to JSON
     $challenges_json = json_encode($challenges);
     
+    // Insert feedback with technologist name in remarks if not already included
+    $remarks_with_name = $remarks;
+    if (!empty($technologist_name) && !empty($remarks)) {
+        $remarks_with_name = "Technologist: " . $technologist_name . "\n\n" . $remarks;
+    } elseif (!empty($technologist_name)) {
+        $remarks_with_name = "Technologist: " . $technologist_name;
+    }
+    
     // Insert feedback
     $insert_query = "INSERT INTO crop_feedback (user_id, crop_schedule_id, recommendation_id, crop_condition, challenges_encountered, remarks, feedback_score) 
                      VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -67,7 +90,7 @@ try {
         $schedule['recommendation_id'], 
         $crop_condition, 
         $challenges_json, 
-        $remarks, 
+        $remarks_with_name, 
         $feedback_score
     );
     

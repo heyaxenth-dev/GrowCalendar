@@ -344,13 +344,43 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Recommended Crops</h5>
-                        <p class="card-text">Based on your soil type and current weather conditions, here are the best
-                            crops for your area:</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">Recommended Crops</h5>
+                                <p class="card-text text-muted small mb-0">Based on your soil type and current weather
+                                    conditions, here are the best crops for your area.</p>
+                            </div>
+                        </div>
 
-                        <div class="row">
+                        <!-- Search Bar -->
+                        <div class="mb-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="recommendationSearch"
+                                    placeholder="Search crops by name, scientific name, season, or harvest days..."
+                                    onkeyup="filterRecommendations()">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()"
+                                    id="clearSearchBtn" style="display: none;">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <span id="resultCount"><?= count($recommendations) ?></span> crop(s) found
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="row" id="recommendationsContainer">
                             <?php foreach ($recommendations as $index => $rec): ?>
-                            <div class="col-lg-4 col-md-6 mb-4 recommendation-item <?= $index >= 6 ? 'd-none' : '' ?>">
+                            <div class="col-lg-4 col-md-6 mb-4 recommendation-item <?= $index >= 6 ? 'd-none' : '' ?>"
+                                data-crop-name="<?= strtolower(htmlspecialchars($rec['crop']['name'])) ?>"
+                                data-scientific-name="<?= strtolower(htmlspecialchars($rec['crop']['scientific_name'])) ?>"
+                                data-season="<?= strtolower(htmlspecialchars($rec['crop']['planting_season'])) ?>"
+                                data-harvest-days="<?= $rec['crop']['harvest_days'] ?>"
+                                data-score="<?= $rec['score'] ?>">
                                 <div class="card h-100">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -409,6 +439,12 @@
                                 </div>
                             </div>
                             <?php endforeach; ?>
+                        </div>
+
+                        <div class="text-center mt-4" id="noResultsMessage" style="display: none;">
+                            <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">No crops found</h5>
+                            <p class="text-muted">Try adjusting your search terms.</p>
                         </div>
 
                         <?php if (count($recommendations) > 6): ?>
@@ -500,6 +536,66 @@ function showAllRecommendations() {
             block: 'nearest'
         });
     }
+}
+
+function filterRecommendations() {
+    const searchTerm = document.getElementById('recommendationSearch').value.toLowerCase().trim();
+    const recommendationItems = document.querySelectorAll('.recommendation-item');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const resultCount = document.getElementById('resultCount');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const showMoreButton = document.getElementById('showMoreButton');
+
+    let visibleCount = 0;
+    let hasResults = false;
+
+    recommendationItems.forEach(item => {
+        const cropName = item.getAttribute('data-crop-name') || '';
+        const scientificName = item.getAttribute('data-scientific-name') || '';
+        const season = item.getAttribute('data-season') || '';
+        const harvestDays = item.getAttribute('data-harvest-days') || '';
+
+        // Check if search term matches any attribute
+        const matches = !searchTerm ||
+            cropName.includes(searchTerm) ||
+            scientificName.includes(searchTerm) ||
+            season.includes(searchTerm) ||
+            harvestDays.includes(searchTerm);
+
+        if (matches) {
+            item.style.display = '';
+            visibleCount++;
+            hasResults = true;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // Update result count
+    if (resultCount) {
+        resultCount.textContent = visibleCount;
+    }
+
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.style.display = searchTerm ? '' : 'none';
+    }
+
+    // Show/hide no results message
+    if (noResultsMessage) {
+        noResultsMessage.style.display = hasResults ? 'none' : '';
+    }
+
+    // Hide "View All" button when searching
+    if (showMoreButton) {
+        showMoreButton.style.display = searchTerm ? 'none' : '';
+    }
+}
+
+function clearSearch() {
+    document.getElementById('recommendationSearch').value = '';
+    filterRecommendations();
+    document.getElementById('recommendationSearch').focus();
 }
 
 function addToSchedule(cropId, cropName, harvestDays) {
