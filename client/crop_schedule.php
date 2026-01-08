@@ -5,15 +5,50 @@
     
     // Get user's crop schedules
     $user_id = $_SESSION['user_id'];
-    $schedules_query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days 
-                       FROM crop_schedules cs 
-                       JOIN crops c ON cs.crop_id = c.id 
-                       WHERE cs.user_id = ? 
-                       ORDER BY cs.planting_date DESC";
+    
+    // Check if farmer_name column exists
+    $check_column = "SELECT COUNT(*) as count 
+                     FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = DATABASE() 
+                     AND TABLE_NAME = 'crop_schedules' 
+                     AND COLUMN_NAME = 'farmer_name'";
+    $column_check = $conn->query($check_column);
+    $has_farmer_name_column = $column_check->fetch_assoc()['count'] > 0;
+    
+    // Build query with farmer_name if column exists
+    if ($has_farmer_name_column) {
+        $schedules_query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days 
+                           FROM crop_schedules cs 
+                           JOIN crops c ON cs.crop_id = c.id 
+                           WHERE cs.user_id = ? 
+                           ORDER BY cs.planting_date DESC";
+    } else {
+        $schedules_query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days 
+                           FROM crop_schedules cs 
+                           JOIN crops c ON cs.crop_id = c.id 
+                           WHERE cs.user_id = ? 
+                           ORDER BY cs.planting_date DESC";
+    }
+    
     $stmt = $conn->prepare($schedules_query);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $schedules = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    
+    // Extract farmer name from notes if column doesn't exist (backward compatibility)
+    if (!$has_farmer_name_column) {
+        foreach ($schedules as &$schedule) {
+            if (!empty($schedule['notes']) && preg_match('/^Farmer:\s*(.+?)(\n\n|$)/i', $schedule['notes'], $matches)) {
+                $schedule['farmer_name'] = trim($matches[1]);
+                // Remove farmer name from notes for display
+                $schedule['notes'] = preg_replace('/^Farmer:\s*.+?(\n\n|$)/i', '', $schedule['notes']);
+                $schedule['notes'] = trim($schedule['notes']);
+            } else {
+                $schedule['farmer_name'] = null;
+            }
+        }
+        unset($schedule);
+    }
     ?>
 
     <main id="main" class="main">
@@ -82,6 +117,16 @@
                                         <p class="text-muted small mb-2">
                                             <em><?= htmlspecialchars($schedule['scientific_name']) ?></em>
                                         </p>
+
+                                        <?php if (!empty($schedule['farmer_name'])): ?>
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="bi bi-person me-1"></i><strong>Farmer:</strong>
+                                                <span
+                                                    class="text-info"><?= htmlspecialchars($schedule['farmer_name']) ?></span>
+                                            </small>
+                                        </div>
+                                        <?php endif; ?>
 
                                         <div class="mb-3">
                                             <div class="row small">
@@ -174,7 +219,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Progress Percentage</label>
+                            <label class="form-label">Success Rate</label>
                             <input type="range" class="form-range" id="progressRange" name="progress_percentage" min="0"
                                 max="100" value="0">
                             <div class="d-flex justify-content-between">

@@ -16,6 +16,15 @@
     $user_name_data = $user_name_result->fetch_assoc();
     $technologist_name = trim(($user_name_data['firstname'] ?? '') . ' ' . ($user_name_data['lastname'] ?? ''));
     
+    // Check if farmer_name column exists in crop_schedules
+    $check_column = "SELECT COUNT(*) as count 
+                     FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = DATABASE() 
+                     AND TABLE_NAME = 'crop_schedules' 
+                     AND COLUMN_NAME = 'farmer_name'";
+    $column_check = $conn->query($check_column);
+    $has_farmer_name_column = $column_check->fetch_assoc()['count'] > 0;
+    
     $feedback_query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days,
                        CASE 
                            WHEN cf.id IS NOT NULL THEN 'feedback_given'
@@ -31,6 +40,18 @@
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $schedules = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    
+    // Extract farmer name from notes if column doesn't exist (backward compatibility)
+    if (!$has_farmer_name_column) {
+        foreach ($schedules as &$schedule) {
+            if (!empty($schedule['notes']) && preg_match('/^Farmer:\s*(.+?)(\n\n|$)/i', $schedule['notes'], $matches)) {
+                $schedule['farmer_name'] = trim($matches[1]);
+            } else {
+                $schedule['farmer_name'] = null;
+            }
+        }
+        unset($schedule);
+    }
     ?>
 
     <main id="main" class="main">
@@ -202,6 +223,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label">Farmer's Name</label>
+                            <input type="text" class="form-control" id="feedbackFarmerName" name="farmer_name" readonly>
+                            <small class="form-text text-muted">Farmer's name from the crop schedule.</small>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Technologist Name</label>
                             <input type="text" class="form-control" id="feedbackTechnologistName"
                                 value="<?= htmlspecialchars($technologist_name) ?>" readonly>
@@ -359,6 +386,21 @@ function submitFeedback(scheduleId, cropName) {
     document.getElementById('feedbackForm').reset();
     document.getElementById('feedbackScheduleId').value = scheduleId;
     document.getElementById('feedbackCropName').value = cropName;
+
+    // Fetch farmer name from schedule
+    fetch(`includes/get_farmer_name.php?schedule_id=${scheduleId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.farmer_name) {
+                document.getElementById('feedbackFarmerName').value = data.farmer_name;
+            } else {
+                document.getElementById('feedbackFarmerName').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching farmer name:', error);
+            document.getElementById('feedbackFarmerName').value = '';
+        });
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));

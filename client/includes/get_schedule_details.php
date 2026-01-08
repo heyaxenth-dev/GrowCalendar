@@ -25,10 +25,20 @@ if (!$schedule_id) {
 }
 
 try {
+    // Check if farmer_name column exists
+    $check_column = "SELECT COUNT(*) as count 
+                     FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = DATABASE() 
+                     AND TABLE_NAME = 'crop_schedules' 
+                     AND COLUMN_NAME = 'farmer_name'";
+    $column_check = $conn->query($check_column);
+    $has_farmer_name_column = $column_check->fetch_assoc()['count'] > 0;
+    
     // Get detailed schedule information
     $query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days, c.description,
                      st.name as soil_type_name, st.description as soil_description,
-                     cf.crop_condition, cf.challenges_encountered, cf.remarks as feedback_remarks, cf.feedback_score, cf.created_at as feedback_date
+                     cf.crop_condition, cf.challenges_encountered, cf.remarks as feedback_remarks, cf.feedback_score, cf.created_at as feedback_date,
+                     cf.farmer_name as feedback_farmer_name
               FROM crop_schedules cs 
               JOIN crops c ON cs.crop_id = c.id 
               LEFT JOIN soil_types st ON cs.recommendation_id = st.id
@@ -46,6 +56,13 @@ try {
     }
     
     $schedule = $result->fetch_assoc();
+    
+    // Extract farmer name if column doesn't exist
+    if (!$has_farmer_name_column && !empty($schedule['notes']) && preg_match('/^Farmer:\s*(.+?)(\n\n|$)/i', $schedule['notes'], $matches)) {
+        $schedule['farmer_name'] = trim($matches[1]);
+    } elseif (!$has_farmer_name_column) {
+        $schedule['farmer_name'] = null;
+    }
     
     // Calculate days since planting
     $planting_date = new DateTime($schedule['planting_date']);
@@ -80,6 +97,12 @@ try {
                 <td><strong>Description:</strong></td>
                 <td><?= htmlspecialchars($schedule['description']) ?></td>
             </tr>
+            <?php if (!empty($schedule['farmer_name'])): ?>
+            <tr>
+                <td><strong>Farmer's Name:</strong></td>
+                <td><span class="text-info"><?= htmlspecialchars($schedule['farmer_name']) ?></span></td>
+            </tr>
+            <?php endif; ?>
         </table>
     </div>
 

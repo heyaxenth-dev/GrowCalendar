@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $crop_id = $_POST['crop_id'] ?? null;
 $recommendation_id = $_POST['recommendation_id'] ?? null;
 $planting_date = $_POST['planting_date'] ?? null;
+$farmer_name = $_POST['farmer_name'] ?? '';
 $notes = $_POST['notes'] ?? '';
 
 // Validate required fields
@@ -61,19 +62,59 @@ try {
     $harvest_date_obj->add(new DateInterval('P' . $harvest_days . 'D'));
     $expected_harvest_date = $harvest_date_obj->format('Y-m-d');
     
-    // Insert crop schedule
-    $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, planting_date, expected_harvest_date, status, notes) 
-                     VALUES (?, ?, ?, ?, ?, 'planting', ?)";
+    // Check if farmer_name column exists in the table
+    $check_column = "SELECT COUNT(*) as count 
+                     FROM INFORMATION_SCHEMA.COLUMNS 
+                     WHERE TABLE_SCHEMA = DATABASE() 
+                     AND TABLE_NAME = 'crop_schedules' 
+                     AND COLUMN_NAME = 'farmer_name'";
+    $column_check = $conn->query($check_column);
+    $has_farmer_name_column = $column_check->fetch_assoc()['count'] > 0;
     
-    $stmt = $conn->prepare($insert_query);
-    $stmt->bind_param("iiisss", 
-        $_SESSION['user_id'], 
-        $crop_id, 
-        $recommendation_id, 
-        $planting_date, 
-        $expected_harvest_date, 
-        $notes
-    );
+    // Prepare farmer name
+    $farmer_name_clean = !empty($farmer_name) ? trim($farmer_name) : null;
+    
+    if ($has_farmer_name_column) {
+        // Insert crop schedule with farmer_name column
+        $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, planting_date, expected_harvest_date, farmer_name, status, notes) 
+                         VALUES (?, ?, ?, ?, ?, ?, 'planting', ?)";
+        
+        $stmt = $conn->prepare($insert_query);
+        $stmt->bind_param("iiissss", 
+            $_SESSION['user_id'], 
+            $crop_id, 
+            $recommendation_id, 
+            $planting_date, 
+            $expected_harvest_date, 
+            $farmer_name_clean,
+            $notes
+        );
+    } else {
+        // Fallback: Combine farmer name and notes if column doesn't exist
+        $combined_notes = '';
+        if (!empty($farmer_name_clean)) {
+            $combined_notes = "Farmer: " . $farmer_name_clean;
+            if (!empty($notes)) {
+                $combined_notes .= "\n\n" . $notes;
+            }
+        } else {
+            $combined_notes = $notes;
+        }
+        
+        // Insert crop schedule without farmer_name column (backward compatibility)
+        $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, planting_date, expected_harvest_date, status, notes) 
+                         VALUES (?, ?, ?, ?, ?, 'planting', ?)";
+        
+        $stmt = $conn->prepare($insert_query);
+        $stmt->bind_param("iiisss", 
+            $_SESSION['user_id'], 
+            $crop_id, 
+            $recommendation_id, 
+            $planting_date, 
+            $expected_harvest_date, 
+            $combined_notes
+        );
+    }
     
     if ($stmt->execute()) {
         echo json_encode([

@@ -15,6 +15,15 @@
     
     $user_id = $_SESSION['user_id'];
     
+    // Get user's name for farmer name field
+    $user_name_query = "SELECT firstname, lastname FROM users WHERE id = ?";
+    $user_name_stmt = $conn->prepare($user_name_query);
+    $user_name_stmt->bind_param("i", $user_id);
+    $user_name_stmt->execute();
+    $user_name_result = $user_name_stmt->get_result();
+    $user_name_data = $user_name_result->fetch_assoc();
+    $farmer_name = trim(($user_name_data['firstname'] ?? '') . ' ' . ($user_name_data['lastname'] ?? ''));
+    
     // Initialize variables
     $soil_types = [];
     $recommendations = [];
@@ -477,6 +486,12 @@
                     <div class="modal-body">
                         <input type="hidden" id="cropId" name="crop_id">
                         <input type="hidden" id="recommendationId" name="recommendation_id">
+
+                        <div class="mb-3">
+                            <label class="form-label">Farmer's Name</label>
+                            <input type="text" class="form-control" id="farmerName" name="farmer_name"
+                                placeholder="Enter farmer's name...">
+                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Crop Name</label>

@@ -50,13 +50,18 @@
                                         </button>
                                     </h6>
                                     <div class="row g-3">
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <label class="form-label small">Technologist Name</label>
                                             <input type="text" class="form-control form-control-sm"
                                                 id="filterTechnologist" placeholder="Search by name..."
                                                 onkeyup="filterTable()">
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Farmer Name</label>
+                                            <input type="text" class="form-control form-control-sm" id="filterFarmer"
+                                                placeholder="Search by farmer..." onkeyup="filterTable()">
+                                        </div>
+                                        <div class="col-md-2">
                                             <label class="form-label small">Crop</label>
                                             <input type="text" class="form-control form-control-sm" id="filterCrop"
                                                 placeholder="Search by crop..." onkeyup="filterTable()">
@@ -122,39 +127,119 @@
                                     </thead>
                                     <tbody>
                                         <?php 
+                                        // Check if farmer_name column exists in crop_feedback
+                                        $check_feedback_column = "SELECT COUNT(*) as count 
+                                                                 FROM INFORMATION_SCHEMA.COLUMNS 
+                                                                 WHERE TABLE_SCHEMA = DATABASE() 
+                                                                 AND TABLE_NAME = 'crop_feedback' 
+                                                                 AND COLUMN_NAME = 'farmer_name'";
+                                        $feedback_column_check = $conn->query($check_feedback_column);
+                                        $has_feedback_farmer_column = $feedback_column_check->fetch_assoc()['count'] > 0;
+                                        
+                                        // Check if farmer_name column exists in crop_schedules
+                                        $check_schedule_column = "SELECT COUNT(*) as count 
+                                                                FROM INFORMATION_SCHEMA.COLUMNS 
+                                                                WHERE TABLE_SCHEMA = DATABASE() 
+                                                                AND TABLE_NAME = 'crop_schedules' 
+                                                                AND COLUMN_NAME = 'farmer_name'";
+                                        $schedule_column_check = $conn->query($check_schedule_column);
+                                        $has_schedule_farmer_column = $schedule_column_check->fetch_assoc()['count'] > 0;
+                                        
                                         // Optimized query using JOINs
-                                        $sql = "
-                                            SELECT 
-                                                cf.id AS feedback_id,
-                                                cf.crop_condition,
-                                                cf.created_at,
-                                                cr.crop_id,
-                                                cs.status AS phase_status,
-                                                cs.id,
-                                                cs.crop_id,
-                                                c.name AS crop_name,
-                                                u.firstname,
-                                                u.lastname
-                                            FROM crop_feedback AS cf
-                                            LEFT JOIN crop_recommendations AS cr ON cr.id = cf.recommendation_id
-                                            LEFT JOIN crop_schedules AS cs ON cs.id = cf.crop_schedule_id
-                                            LEFT JOIN crops AS c ON c.id = cs.crop_id
-                                            LEFT JOIN users AS u ON u.id = cf.user_id
-                                            ORDER BY cf.created_at DESC
-                                        ";
+                                        if ($has_feedback_farmer_column) {
+                                            $sql = "
+                                                SELECT 
+                                                    cf.id AS feedback_id,
+                                                    cf.crop_condition,
+                                                    cf.created_at,
+                                                    cf.farmer_name AS feedback_farmer_name,
+                                                    cr.crop_id,
+                                                    cs.status AS phase_status,
+                                                    cs.id,
+                                                    cs.crop_id,
+                                                    cs.farmer_name AS schedule_farmer_name,
+                                                    c.name AS crop_name,
+                                                    u.firstname,
+                                                    u.lastname
+                                                FROM crop_feedback AS cf
+                                                LEFT JOIN crop_recommendations AS cr ON cr.id = cf.recommendation_id
+                                                LEFT JOIN crop_schedules AS cs ON cs.id = cf.crop_schedule_id
+                                                LEFT JOIN crops AS c ON c.id = cs.crop_id
+                                                LEFT JOIN users AS u ON u.id = cf.user_id
+                                                ORDER BY cf.created_at DESC
+                                            ";
+                                        } elseif ($has_schedule_farmer_column) {
+                                            $sql = "
+                                                SELECT 
+                                                    cf.id AS feedback_id,
+                                                    cf.crop_condition,
+                                                    cf.created_at,
+                                                    cr.crop_id,
+                                                    cs.status AS phase_status,
+                                                    cs.id,
+                                                    cs.crop_id,
+                                                    cs.farmer_name AS schedule_farmer_name,
+                                                    c.name AS crop_name,
+                                                    u.firstname,
+                                                    u.lastname
+                                                FROM crop_feedback AS cf
+                                                LEFT JOIN crop_recommendations AS cr ON cr.id = cf.recommendation_id
+                                                LEFT JOIN crop_schedules AS cs ON cs.id = cf.crop_schedule_id
+                                                LEFT JOIN crops AS c ON c.id = cs.crop_id
+                                                LEFT JOIN users AS u ON u.id = cf.user_id
+                                                ORDER BY cf.created_at DESC
+                                            ";
+                                        } else {
+                                            $sql = "
+                                                SELECT 
+                                                    cf.id AS feedback_id,
+                                                    cf.crop_condition,
+                                                    cf.created_at,
+                                                    cr.crop_id,
+                                                    cs.status AS phase_status,
+                                                    cs.id,
+                                                    cs.crop_id,
+                                                    cs.notes AS schedule_notes,
+                                                    c.name AS crop_name,
+                                                    u.firstname,
+                                                    u.lastname
+                                                FROM crop_feedback AS cf
+                                                LEFT JOIN crop_recommendations AS cr ON cr.id = cf.recommendation_id
+                                                LEFT JOIN crop_schedules AS cs ON cs.id = cf.crop_schedule_id
+                                                LEFT JOIN crops AS c ON c.id = cs.crop_id
+                                                LEFT JOIN users AS u ON u.id = cf.user_id
+                                                ORDER BY cf.created_at DESC
+                                            ";
+                                        }
 
                                         $result = $conn->query($sql);
 
                                         if ($result && $result->num_rows > 0) {
                                             while ($row = $result->fetch_assoc()) {
+                                                // Get farmer name
+                                                $farmer_name = null;
+                                                if ($has_feedback_farmer_column && !empty($row['feedback_farmer_name'])) {
+                                                    $farmer_name = $row['feedback_farmer_name'];
+                                                } elseif ($has_schedule_farmer_column && !empty($row['schedule_farmer_name'])) {
+                                                    $farmer_name = $row['schedule_farmer_name'];
+                                                } elseif (!empty($row['schedule_notes']) && preg_match('/^Farmer:\s*(.+?)(\n\n|$)/i', $row['schedule_notes'], $matches)) {
+                                                    $farmer_name = trim($matches[1]);
+                                                }
                                         ?>
                                         <tr class="feedback-row"
                                             data-technologist="<?= strtolower(htmlspecialchars($row['firstname'] . ' ' . $row['lastname'])) ?>"
                                             data-crop="<?= strtolower(htmlspecialchars($row['crop_name'] ?? 'unknown crop')) ?>"
                                             data-phase="<?= strtolower($row['phase_status'] ?? '') ?>"
                                             data-status="<?= strtolower($row['crop_condition'] ?? '') ?>"
-                                            data-date="<?= date('Y-m-d', strtotime($row['created_at'])) ?>">
-                                            <td><?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']) ?></td>
+                                            data-date="<?= date('Y-m-d', strtotime($row['created_at'])) ?>"
+                                            data-farmer="<?= strtolower(htmlspecialchars($farmer_name ?? '')) ?>">
+                                            <td>
+                                                <?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']) ?>
+                                                <?php if (!empty($farmer_name)): ?>
+                                                <br><small class="text-muted"><i class="bi bi-person me-1"></i>Farmer:
+                                                    <?= htmlspecialchars($farmer_name) ?></small>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?= htmlspecialchars($row['crop_name'] ?? 'Unknown Crop') ?></td>
                                             <td>
                                                 <?php 
@@ -264,6 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function filterTable() {
     const technologistFilter = document.getElementById('filterTechnologist').value.toLowerCase();
+    const farmerFilter = document.getElementById('filterFarmer').value.toLowerCase();
     const cropFilter = document.getElementById('filterCrop').value.toLowerCase();
     const phaseFilter = document.getElementById('filterPhase').value.toLowerCase();
     const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
@@ -275,6 +361,7 @@ function filterTable() {
 
     rows.forEach(row => {
         const technologist = row.getAttribute('data-technologist') || '';
+        const farmer = row.getAttribute('data-farmer') || '';
         const crop = row.getAttribute('data-crop') || '';
         const phase = row.getAttribute('data-phase') || '';
         const status = row.getAttribute('data-status') || '';
@@ -284,6 +371,9 @@ function filterTable() {
 
         // Apply filters
         if (technologistFilter && !technologist.includes(technologistFilter)) {
+            show = false;
+        }
+        if (farmerFilter && !farmer.includes(farmerFilter)) {
             show = false;
         }
         if (cropFilter && !crop.includes(cropFilter)) {
@@ -322,6 +412,7 @@ function filterTable() {
 
 function clearFilters() {
     document.getElementById('filterTechnologist').value = '';
+    document.getElementById('filterFarmer').value = '';
     document.getElementById('filterCrop').value = '';
     document.getElementById('filterPhase').value = '';
     document.getElementById('filterStatus').value = '';
