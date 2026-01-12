@@ -38,8 +38,10 @@
             if ($total_schedules > 0) {
                 $availability = round(($success_count / $total_schedules) * 100);
             } else {
-                // Default availability for crops without data
-                $availability = rand(75, 95);
+                // Default availability for crops without data - use consistent value based on crop ID
+                // This ensures the same crop always gets the same availability percentage
+                $hash = crc32($crop['name'] . $crop['id']);
+                $availability = 75 + (abs($hash) % 21); // Range: 75-95, consistent per crop
             }
             
             $seasonal_availability[] = [
@@ -49,6 +51,17 @@
             ];
         }
     }
+    
+    // Sort seasonal availability consistently (by season, then by crop name, then by availability)
+    usort($seasonal_availability, function($a, $b) {
+        if ($a['season'] !== $b['season']) {
+            return strcmp($a['season'], $b['season']);
+        }
+        if ($a['crop'] !== $b['crop']) {
+            return strcmp($a['crop'], $b['crop']);
+        }
+        return $b['availability'] - $a['availability'];
+    });
     
     // Get crop performance data from feedback
     $performance_query = "SELECT c.name, 
@@ -77,21 +90,55 @@
     if (empty($crop_performance)) {
         $top_crops = array_slice($all_crops, 0, 3);
         foreach ($top_crops as $crop) {
+            // Use consistent values based on crop ID to avoid random changes on refresh
+            $hash = crc32($crop['name'] . $crop['id']);
+            $score = 70 + (abs($hash) % 26); // Range: 70-95, consistent per crop
+            $success_hash = crc32($crop['name'] . $crop['id'] . 'success');
+            $success_rate = 75 + (abs($success_hash) % 16); // Range: 75-90, consistent per crop
+            
             $crop_performance[] = [
                 'name' => $crop['name'],
-                'score' => rand(70, 95),
-                'success_rate' => rand(75, 90)
+                'score' => $score,
+                'success_rate' => $success_rate
             ];
         }
     }
     
     // Get forecasted yield data (simulated based on weather and crop schedules)
+    // Try to get actual forecast data from crop schedules first
+    $forecast_query = "SELECT 
+                        MONTH(planting_date) as month_num,
+                        COUNT(*) as crop_count,
+                        AVG(DATEDIFF(expected_harvest_date, planting_date)) as avg_days
+                        FROM crop_schedules 
+                        WHERE planting_date IS NOT NULL
+                        GROUP BY MONTH(planting_date)
+                        ORDER BY month_num";
+    $forecast_result = $conn->query($forecast_query);
+    $actual_forecast_data = [];
+    if ($forecast_result && $forecast_result->num_rows > 0) {
+        while ($row = $forecast_result->fetch_assoc()) {
+            $actual_forecast_data[$row['month_num']] = $row['crop_count'];
+        }
+    }
+    
     $forecast_yields = [];
     $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     for ($i = 0; $i < 12; $i++) {
+        $month_num = $i + 1;
+        if (isset($actual_forecast_data[$month_num])) {
+            // Use actual data if available, scale it to yield range
+            $base_yield = 800 + ($actual_forecast_data[$month_num] * 50);
+            $yield = min(1200, max(800, $base_yield));
+        } else {
+            // Use consistent value based on month to avoid random changes
+            $hash = crc32('forecast_' . $month_num . '_' . date('Y'));
+            $yield = 800 + (abs($hash) % 401); // Range: 800-1200, consistent per month/year
+        }
+        
         $forecast_yields[] = [
             'month' => $months[$i],
-            'yield' => rand(800, 1200) // Simulated yield in tons
+            'yield' => $yield
         ];
     }
     
@@ -121,10 +168,16 @@
     // Get top available crop
     $top_available = "Rice";
     if (!empty($seasonal_availability)) {
-        usort($seasonal_availability, function($a, $b) {
-            return $b['availability'] - $a['availability'];
+        // Create a copy for sorting to preserve original array order for display
+        $sorted_availability = $seasonal_availability;
+        usort($sorted_availability, function($a, $b) {
+            // Sort by availability descending, then by crop name for consistency
+            if ($b['availability'] !== $a['availability']) {
+                return $b['availability'] - $a['availability'];
+            }
+            return strcmp($a['crop'], $b['crop']);
         });
-        $top_available = $seasonal_availability[0]['crop'];
+        $top_available = $sorted_availability[0]['crop'];
     }
     
     // Get next planting season (simplified - next month's season)
@@ -139,9 +192,15 @@
     // Get top performer
     $top_performer = "Rice";
     if (!empty($crop_performance)) {
-        usort($crop_performance, function($a, $b) {
-            return $b['score'] - $a['score'];
+        // Create a copy for sorting to preserve original array order for display
+        $sorted_performance = $crop_performance;
+        usort($sorted_performance, function($a, $b) {
+            // Sort by score descending, then by name for consistency
+            if ($b['score'] !== $a['score']) {
+                return $b['score'] - $a['score'];
+            }
+            return strcmp($a['name'], $b['name']);
         });
-        $top_performer = $crop_performance[0]['name'];
+        $top_performer = $sorted_performance[0]['name'];
     }
 ?>
