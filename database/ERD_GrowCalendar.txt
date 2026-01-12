@@ -1,0 +1,246 @@
+================================================================================
+GROWCALENDAR DATABASE - ENTITY RELATIONSHIP DIAGRAM (TEXT VERSION)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USERS                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                    INT (AUTO_INCREMENT)                              │
+│     role                  VARCHAR(255) NOT NULL                              │
+│     username              VARCHAR(255) NOT NULL                              │
+│     firstname             VARCHAR(255) NOT NULL                              │
+│     lastname              VARCHAR(255) NOT NULL                              │
+│     barangay              VARCHAR(255) NOT NULL                              │
+│     last_login            DATE                                              │
+│     email                 VARCHAR(255) NOT NULL                              │
+│     password              VARCHAR(255) NOT NULL                              │
+│     password_token        VARCHAR(255) NOT NULL                              │
+│     status                VARCHAR(10) DEFAULT 'Active'                      │
+│     date_created          TIMESTAMP DEFAULT CURRENT_TIMESTAMP               │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │
+         │ 1
+         │
+         │ * (ON DELETE CASCADE)
+         ├──────────────────────────────────────────────────────────────┐
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         ▼                                                              ▼
+┌──────────────────────────────┐                    ┌──────────────────────────────┐
+│  CROP_RECOMMENDATIONS        │                    │  CROP_SCHEDULES              │
+├──────────────────────────────┤                    ├──────────────────────────────┤
+│ PK  id                       │                    │ PK  id                        │
+│ FK  user_id ────────────────┼────────────────────┤ FK  user_id                   │
+│ FK  crop_id                  │                    │ FK  crop_id                   │
+│ FK  soil_type_id             │                    │ FK  recommendation_id         │
+│ FK  weather_data_id           │                    │     planting_date             │
+│     recommendation_score      │                    │     expected_harvest_date     │
+│     reasons                  │                    │     farmer_name               │
+│     planting_tips            │                    │     actual_harvest_date       │
+│     created_at               │                    │     status (ENUM)              │
+└──────────────────────────────┘                    │     progress_percentage      │
+         │                                           │     notes                     │
+         │ 1                                         │     created_at                │
+         │                                           │     updated_at                 │
+         │ * (ON DELETE SET NULL)                    └──────────────────────────────┘
+         │                                                      │
+         │                                                      │ 1
+         │                                                      │
+         │                                                      │ * (ON DELETE CASCADE)
+         │                                                      │
+         │                                                      ▼
+         │                                           ┌──────────────────────────────┐
+         │                                           │  CROP_FEEDBACK               │
+         │                                           ├──────────────────────────────┤
+         │                                           │ PK  id                        │
+         │                                           │ FK  user_id                   │
+         │                                           │ FK  crop_schedule_id          │
+         │                                           │     farmer_name               │
+         │                                           │ FK  recommendation_id         │
+         │                                           │     crop_condition (ENUM)     │
+         │                                           │     challenges_encountered     │
+         │                                           │     remarks                   │
+         │                                           │     photos                    │
+         │                                           │     feedback_score            │
+         │                                           │     created_at                │
+         │                                           └──────────────────────────────┘
+         │
+         │
+         ▼
+┌──────────────────────────────┐
+│  USER_SOIL_PREFERENCES     │
+├──────────────────────────────┤
+│ PK  id                       │
+│ FK  user_id                  │
+│ FK  soil_type_id             │
+│     location                 │
+│     notes                    │
+│     created_at               │
+│     updated_at                │
+└──────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CROPS                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                    INT (AUTO_INCREMENT)                              │
+│     name                  VARCHAR(100) NOT NULL                              │
+│     scientific_name       VARCHAR(150)                                       │
+│     description           TEXT                                              │
+│     planting_season       VARCHAR(50)                                       │
+│     harvest_days           INT                                               │
+│     water_requirements    VARCHAR(50)                                        │
+│     temperature_min       DECIMAL(4,1)                                      │
+│     temperature_max       DECIMAL(4,1)                                      │
+│     humidity_min          DECIMAL(4,1)                                      │
+│     humidity_max          DECIMAL(4,1)                                      │
+│     rainfall_min          DECIMAL(6,2)                                       │
+│     rainfall_max          DECIMAL(6,2)                                       │
+│     ph_min                DECIMAL(3,1)                                      │
+│     ph_max                DECIMAL(3,1)                                      │
+│     marketability         TEXT                                              │
+│     soil_type_preference  VARCHAR(255)                                      │
+│     weather_conditions    TEXT                                              │
+│     image_url             VARCHAR(255)                                      │
+│     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP               │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │
+         │ 1
+         │
+         │ * (ON DELETE CASCADE)
+         ├──────────────────────────────────────────────────────────────┐
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         ▼                                                              ▼
+┌──────────────────────────────┐                    ┌──────────────────────────────┐
+│  CROP_RECOMMENDATIONS        │                    │  CROP_SOIL_COMPATIBILITY    │
+├──────────────────────────────┤                    ├──────────────────────────────┤
+│ FK  crop_id                  │                    │ PK  id                        │
+│                              │                    │ FK  crop_id                   │
+│                              │                    │ FK  soil_type_id             │
+│                              │                    │     compatibility_score       │
+│                              │                    │     notes                     │
+│                              │                    │ UNIQUE (crop_id, soil_type_id)│
+└──────────────────────────────┘                    └──────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          SOIL_TYPES                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                    INT (AUTO_INCREMENT)                              │
+│     name                  VARCHAR(100) NOT NULL                              │
+│     description           TEXT                                              │
+│     ph_min                DECIMAL(3,1)                                      │
+│     ph_max                DECIMAL(3,1)                                      │
+│     drainage              VARCHAR(50)                                       │
+│     fertility_level       VARCHAR(50)                                       │
+│     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP               │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │
+         │ 1
+         │
+         │ * (ON DELETE CASCADE)
+         ├──────────────────────────────────────────────────────────────┐
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         │ * (ON DELETE CASCADE)                                       │
+         │                                                              │
+         ▼                                                              ▼
+┌──────────────────────────────┐                    ┌──────────────────────────────┐
+│  CROP_RECOMMENDATIONS        │                    │  CROP_SOIL_COMPATIBILITY    │
+├──────────────────────────────┤                    ├──────────────────────────────┤
+│ FK  soil_type_id             │                    │ FK  soil_type_id             │
+│                              │                    │                              │
+└──────────────────────────────┘                    └──────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          WEATHER_DATA                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                    INT (AUTO_INCREMENT)                              │
+│     location              VARCHAR(100) NOT NULL                              │
+│     temperature           DECIMAL(4,1)                                      │
+│     humidity              DECIMAL(4,1)                                      │
+│     rainfall              DECIMAL(6,2)                                       │
+│     wind_speed            DECIMAL(4,1)                                      │
+│     weather_condition     VARCHAR(50)                                       │
+│     recorded_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP               │
+│     api_source            VARCHAR(50)                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+         │
+         │ 1
+         │
+         │ * (ON DELETE CASCADE)
+         │
+         ▼
+┌──────────────────────────────┐
+│  CROP_RECOMMENDATIONS        │
+├──────────────────────────────┤
+│ FK  weather_data_id          │
+│                              │
+└──────────────────────────────┘
+
+
+================================================================================
+RELATIONSHIP SUMMARY
+================================================================================
+
+1. users (1) ────────< (*) crop_recommendations      [ON DELETE CASCADE]
+2. users (1) ────────< (*) crop_schedules            [ON DELETE CASCADE]
+3. users (1) ────────< (*) crop_feedback            [ON DELETE CASCADE]
+4. users (1) ────────< (*) user_soil_preferences    [ON DELETE CASCADE]
+
+5. crops (1) ────────< (*) crop_recommendations      [ON DELETE CASCADE]
+6. crops (1) ────────< (*) crop_schedules           [ON DELETE CASCADE]
+7. crops (*) ────────<─> (*) soil_types             [via crop_soil_compatibility]
+
+8. soil_types (1) ────< (*) crop_recommendations     [ON DELETE CASCADE]
+9. soil_types (1) ────< (*) user_soil_preferences    [ON DELETE CASCADE]
+10. soil_types (*) ────<─> (*) crops                 [via crop_soil_compatibility]
+
+11. weather_data (1) ─< (*) crop_recommendations     [ON DELETE CASCADE]
+
+12. crop_recommendations (1) ─< (*) crop_schedules   [ON DELETE SET NULL]
+13. crop_recommendations (1) ─< (*) crop_feedback    [ON DELETE SET NULL]
+
+14. crop_schedules (1) ────< (*) crop_feedback        [ON DELETE CASCADE]
+
+
+================================================================================
+KEY FEATURES
+================================================================================
+
+✓ All foreign keys have proper referential integrity constraints
+✓ CASCADE deletes ensure data consistency
+✓ SET NULL on recommendation_id preserves feedback/schedules
+✓ Unique constraint on crop_soil_compatibility prevents duplicates
+✓ Indexes on frequently queried columns for performance
+✓ ENUM types ensure data consistency for status and condition
+✓ JSON columns for flexible data storage (challenges, photos)
+✓ farmer_name columns added via ALTER statements
+✓ Timestamps track creation and update times
+
+================================================================================
+TOTAL TABLES: 9
+================================================================================
+
+1. users
+2. crops
+3. soil_types
+4. crop_soil_compatibility (Junction Table)
+5. weather_data
+6. user_soil_preferences
+7. crop_recommendations
+8. crop_schedules
+9. crop_feedback
+
+================================================================================

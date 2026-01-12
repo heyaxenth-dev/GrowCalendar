@@ -1,0 +1,194 @@
+// GrowCalendar Database ERD
+// Use this file with dbdiagram.io or other DBML-compatible tools
+// Visit: https://dbdiagram.io
+
+Project GrowCalendar {
+  database_type: 'MySQL'
+  Note: 'GrowCalendar Crop Recommendation System Database'
+}
+
+// Users Table
+Table users {
+  id int [pk, increment]
+  role varchar(255) [not null]
+  username varchar(255) [not null]
+  firstname varchar(255) [not null]
+  lastname varchar(255) [not null]
+  barangay varchar(255) [not null]
+  last_login date
+  email varchar(255) [not null]
+  password varchar(255) [not null]
+  password_token varchar(255) [not null]
+  status varchar(10) [default: 'Active']
+  date_created timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  Note: 'Stores user account information for farmers and administrators'
+}
+
+// Crops Table
+Table crops {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  scientific_name varchar(150)
+  description text
+  planting_season varchar(50)
+  harvest_days int
+  water_requirements varchar(50)
+  temperature_min decimal(4,1)
+  temperature_max decimal(4,1)
+  humidity_min decimal(4,1)
+  humidity_max decimal(4,1)
+  rainfall_min decimal(6,2)
+  rainfall_max decimal(6,2)
+  ph_min decimal(3,1)
+  ph_max decimal(3,1)
+  marketability text
+  soil_type_preference varchar(255)
+  weather_conditions text
+  image_url varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  Note: 'Stores crop information including environmental requirements'
+}
+
+// Soil Types Table
+Table soil_types {
+  id int [pk, increment]
+  name varchar(100) [not null]
+  description text
+  ph_min decimal(3,1)
+  ph_max decimal(3,1)
+  drainage varchar(50)
+  fertility_level varchar(50)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  Note: 'Stores different soil type classifications and properties'
+}
+
+// Crop-Soil Compatibility Junction Table
+Table crop_soil_compatibility {
+  id int [pk, increment]
+  crop_id int [ref: > crops.id]
+  soil_type_id int [ref: > soil_types.id]
+  compatibility_score decimal(3,2) [default: 0.00]
+  notes text
+  
+  indexes {
+    (crop_id, soil_type_id) [unique, name: 'unique_crop_soil']
+  }
+  
+  Note: 'Junction table linking crops to compatible soil types with scores'
+}
+
+// Weather Data Table
+Table weather_data {
+  id int [pk, increment]
+  location varchar(100) [not null]
+  temperature decimal(4,1)
+  humidity decimal(4,1)
+  rainfall decimal(6,2)
+  wind_speed decimal(4,1)
+  weather_condition varchar(50)
+  recorded_at timestamp [default: `CURRENT_TIMESTAMP`]
+  api_source varchar(50)
+  
+  Note: 'Stores weather information from API sources'
+}
+
+// User Soil Preferences Table
+Table user_soil_preferences {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  soil_type_id int [ref: > soil_types.id]
+  location varchar(100)
+  notes text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'ON UPDATE CURRENT_TIMESTAMP']
+  
+  Note: 'Stores user-specific soil type preferences'
+}
+
+// Crop Recommendations Table
+Table crop_recommendations {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  crop_id int [ref: > crops.id]
+  soil_type_id int [ref: > soil_types.id]
+  weather_data_id int [ref: > weather_data.id]
+  recommendation_score decimal(3,2)
+  reasons text
+  planting_tips text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  Note: 'Stores crop recommendations generated for users'
+}
+
+// Crop Schedules Table
+Table crop_schedules {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  crop_id int [ref: > crops.id]
+  recommendation_id int [ref: - crop_recommendations.id, note: 'ON DELETE SET NULL']
+  planting_date date
+  expected_harvest_date date
+  farmer_name varchar(255) [note: 'Added via ALTER statement']
+  actual_harvest_date date
+  status enum('planting', 'vegetative', 'reproductive', 'harvest', 'completed') [default: 'planting']
+  progress_percentage decimal(5,2) [default: 0.00]
+  notes text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [default: `CURRENT_TIMESTAMP`, note: 'ON UPDATE CURRENT_TIMESTAMP']
+  
+  indexes {
+    user_id [name: 'idx_crop_schedules_user_id']
+    crop_id [name: 'idx_crop_schedules_crop_id']
+    status [name: 'idx_crop_schedules_status']
+    planting_date [name: 'idx_crop_schedules_planting_date']
+  }
+  
+  Note: 'Tracks user crop planting schedules and progress'
+}
+
+// Crop Feedback Table
+Table crop_feedback {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  crop_schedule_id int [ref: > crop_schedules.id]
+  farmer_name varchar(255) [note: 'Added via ALTER statement']
+  recommendation_id int [ref: - crop_recommendations.id, note: 'ON DELETE SET NULL']
+  crop_condition enum('success', 'partial', 'failure') [not null]
+  challenges_encountered json
+  remarks text
+  photos json
+  feedback_score int [note: 'CHECK constraint: 1-5']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    user_id [name: 'idx_crop_feedback_user_id']
+    crop_schedule_id [name: 'idx_crop_feedback_schedule_id']
+    crop_condition [name: 'idx_crop_feedback_condition']
+  }
+  
+  Note: 'Stores user feedback on crop performance and outcomes'
+}
+
+// Relationship Notes
+Ref: users.crop_recommendations [delete: cascade]
+Ref: users.crop_schedules [delete: cascade]
+Ref: users.crop_feedback [delete: cascade]
+Ref: users.user_soil_preferences [delete: cascade]
+
+Ref: crops.crop_recommendations [delete: cascade]
+Ref: crops.crop_schedules [delete: cascade]
+Ref: crops.crop_soil_compatibility [delete: cascade]
+
+Ref: soil_types.crop_recommendations [delete: cascade]
+Ref: soil_types.crop_soil_compatibility [delete: cascade]
+Ref: soil_types.user_soil_preferences [delete: cascade]
+
+Ref: weather_data.crop_recommendations [delete: cascade]
+
+Ref: crop_recommendations.crop_schedules [delete: set null]
+Ref: crop_recommendations.crop_feedback [delete: set null]
+
+Ref: crop_schedules.crop_feedback [delete: cascade]
