@@ -122,7 +122,53 @@
         $user_soil_preference = $recommendation_engine->getUserSoilPreference($user_id);
     }
     
-    // Handle form submission (only if engine is available)
+    // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD (Automatic System)
+    // Use user's saved preference or default values
+    if ($recommendation_engine && empty($recommendations)) {
+        $selected_soil_id = null;
+        $location = 'Poblacion, Barbaza, Antique'; // Default location
+        
+        // Use saved preference if available
+        if ($user_soil_preference) {
+            $selected_soil_id = $user_soil_preference['id'];
+            $location = $user_soil_preference['location'] ?? $location;
+        } else {
+            // Use first available soil type as default
+            if (!empty($soil_types)) {
+                $selected_soil_id = $soil_types[0]['id'];
+            }
+        }
+        
+        // Auto-generate recommendations if we have a soil type
+        if ($selected_soil_id) {
+            try {
+                // Get weather data
+                $weather_api = new WeatherAPI(getWeatherApiKey());
+                $weather_result = $weather_api->getCurrentWeather($location);
+                
+                if (!$weather_result['error']) {
+                    $weather_data = $weather_result;
+                } else {
+                    // Use fallback weather data
+                    $weather_data = getFallbackWeatherData($location);
+                }
+                
+                // Save weather data to database
+                $weather_id = $weather_api->saveWeatherData($conn, $weather_data);
+                
+                // Save/update user soil preference
+                $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_id, $location);
+                
+                // Generate recommendations automatically
+                $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
+                $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
+            } catch (Exception $e) {
+                $error_message = "Error generating recommendations: " . $e->getMessage();
+            }
+        }
+    }
+    
+    // Handle manual form submission (optional - for changing preferences)
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $recommendation_engine) {
         if (isset($_POST['get_recommendations'])) {
             $selected_soil_id = $_POST['soil_type'];
@@ -145,7 +191,7 @@
                     // Generate recommendations
                     $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
                     $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
-                    $success_message = "Recommendations generated successfully!";
+                    $success_message = "Recommendations updated successfully!";
                 } else {
                     // Use fallback weather data
                     $weather_data = getFallbackWeatherData($location);
@@ -154,7 +200,7 @@
                     $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_id, $location);
                     $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
                     $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
-                    $success_message = "Recommendations generated using fallback weather data!";
+                    $success_message = "Recommendations updated using fallback weather data!";
                 }
             } catch (Exception $e) {
                 $error_message = "Error generating recommendations: " . $e->getMessage();
@@ -219,9 +265,10 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Get Crop Recommendations</h5>
-                        <p class="card-text">Select your soil type and location to get personalized crop recommendations
-                            based on current weather conditions.</p>
+                        <h5 class="card-title">Crop Recommendations</h5>
+                        <p class="card-text">Recommendations are automatically generated based on your saved preferences
+                            and current weather conditions. You can update your soil type and location below to refresh
+                            recommendations.</p>
 
                         <form method="POST" action="">
                             <div class="row mb-3">
@@ -260,8 +307,10 @@
 
                             <div class="text-center">
                                 <button type="submit" name="get_recommendations" class="btn btn-primary">
-                                    <i class="bi bi-search me-1"></i>Get Recommendations
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Update Recommendations
                                 </button>
+                                <small class="d-block text-muted mt-2">Recommendations are automatically generated on
+                                    page load</small>
                             </div>
                         </form>
                     </div>
@@ -398,9 +447,33 @@
                                                 class="badge bg-success"><?= number_format($rec['score'] * 100, 1) ?>%</span>
                                         </div>
 
-                                        <p class="card-text text-muted small">
+                                        <p class="card-text text-muted small mb-2">
                                             <em><?= $rec['crop']['scientific_name'] ?></em>
                                         </p>
+
+                                        <?php if (!empty($rec['crop']['description'])): ?>
+                                        <div class="mb-3">
+                                            <h6 class="small text-info mb-1">Crop Summary:</h6>
+                                            <p class="small text-muted mb-2">
+                                                <?= htmlspecialchars($rec['crop']['description']) ?></p>
+                                            <div class="row small text-muted g-2">
+                                                <?php if (!empty($rec['crop']['water_requirements'])): ?>
+                                                <div class="col-6">
+                                                    <i class="bi bi-droplet text-primary"></i>
+                                                    <strong>Water:</strong>
+                                                    <?= htmlspecialchars($rec['crop']['water_requirements']) ?>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if (!empty($rec['crop']['temperature_min']) && !empty($rec['crop']['temperature_max'])): ?>
+                                                <div class="col-6">
+                                                    <i class="bi bi-thermometer-half text-danger"></i>
+                                                    <strong>Temp:</strong>
+                                                    <?= $rec['crop']['temperature_min'] ?>-<?= $rec['crop']['temperature_max'] ?>°C
+                                                </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
 
                                         <div class="mb-3">
                                             <h6 class="small text-primary mb-1">Why this crop?</h6>
@@ -505,7 +578,11 @@
 
                         <div class="mb-3">
                             <label class="form-label">Expected Harvest Date</label>
-                            <input type="date" class="form-control" id="harvestDate" readonly>
+                            <input type="date" class="form-control" id="harvestDate" readonly style="display: none;">
+                            <input type="text" class="form-control" id="harvestDateDisplay" readonly
+                                placeholder="mm/dd/yy (auto-calculated)" style="background-color: #f8f9fa;">
+                            <small class="text-muted">Automatically calculated based on planting date and crop harvest
+                                days</small>
                         </div>
 
                         <div class="mb-3">
@@ -622,10 +699,37 @@ function addToSchedule(cropId, cropName, harvestDays) {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('plantingDate').value = today;
 
-    // Calculate expected harvest date
+    // Calculate expected harvest date and format as mm/dd/yy
     const plantingDate = new Date(today);
     const harvestDate = new Date(plantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
+
+    // Format as mm/dd/yy
+    const month = String(harvestDate.getMonth() + 1).padStart(2, '0');
+    const day = String(harvestDate.getDate()).padStart(2, '0');
+    const year = String(harvestDate.getFullYear()).slice(-2);
+    const formattedDate = `${month}/${day}/${year}`;
+
+    // Store ISO date for form submission
     document.getElementById('harvestDate').value = harvestDate.toISOString().split('T')[0];
+
+    // Display formatted date
+    const harvestDateDisplay = document.getElementById('harvestDateDisplay');
+    if (harvestDateDisplay) {
+        harvestDateDisplay.value = formattedDate;
+    }
+
+    // Update harvest date when planting date changes
+    document.getElementById('plantingDate').addEventListener('change', function() {
+        const newPlantingDate = new Date(this.value);
+        const newHarvestDate = new Date(newPlantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
+        const newMonth = String(newHarvestDate.getMonth() + 1).padStart(2, '0');
+        const newDay = String(newHarvestDate.getDate()).padStart(2, '0');
+        const newYear = String(newHarvestDate.getFullYear()).slice(-2);
+        document.getElementById('harvestDate').value = newHarvestDate.toISOString().split('T')[0];
+        if (harvestDateDisplay) {
+            harvestDateDisplay.value = `${newMonth}/${newDay}/${newYear}`;
+        }
+    });
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('addToScheduleModal'));

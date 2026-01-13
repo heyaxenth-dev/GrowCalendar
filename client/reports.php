@@ -16,20 +16,37 @@
                     <p class="text-muted text-small">View, compare, and analyze seasonal, forecasted, and
                         performance-based crop data.</p>
                 </div>
-                <div class="d-flex gap-2 align-items-center">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
                     <!-- Filters -->
                     <select class="form-select form-select-sm" style="width: auto;" id="filterYear">
                         <option value="">Year</option>
-                        <option value="2022">2022</option>
-                        <option value="2023">2023</option>
-                        <option value="2024" selected>2024</option>
-                        <option value="2025">2025</option>
+                        <?php 
+                        $current_year = date('Y');
+                        for ($y = $current_year - 3; $y <= $current_year + 1; $y++): 
+                        ?>
+                        <option value="<?= $y ?>" <?= ($y == $current_year) ? 'selected' : '' ?>><?= $y ?></option>
+                        <?php endfor; ?>
+                    </select>
+                    <select class="form-select form-select-sm" style="width: auto;" id="filterMonth">
+                        <option value="">Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
                     </select>
                     <select class="form-select form-select-sm" style="width: auto;" id="filterSeason">
                         <option value="">Season</option>
-                        <?php foreach ($seasons as $season): ?>
-                        <option value="<?= htmlspecialchars($season) ?>"><?= htmlspecialchars($season) ?></option>
-                        <?php endforeach; ?>
+                        <option value="Wet Season">Wet Season (May - November)</option>
+                        <option value="Dry Season">Dry Season (December - April)</option>
+                        <option value="Year-round">Year-round</option>
                     </select>
                     <select class="form-select form-select-sm" style="width: auto;" id="filterCrop">
                         <option value="">Crop</option>
@@ -74,7 +91,7 @@
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th>Season</th>
+                                            <th>Season (Month Range)</th>
                                             <th>Crop</th>
                                             <th>Availability (%)</th>
                                         </tr>
@@ -84,9 +101,17 @@
                                         $display_count = 0;
                                         foreach ($seasonal_availability as $item): 
                                             if ($display_count >= 5) break;
+                                            
+                                            // Format season with month range
+                                            $season_display = $item['season'];
+                                            if ($item['season'] == 'Wet Season') {
+                                                $season_display = 'Wet Season (May - November)';
+                                            } elseif ($item['season'] == 'Dry Season') {
+                                                $season_display = 'Dry Season (December - April)';
+                                            }
                                         ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($item['season']) ?></td>
+                                            <td><?= htmlspecialchars($season_display) ?></td>
                                             <td><?= htmlspecialchars($item['crop']) ?></td>
                                             <td><strong><?= $item['availability'] ?>%</strong></td>
                                         </tr>
@@ -98,12 +123,12 @@
                                         if (empty($seasonal_availability)):
                                         ?>
                                         <tr>
-                                            <td>Dry</td>
+                                            <td>Dry Season (December - April)</td>
                                             <td>Rice</td>
                                             <td><strong>95%</strong></td>
                                         </tr>
                                         <tr>
-                                            <td>Wet</td>
+                                            <td>Wet Season (May - November)</td>
                                             <td>Corn</td>
                                             <td><strong>80%</strong></td>
                                         </tr>
@@ -236,6 +261,13 @@
                                     </div>
                                     <div class="text-center">
                                         <div class="mb-2">
+                                            <i class="bi bi-people fs-4 text-primary"></i>
+                                        </div>
+                                        <div class="small text-muted">Registered Farmers</div>
+                                        <div class="h5 mb-0"><?= $total_registered_farmers ?? 0 ?></div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="mb-2">
                                             <i class="bi bi-gear fs-4 text-primary"></i>
                                         </div>
                                         <div class="small text-muted">Generated by</div>
@@ -277,7 +309,7 @@
                             <table class="table table-bordered table-sm">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Season</th>
+                                        <th>Season (Month Range)</th>
                                         <th>Crop</th>
                                         <th>Availability (%)</th>
                                     </tr>
@@ -286,9 +318,16 @@
                                     <?php 
                                     if (!empty($seasonal_availability)) {
                                         foreach ($seasonal_availability as $item): 
+                                            // Format season with month range
+                                            $season_display = $item['season'];
+                                            if ($item['season'] == 'Wet Season') {
+                                                $season_display = 'Wet Season (May - November)';
+                                            } elseif ($item['season'] == 'Dry Season') {
+                                                $season_display = 'Dry Season (December - April)';
+                                            }
                                     ?>
                                     <tr>
-                                        <td><?= htmlspecialchars($item['season']) ?></td>
+                                        <td><?= htmlspecialchars($season_display) ?></td>
                                         <td><?= htmlspecialchars($item['crop']) ?></td>
                                         <td><strong><?= $item['availability'] ?>%</strong></td>
                                     </tr>
@@ -297,12 +336,12 @@
                                     } else {
                                     ?>
                                     <tr>
-                                        <td>Dry</td>
+                                        <td>Dry Season (December - April)</td>
                                         <td>Rice</td>
                                         <td><strong>95%</strong></td>
                                     </tr>
                                     <tr>
-                                        <td>Wet</td>
+                                        <td>Wet Season (May - November)</td>
                                         <td>Corn</td>
                                         <td><strong>80%</strong></td>
                                     </tr>

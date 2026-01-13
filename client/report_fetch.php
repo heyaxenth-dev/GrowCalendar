@@ -151,6 +151,12 @@
     $total_crops_data = $total_crops_result->fetch_assoc();
     $total_crops_monitored = $total_crops_data['total'] > 0 ? $total_crops_data['total'] : count($all_crops);
     
+    // Get total number of registered farmers
+    $total_farmers_query = "SELECT COUNT(*) as total FROM users WHERE role = 'farmer' AND status = 'Active'";
+    $total_farmers_result = $conn->query($total_farmers_query);
+    $total_farmers_data = $total_farmers_result->fetch_assoc();
+    $total_registered_farmers = $total_farmers_data['total'] ?? 0;
+    
     // Get data period (from earliest schedule to latest)
     $period_query = "SELECT 
                     MIN(created_at) as earliest,
@@ -180,13 +186,14 @@
         $top_available = $sorted_availability[0]['crop'];
     }
     
-    // Get next planting season (simplified - next month's season)
+    // Get next planting season with proper month ranges
     $current_month = date('n');
-    $next_planting_season = "November";
-    if ($current_month >= 11 || $current_month <= 2) {
-        $next_planting_season = "November";
+    if ($current_month >= 5 && $current_month <= 11) {
+        // Currently in Wet Season (May-November)
+        $next_planting_season = "December - April (Dry Season)";
     } else {
-        $next_planting_season = "May";
+        // Currently in Dry Season (Dec-Apr)
+        $next_planting_season = "May - November (Wet Season)";
     }
     
     // Get top performer

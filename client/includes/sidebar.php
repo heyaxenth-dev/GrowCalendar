@@ -41,11 +41,11 @@
             <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'crop_schedule') ? '' : 'collapsed' ?>"
                     href="<?= get_page_link('crop_schedule')?>">
-                    <i class="bi bi-calendar-plus"></i>
-                    <span>Crop Schedule</span>
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Crop Progress</span>
                 </a>
             </li>
-            <!-- End Crop Schedule Page Nav -->
+            <!-- End Crop Progress Page Nav -->
 
             <li class="nav-item">
                 <a class="nav-link <?= ($current_page == 'feedback')? '' : 'collapsed'?>"

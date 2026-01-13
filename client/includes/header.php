@@ -27,7 +27,7 @@
     // 'Dashboard' => 'home',
     'homepage' => 'Dashboard',
     'recommendations' => 'Crop Recommendations',
-    'crop_schedule' => 'Crop Schedule',
+    'crop_schedule' => 'Crop Progress',
     'feedback' => 'Feedback',
     'weather_insights' => 'Weather Insights',
     'reports' => 'Reports',

@@ -2,9 +2,13 @@
     include './authentication/authentication.php';
     include 'includes/header.php';
     include 'includes/sidebar.php';
+    include 'includes/auto_progress_calculator.php';
     
     // Get user's crop schedules
     $user_id = $_SESSION['user_id'];
+    
+    // Auto-update all schedules progress on page load
+    updateAllCropSchedulesProgress($conn, $user_id);
     
     // Check if farmer_name column exists
     $check_column = "SELECT COUNT(*) as count 
@@ -84,7 +88,10 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0">Your Crop Schedules</h5>
+                            <div>
+                                <h5 class="card-title mb-0">Your Crop Progress</h5>
+                                <small class="text-muted">Progress is automatically calculated and updated</small>
+                            </div>
                             <a href="recommendations.php" class="btn btn-primary">
                                 <i class="bi bi-plus-circle me-1"></i>Add New Crop
                             </a>
@@ -133,16 +140,24 @@
                                                 <div class="col-6">
                                                     <strong>Planted:</strong><br>
                                                     <span
-                                                        class="text-primary"><?= date('M j, Y', strtotime($schedule['planting_date'])) ?></span>
+                                                        class="text-primary"><?= formatDateMMDDYY($schedule['planting_date']) ?></span>
                                                 </div>
                                                 <div class="col-6">
                                                     <strong>Harvest:</strong><br>
                                                     <span
-                                                        class="text-success"><?= date('M j, Y', strtotime($schedule['expected_harvest_date'])) ?></span>
+                                                        class="text-success"><?= formatDateMMDDYY($schedule['expected_harvest_date']) ?></span>
                                                 </div>
                                             </div>
                                         </div>
 
+                                        <?php 
+                                        // Auto-calculate progress if needed
+                                        $auto_progress = calculateAutoProgress(
+                                            $schedule['planting_date'],
+                                            $schedule['expected_harvest_date']
+                                        );
+                                        $display_progress = max($schedule['progress_percentage'], $auto_progress);
+                                        ?>
                                         <div class="mb-3">
                                             <div class="progress" style="height: 8px;">
                                                 <div class="progress-bar bg-<?= 
@@ -150,10 +165,12 @@
                                                     ($schedule['status'] == 'vegetative' ? 'primary' : 
                                                     ($schedule['status'] == 'reproductive' ? 'warning' : 'danger'))
                                                 ?>" role="progressbar"
-                                                    style="width: <?= $schedule['progress_percentage'] ?>%"></div>
+                                                    style="width: <?= number_format($display_progress, 1) ?>%"></div>
                                             </div>
-                                            <small class="text-muted"><?= $schedule['progress_percentage'] ?>%
-                                                Complete</small>
+                                            <small class="text-muted">
+                                                <i class="bi bi-arrow-repeat text-info"></i>
+                                                <?= number_format($display_progress, 1) ?>% Complete (Auto-calculated)
+                                            </small>
                                         </div>
 
                                         <?php if (!empty($schedule['notes'])): ?>
@@ -165,9 +182,10 @@
                                         <?php endif; ?>
 
                                         <div class="d-flex gap-2">
-                                            <button class="btn btn-outline-primary btn-sm flex-fill"
-                                                onclick="updateSchedule(<?= $schedule['id'] ?>, '<?= $schedule['status'] ?>')">
-                                                <i class="bi bi-pencil me-1"></i>Update
+                                            <button class="btn btn-outline-info btn-sm flex-fill"
+                                                onclick="viewDetails(<?= $schedule['id'] ?>)"
+                                                title="View crop details (Progress updates automatically)">
+                                                <i class="bi bi-eye me-1"></i>View Details
                                             </button>
                                             <?php if ($schedule['status'] == 'harvest' || $schedule['status'] == 'completed'): ?>
                                             <button class="btn btn-outline-success btn-sm flex-fill"
@@ -195,56 +213,20 @@
     </main>
     <!-- End #main -->
 
-    <!-- Update Schedule Modal -->
-    <div class="modal fade" id="updateScheduleModal" tabindex="-1">
+    <!-- View Details Modal (Read-only, Progress is Auto-calculated) -->
+    <div class="modal fade" id="viewDetailsModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Update Crop Schedule</h5>
+                    <h5 class="modal-title">Crop Progress Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="updateScheduleForm">
-                    <div class="modal-body">
-                        <input type="hidden" id="scheduleId" name="schedule_id">
-
-                        <div class="mb-3">
-                            <label class="form-label">Current Status</label>
-                            <select class="form-select" id="newStatus" name="new_status" required>
-                                <option value="planting">Planting</option>
-                                <option value="vegetative">Vegetative</option>
-                                <option value="reproductive">Reproductive</option>
-                                <option value="harvest">Harvest</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Success Rate</label>
-                            <input type="range" class="form-range" id="progressRange" name="progress_percentage" min="0"
-                                max="100" value="0">
-                            <div class="d-flex justify-content-between">
-                                <span>0%</span>
-                                <span id="progressValue">0%</span>
-                                <span>100%</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Actual Harvest Date (if completed)</label>
-                            <input type="date" class="form-control" id="actualHarvestDate" name="actual_harvest_date">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="updateNotes" name="notes" rows="3"
-                                placeholder="Add any updates about this crop..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Schedule</button>
-                    </div>
-                </form>
+                <div class="modal-body" id="detailsContent">
+                    <!-- Details will be loaded via JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -390,12 +372,47 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-function updateSchedule(scheduleId, currentStatus) {
-    document.getElementById('scheduleId').value = scheduleId;
-    document.getElementById('newStatus').value = currentStatus;
-
-    const modal = new bootstrap.Modal(document.getElementById('updateScheduleModal'));
-    modal.show();
+// View crop details (read-only, progress is auto-calculated)
+function viewDetails(scheduleId) {
+    // Fetch schedule details
+    fetch('includes/get_schedule_details.php?id=' + scheduleId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const schedule = data.schedule;
+                const content = `
+                    <div class="mb-3">
+                        <h6>Crop Information</h6>
+                        <p><strong>Name:</strong> ${schedule.crop_name}</p>
+                        <p><strong>Scientific Name:</strong> <em>${schedule.scientific_name}</em></p>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Timeline</h6>
+                        <p><strong>Planting Date:</strong> ${schedule.planting_date_formatted}</p>
+                        <p><strong>Expected Harvest:</strong> ${schedule.expected_harvest_date_formatted}</p>
+                        ${schedule.actual_harvest_date ? `<p><strong>Actual Harvest:</strong> ${schedule.actual_harvest_date_formatted}</p>` : ''}
+                    </div>
+                    <div class="mb-3">
+                        <h6>Progress</h6>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar" style="width: ${schedule.progress_percentage}%">
+                                ${schedule.progress_percentage}%
+                            </div>
+                        </div>
+                        <p><strong>Status:</strong> <span class="badge bg-${schedule.status_color}">${schedule.status}</span></p>
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> Progress is automatically calculated based on dates</small>
+                    </div>
+                    ${schedule.notes ? `<div class="mb-3"><h6>Notes</h6><p>${schedule.notes}</p></div>` : ''}
+                `;
+                document.getElementById('detailsContent').innerHTML = content;
+                const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+                modal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'Failed to load schedule details', 'error');
+        });
 }
 
 function giveFeedback(scheduleId, cropName) {
@@ -462,58 +479,7 @@ function deleteSchedule(scheduleId, cropName) {
     });
 }
 
-// Update progress value display
-document.getElementById('progressRange').addEventListener('input', function() {
-    document.getElementById('progressValue').textContent = this.value + '%';
-});
-
-// Handle update schedule form submission
-document.getElementById('updateScheduleForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    fetch('includes/update_crop_schedule.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            const modalEl = document.getElementById('updateScheduleModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-
-            if (data.success) {
-                modal.hide();
-
-                Swal.fire({
-                    title: "Success!",
-                    text: "Schedule updated successfully!",
-                    icon: "success",
-                    confirmButtonText: "Done",
-                    timer: 2500,
-                    timerProgressBar: true
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    title: "Error!",
-                    text: data.message || "Failed to update schedule.",
-                    icon: "error",
-                    confirmButtonText: "Retry"
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: "Error!",
-                text: "An unexpected error occurred while updating the schedule.",
-                icon: "error",
-                confirmButtonText: "Retry"
-            });
-        });
-});
+// Progress is automatically calculated - no manual updates needed
 
 // Handle feedback form submission
 document.getElementById('feedbackForm').addEventListener('submit', function(e) {
