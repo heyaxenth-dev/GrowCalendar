@@ -409,11 +409,85 @@ function submitFeedback(scheduleId, cropName) {
 
 function viewScheduleDetails(scheduleId) {
     fetch(`includes/get_schedule_details.php?id=${scheduleId}`)
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('scheduleDetailsContent').innerHTML = html;
-            const modal = new bootstrap.Modal(document.getElementById('scheduleDetailsModal'));
-            modal.show();
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const schedule = data.schedule;
+
+                // Format the content as HTML
+                const content = `
+                    <div class="mb-3">
+                        <h6 class="text-primary">Crop Information</h6>
+                        <p class="mb-1"><strong>Crop Name:</strong> ${schedule.crop_name}</p>
+                        <p class="mb-0"><strong>Scientific Name:</strong> <em>${schedule.scientific_name}</em></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Timeline</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Planting Date:</strong></p>
+                                <p class="text-primary">${schedule.planting_date_formatted}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Expected Harvest:</strong></p>
+                                <p class="text-success">${schedule.expected_harvest_date_formatted}</p>
+                            </div>
+                        </div>
+                        ${schedule.actual_harvest_date ? `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Actual Harvest:</strong></p>
+                                    <p class="text-info">${schedule.actual_harvest_date_formatted}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Progress</h6>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar bg-${schedule.status_color}" 
+                                 role="progressbar" 
+                                 style="width: ${schedule.progress_percentage}%"
+                                 aria-valuenow="${schedule.progress_percentage}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                ${schedule.progress_percentage}%
+                            </div>
+                        </div>
+                        <p class="mb-1"><strong>Status:</strong> 
+                            <span class="badge bg-${schedule.status_color}">${schedule.status}</span>
+                        </p>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Progress is automatically calculated based on dates
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Crop Details</h6>
+                        <p class="mb-1"><strong>Harvest Days:</strong> ${schedule.harvest_days} days</p>
+                    </div>
+                    
+                    ${schedule.notes ? `
+                    <div class="mb-3">
+                        <h6 class="text-primary">Notes</h6>
+                        <p class="text-muted">${schedule.notes.replace(/\n/g, '<br>')}</p>
+                    </div>
+                    ` : ''}
+                `;
+
+                document.getElementById('scheduleDetailsContent').innerHTML = content;
+                const modal = new bootstrap.Modal(document.getElementById('scheduleDetailsModal'));
+                modal.show();
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: data.message || "Unable to load schedule details.",
+                    icon: "error",
+                    confirmButtonText: "OK"
+                });
+            }
         })
         .catch(error => {
             console.error('Error:', error);

@@ -288,7 +288,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="location" class="form-label">Location</label>
-                                    <select class="form-select" id="location" name="location" required>
+                                    <select class="form-select" id="location" name="location" required
+                                        onchange="handleLocationChange()">
                                         <option value="">Select Location</option>
                                         <?php 
                                         $selected_location = $user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique';
@@ -301,6 +302,7 @@
                                         <?php endforeach; ?>
                                     </select>
                                     <div class="form-text">Select your city and province for accurate weather data.
+                                        Recommendations will update automatically.
                                     </div>
                                 </div>
                             </div>
@@ -602,6 +604,66 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+// Handle location change - automatically reload recommendations
+function handleLocationChange() {
+    const locationSelect = document.getElementById('location');
+    const soilTypeSelect = document.getElementById('soil_type');
+
+    // Check if both location and soil type are selected
+    if (locationSelect.value && soilTypeSelect.value) {
+        // Show loading indicator
+        Swal.fire({
+            title: 'Updating Recommendations',
+            text: 'Fetching weather data and generating new recommendations...',
+            icon: 'info',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Create a hidden form to submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+
+        // Add soil type
+        const soilInput = document.createElement('input');
+        soilInput.type = 'hidden';
+        soilInput.name = 'soil_type';
+        soilInput.value = soilTypeSelect.value;
+        form.appendChild(soilInput);
+
+        // Add location
+        const locationInput = document.createElement('input');
+        locationInput.type = 'hidden';
+        locationInput.name = 'location';
+        locationInput.value = locationSelect.value;
+        form.appendChild(locationInput);
+
+        // Add submit button name
+        const submitInput = document.createElement('input');
+        submitInput.type = 'hidden';
+        submitInput.name = 'get_recommendations';
+        submitInput.value = '1';
+        form.appendChild(submitInput);
+
+        // Append to body and submit
+        document.body.appendChild(form);
+        form.submit();
+    } else if (locationSelect.value && !soilTypeSelect.value) {
+        // If location is selected but soil type is not, just show a message
+        Swal.fire({
+            title: 'Soil Type Required',
+            text: 'Please select a soil type first to generate recommendations.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
 function showAllRecommendations() {
     // Show all hidden recommendation items
     const hiddenItems = document.querySelectorAll('.recommendation-item.d-none');
