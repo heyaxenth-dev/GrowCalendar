@@ -420,7 +420,7 @@
                                 </span>
                                 <input type="text" class="form-control" id="recommendationSearch"
                                     placeholder="Search crops by name, scientific name, season, or harvest days..."
-                                    onkeyup="filterRecommendations()">
+                                    onkeyup="filterRecommendations()" oninput="filterRecommendations()">
                                 <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()"
                                     id="clearSearchBtn" style="display: none;">
                                     <i class="bi bi-x-circle"></i> Clear
@@ -707,7 +707,7 @@ function filterRecommendations() {
         const cropName = item.getAttribute('data-crop-name') || '';
         const scientificName = item.getAttribute('data-scientific-name') || '';
         const season = item.getAttribute('data-season') || '';
-        const harvestDays = item.getAttribute('data-harvest-days') || '';
+        const harvestDays = String(item.getAttribute('data-harvest-days') || '');
 
         // Check if search term matches any attribute
         const matches = !searchTerm ||
@@ -717,11 +717,13 @@ function filterRecommendations() {
             harvestDays.includes(searchTerm);
 
         if (matches) {
-            item.style.display = '';
+            // Remove d-none class to show the item (Bootstrap class takes precedence)
+            item.classList.remove('d-none');
             visibleCount++;
             hasResults = true;
         } else {
-            item.style.display = 'none';
+            // Add d-none class to hide the item
+            item.classList.add('d-none');
         }
     });
 
@@ -737,7 +739,7 @@ function filterRecommendations() {
 
     // Show/hide no results message
     if (noResultsMessage) {
-        noResultsMessage.style.display = hasResults ? 'none' : '';
+        noResultsMessage.style.display = hasResults ? 'none' : 'block';
     }
 
     // Hide "View All" button when searching
@@ -748,7 +750,41 @@ function filterRecommendations() {
 
 function clearSearch() {
     document.getElementById('recommendationSearch').value = '';
-    filterRecommendations();
+    const recommendationItems = document.querySelectorAll('.recommendation-item');
+
+    // Restore initial state: show first 6 items, hide the rest
+    recommendationItems.forEach((item, index) => {
+        if (index < 6) {
+            item.classList.remove('d-none');
+        } else {
+            item.classList.add('d-none');
+        }
+    });
+
+    // Update result count
+    const resultCount = document.getElementById('resultCount');
+    if (resultCount) {
+        resultCount.textContent = recommendationItems.length;
+    }
+
+    // Hide clear button
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (clearBtn) {
+        clearBtn.style.display = 'none';
+    }
+
+    // Show "View All" button if there are more than 6 items
+    const showMoreButton = document.getElementById('showMoreButton');
+    if (showMoreButton && recommendationItems.length > 6) {
+        showMoreButton.style.display = '';
+    }
+
+    // Hide no results message
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+    }
+
     document.getElementById('recommendationSearch').focus();
 }
 
