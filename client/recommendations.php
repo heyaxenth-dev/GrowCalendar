@@ -400,13 +400,18 @@
 
         <!-- Crop Recommendations -->
         <?php if (!empty($recommendations)): ?>
+        <?php
+            $total_recommendations = count($recommendations);
+            $per_page = 5;
+            $total_pages = max(1, ceil($total_recommendations / $per_page));
+        ?>
         <div class="row">
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div>
-                                <h5 class="card-title mb-1">Recommended Crops</h5>
+                                <h5 class="card-title mb-1">Crop Recommendations</h5>
                                 <p class="card-text text-muted small mb-0">Based on your soil type and current weather
                                     conditions, here are the best crops for your area.</p>
                             </div>
@@ -419,110 +424,59 @@
                                     <i class="bi bi-search"></i>
                                 </span>
                                 <input type="text" class="form-control" id="recommendationSearch"
-                                    placeholder="Search crops by name, scientific name, season, or harvest days..."
-                                    onkeyup="filterRecommendations()" oninput="filterRecommendations()">
+                                    placeholder="Search crops..." onkeyup="filterRecommendations()"
+                                    oninput="filterRecommendations()">
                                 <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()"
                                     id="clearSearchBtn" style="display: none;">
                                     <i class="bi bi-x-circle"></i> Clear
                                 </button>
                             </div>
-                            <div class="mt-2">
+                            <div class="mt-2 d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    <span id="resultCount"><?= count($recommendations) ?></span> crop(s) found
+                                    <span id="resultCount"><?= $total_recommendations ?></span> crop(s) found
+                                </small>
+                                <small class="text-muted" id="paginationInfo">
+                                    Page 1 / <?= $total_pages ?>
                                 </small>
                             </div>
                         </div>
 
-                        <div class="row" id="recommendationsContainer">
+                        <!-- Recommendations List -->
+                        <div id="recommendationsContainer">
                             <?php foreach ($recommendations as $index => $rec): ?>
-                            <div class="col-lg-4 col-md-6 mb-4 recommendation-item <?= $index >= 6 ? 'd-none' : '' ?>"
+                            <div class="recommendation-item mb-2 <?= $index >= $per_page ? 'd-none' : '' ?>"
+                                data-index="<?= $index ?>"
                                 data-crop-name="<?= strtolower(htmlspecialchars($rec['crop']['name'])) ?>"
                                 data-scientific-name="<?= strtolower(htmlspecialchars($rec['crop']['scientific_name'])) ?>"
                                 data-season="<?= strtolower(htmlspecialchars($rec['crop']['planting_season'])) ?>"
                                 data-harvest-days="<?= $rec['crop']['harvest_days'] ?>"
-                                data-score="<?= $rec['score'] ?>">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h6 class="card-title"><?= $rec['crop']['name'] ?></h6>
-                                            <span
-                                                class="badge bg-success"><?= number_format($rec['score'] * 100, 1) ?>%</span>
-                                        </div>
-
-                                        <p class="card-text text-muted small mb-2">
-                                            <em><?= $rec['crop']['scientific_name'] ?></em>
-                                        </p>
-
-                                        <?php if (!empty($rec['crop']['description'])): ?>
-                                        <div class="mb-3">
-                                            <h6 class="small text-info mb-1">Crop Summary:</h6>
-                                            <p class="small text-muted mb-2">
-                                                <?= htmlspecialchars($rec['crop']['description']) ?></p>
-                                            <div class="row small text-muted g-2">
-                                                <?php if (!empty($rec['crop']['water_requirements'])): ?>
-                                                <div class="col-6">
-                                                    <i class="bi bi-droplet text-primary"></i>
-                                                    <strong>Water:</strong>
-                                                    <?= htmlspecialchars($rec['crop']['water_requirements']) ?>
-                                                </div>
-                                                <?php endif; ?>
-                                                <?php if (!empty($rec['crop']['temperature_min']) && !empty($rec['crop']['temperature_max'])): ?>
-                                                <div class="col-6">
-                                                    <i class="bi bi-thermometer-half text-danger"></i>
-                                                    <strong>Temp:</strong>
-                                                    <?= $rec['crop']['temperature_min'] ?>-<?= $rec['crop']['temperature_max'] ?>°C
-                                                </div>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-
-                                        <div class="mb-3">
-                                            <h6 class="small text-primary mb-1">Why this crop?</h6>
-                                            <ul class="list-unstyled small">
-                                                <?php foreach ($rec['reasons'] as $reason): ?>
-                                                <li><i
-                                                        class="bi bi-check-circle-fill text-success me-1"></i><?= $reason ?>
-                                                </li>
-                                                <?php endforeach; ?>
-                                            </ul>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <h6 class="small text-info mb-1">Planting Tips:</h6>
-                                            <ul class="list-unstyled small">
-                                                <?php foreach ($rec['planting_tips'] as $tip): ?>
-                                                <li><i class="bi bi-lightbulb text-warning me-1"></i><?= $tip ?></li>
-                                                <?php endforeach; ?>
-                                            </ul>
-                                        </div>
-
-                                        <div class="row small text-muted">
-                                            <div class="col-6">
-                                                <strong>Season:</strong> <?= $rec['crop']['planting_season'] ?>
-                                            </div>
-                                            <div class="col-6">
-                                                <strong>Harvest:</strong> <?= $rec['crop']['harvest_days'] ?> days
-                                            </div>
-                                        </div>
-
-                                        <?php if (!empty($rec['crop']['marketability'])): ?>
-                                        <div class="mt-2">
-                                            <h6 class="small text-success mb-1">Market Potential:</h6>
-                                            <p class="small text-muted mb-0"><?= $rec['crop']['marketability'] ?></p>
-                                        </div>
-                                        <?php endif; ?>
-
-                                        <div class="mt-3">
-                                            <button class="btn btn-primary btn-sm"
-                                                onclick="addToSchedule(<?= $rec['crop']['id'] ?>, '<?= htmlspecialchars($rec['crop']['name'], ENT_QUOTES) ?>', <?= $rec['crop']['harvest_days'] ?>)">
-                                                <i class="bi bi-calendar-plus me-1"></i>Add to Schedule
-                                            </button>
-                                        </div>
-                                    </div>
+                                data-score="<?= number_format($rec['score'] * 100, 1) ?>">
+                                <div class="d-flex align-items-center">
+                                    <button type="button"
+                                        class="btn btn-outline-success flex-grow-1 text-start recommendation-row-btn"
+                                        onclick="showRecommendationDetails(<?= $index ?>)">
+                                        <span class="fw-semibold"><?= htmlspecialchars($rec['crop']['name']) ?></span>
+                                        <span class="float-end"><?= number_format($rec['score'] * 100, 1) ?>%</span>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary ms-2 btn-sm"
+                                        onclick="showRecommendationDetails(<?= $index ?>)">
+                                        View Details
+                                    </button>
                                 </div>
                             </div>
                             <?php endforeach; ?>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="prevPageBtn"
+                                onclick="changeRecommendationsPage(-1)">
+                                &laquo; Previous
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="nextPageBtn"
+                                onclick="changeRecommendationsPage(1)">
+                                Next &raquo;
+                            </button>
                         </div>
 
                         <div class="text-center mt-4" id="noResultsMessage" style="display: none;">
@@ -530,15 +484,6 @@
                             <h5 class="text-muted mt-3">No crops found</h5>
                             <p class="text-muted">Try adjusting your search terms.</p>
                         </div>
-
-                        <?php if (count($recommendations) > 6): ?>
-                        <div class="text-center mt-4" id="showMoreButton">
-                            <button class="btn btn-outline-primary" onclick="showAllRecommendations()">
-                                <i class="bi bi-chevron-down me-1"></i>View All <?= count($recommendations) ?>
-                                Recommendations
-                            </button>
-                        </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -548,6 +493,21 @@
 
     </main>
     <!-- End #main -->
+
+    <!-- Recommendation Details Modal -->
+    <div class="modal fade" id="recommendationDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recommendationDetailsTitle">Crop Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="recommendationDetailsBody">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Add to Schedule Modal -->
     <div class="modal fade" id="addToScheduleModal" tabindex="-1">
@@ -603,7 +563,90 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <?php
+    // Build lightweight dataset for JS details modal
+    $recommendation_js = [];
+    if (!empty($recommendations)) {
+        foreach ($recommendations as $rec) {
+            $historyScore = isset($rec['history_score']) ? (float)$rec['history_score'] : 0.0;
+            // Create a friendly label for history basis
+            $historyLabel = '';
+            if ($historyScore > 0.7) {
+                $historyLabel = 'Frequently planted in your previous schedules for this location.';
+            } elseif ($historyScore > 0.4) {
+                $historyLabel = 'Commonly planted in your farm/area based on your past schedules.';
+            } elseif ($historyScore > 0.0) {
+                $historyLabel = 'Previously planted at least once in your farm/area.';
+            }
+
+            $recommendation_js[] = [
+                'id' => $rec['crop']['id'],
+                'name' => $rec['crop']['name'],
+                'scientific_name' => $rec['crop']['scientific_name'],
+                'description' => $rec['crop']['description'],
+                'planting_season' => $rec['crop']['planting_season'],
+                'harvest_days' => $rec['crop']['harvest_days'],
+                'water_requirements' => $rec['crop']['water_requirements'],
+                'temperature_min' => $rec['crop']['temperature_min'],
+                'temperature_max' => $rec['crop']['temperature_max'],
+                'marketability' => $rec['crop']['marketability'],
+                'weather_conditions' => $rec['crop']['weather_conditions'],
+                'score' => round($rec['score'] * 100, 1),
+                'reasons' => array_values($rec['reasons']),
+                'planting_tips' => array_values($rec['planting_tips']),
+                'history_score' => $historyScore,
+                'history_label' => $historyLabel,
+            ];
+        }
+    }
+    ?>
     <script>
+const recommendationDetails =
+    <?= json_encode($recommendation_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+// Pagination state
+let recommendationsPerPage = 5;
+let currentRecommendationsPage = 1;
+
+function getTotalRecommendationPages() {
+    const items = document.querySelectorAll('.recommendation-item');
+    return Math.max(1, Math.ceil(items.length / recommendationsPerPage));
+}
+
+function updateRecommendationsPagination() {
+    const items = document.querySelectorAll('.recommendation-item');
+    const totalPages = getTotalRecommendationPages();
+
+    items.forEach((item, index) => {
+        const pageIndex = Math.floor(index / recommendationsPerPage) + 1;
+        if (pageIndex === currentRecommendationsPage) {
+            item.classList.remove('d-none');
+        } else {
+            item.classList.add('d-none');
+        }
+    });
+
+    const paginationInfo = document.getElementById('paginationInfo');
+    if (paginationInfo) {
+        paginationInfo.textContent = `Page ${totalPages === 0 ? 0 : currentRecommendationsPage} / ${totalPages}`;
+    }
+
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    if (prevBtn) prevBtn.disabled = currentRecommendationsPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentRecommendationsPage >= totalPages;
+}
+
+function changeRecommendationsPage(delta) {
+    const totalPages = getTotalRecommendationPages();
+    currentRecommendationsPage = Math.min(totalPages, Math.max(1, currentRecommendationsPage + delta));
+    updateRecommendationsPagination();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateRecommendationsPagination();
+});
+
 // Handle location change - automatically reload recommendations
 function handleLocationChange() {
     const locationSelect = document.getElementById('location');
@@ -664,41 +707,12 @@ function handleLocationChange() {
     }
 }
 
-function showAllRecommendations() {
-    // Show all hidden recommendation items
-    const hiddenItems = document.querySelectorAll('.recommendation-item.d-none');
-    hiddenItems.forEach(item => {
-        item.classList.remove('d-none');
-        // Add fade-in animation
-        item.style.opacity = '0';
-        item.style.transition = 'opacity 0.3s ease-in';
-        setTimeout(() => {
-            item.style.opacity = '1';
-        }, 10);
-    });
-
-    // Hide the "View All" button
-    const showMoreButton = document.getElementById('showMoreButton');
-    if (showMoreButton) {
-        showMoreButton.style.display = 'none';
-    }
-
-    // Smooth scroll to show the newly revealed items
-    if (hiddenItems.length > 0) {
-        hiddenItems[0].scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest'
-        });
-    }
-}
-
 function filterRecommendations() {
     const searchTerm = document.getElementById('recommendationSearch').value.toLowerCase().trim();
     const recommendationItems = document.querySelectorAll('.recommendation-item');
     const clearBtn = document.getElementById('clearSearchBtn');
     const resultCount = document.getElementById('resultCount');
     const noResultsMessage = document.getElementById('noResultsMessage');
-    const showMoreButton = document.getElementById('showMoreButton');
 
     let visibleCount = 0;
     let hasResults = false;
@@ -742,9 +756,23 @@ function filterRecommendations() {
         noResultsMessage.style.display = hasResults ? 'none' : 'block';
     }
 
-    // Hide "View All" button when searching
-    if (showMoreButton) {
-        showMoreButton.style.display = searchTerm ? 'none' : '';
+    // When searching, disable pagination buttons and show result count
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const paginationInfo = document.getElementById('paginationInfo');
+
+    if (searchTerm) {
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+        if (paginationInfo) {
+            paginationInfo.textContent = `${visibleCount} result(s)`;
+        }
+    } else {
+        // Restore pagination when search is cleared
+        if (prevBtn || nextBtn || paginationInfo) {
+            currentRecommendationsPage = 1;
+            updateRecommendationsPagination();
+        }
     }
 }
 
@@ -752,14 +780,9 @@ function clearSearch() {
     document.getElementById('recommendationSearch').value = '';
     const recommendationItems = document.querySelectorAll('.recommendation-item');
 
-    // Restore initial state: show first 6 items, hide the rest
-    recommendationItems.forEach((item, index) => {
-        if (index < 6) {
-            item.classList.remove('d-none');
-        } else {
-            item.classList.add('d-none');
-        }
-    });
+    // Reset pagination to first page
+    currentRecommendationsPage = 1;
+    updateRecommendationsPagination();
 
     // Update result count
     const resultCount = document.getElementById('resultCount');
@@ -773,12 +796,6 @@ function clearSearch() {
         clearBtn.style.display = 'none';
     }
 
-    // Show "View All" button if there are more than 6 items
-    const showMoreButton = document.getElementById('showMoreButton');
-    if (showMoreButton && recommendationItems.length > 6) {
-        showMoreButton.style.display = '';
-    }
-
     // Hide no results message
     const noResultsMessage = document.getElementById('noResultsMessage');
     if (noResultsMessage) {
@@ -786,6 +803,93 @@ function clearSearch() {
     }
 
     document.getElementById('recommendationSearch').focus();
+}
+
+// Show details modal for a recommendation
+function showRecommendationDetails(index) {
+    if (!recommendationDetails || !recommendationDetails[index]) {
+        return;
+    }
+    const rec = recommendationDetails[index];
+
+    const titleEl = document.getElementById('recommendationDetailsTitle');
+    if (titleEl) {
+        titleEl.textContent = `${rec.name} – ${rec.score}% match`;
+    }
+
+    const bodyEl = document.getElementById('recommendationDetailsBody');
+    if (bodyEl) {
+        const reasonsHtml = (rec.reasons || []).map(r =>
+            `<li><i class="bi bi-check-circle-fill text-success me-1"></i>${r}</li>`
+        ).join('');
+
+        const tipsHtml = (rec.planting_tips || []).map(t =>
+            `<li><i class="bi bi-lightbulb text-warning me-1"></i>${t}</li>`
+        ).join('');
+
+        bodyEl.innerHTML = `
+            <h5 class="mb-1">${rec.name}</h5>
+            <p class="text-muted mb-2"><em>${rec.scientific_name || ''}</em></p>
+            ${rec.description ? `
+                <div class="mb-3">
+                    <h6 class="small text-info mb-1">Crop Summary</h6>
+                    <p class="small text-muted mb-0">${rec.description}</p>
+                </div>` : ''
+            }
+            <div class="row small text-muted mb-3">
+                <div class="col-md-4 mb-2">
+                    <strong>Season:</strong> ${rec.planting_season || 'N/A'}
+                </div>
+                <div class="col-md-4 mb-2">
+                    <strong>Harvest:</strong> ${rec.harvest_days || 'N/A'} days
+                </div>
+                <div class="col-md-4 mb-2">
+                    <strong>Water:</strong> ${rec.water_requirements || 'N/A'}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>Temperature:</strong> ${
+                        rec.temperature_min !== null && rec.temperature_max !== null
+                            ? `${rec.temperature_min}–${rec.temperature_max}°C`
+                            : 'N/A'
+                    }
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>Market:</strong> ${rec.marketability || 'N/A'}
+                </div>
+            </div>
+            
+            ${rec.history_label ? `
+                <div class="mb-3">
+                    <h6 class="small text-success mb-1">Historical Basis</h6>
+                    <p class="small text-muted mb-0">${rec.history_label}</p>
+                </div>` : ''
+            }
+            
+            ${reasonsHtml ? `
+                <div class="mb-3">
+                    <h6 class="small text-primary mb-1">Why this crop?</h6>
+                    <ul class="list-unstyled small mb-0">${reasonsHtml}</ul>
+                </div>` : ''
+            }
+
+            ${tipsHtml ? `
+                <div class="mb-3">
+                    <h6 class="small text-info mb-1">Planting Tips</h6>
+                    <ul class="list-unstyled small mb-0">${tipsHtml}</ul>
+                </div>` : ''
+            }
+
+            <div class="mt-3 text-end">
+                <button class="btn btn-primary btn-sm"
+                    onclick="addToSchedule(${rec.id}, '${rec.name.replace(/'/g, "\\'")}', ${rec.harvest_days || 0})">
+                    <i class="bi bi-calendar-plus me-1"></i>Add to Schedule
+                </button>
+            </div>
+        `;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('recommendationDetailsModal'));
+    modal.show();
 }
 
 function addToSchedule(cropId, cropName, harvestDays) {

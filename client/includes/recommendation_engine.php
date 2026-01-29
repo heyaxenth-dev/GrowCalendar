@@ -6,6 +6,12 @@
 
 class CropRecommendationEngine {
     private $conn;
+    /**
+     * Cache of historical crop usage scores to avoid repeated queries.
+     * Keyed by "user_id|location", value = [crop_id => score (0-1)].
+     * @var array<string,array<int,float>>
+     */
+    private $historyCache = [];
     
     public function __construct($database_connection) {
         $this->conn = $database_connection;
@@ -23,14 +29,20 @@ class CropRecommendationEngine {
         $crops = $this->getAllCrops();
         $recommendations = [];
         
+        $location = $weather_data['location'] ?? null;
+        
         foreach ($crops as $crop) {
-            $score = $this->calculateCropScore($crop, $soil_type_id, $weather_data);
+            // Historical score based on farmer's previous plantings in this location
+            $history_score = $this->calculateHistoryScore($user_id, (int)$crop['id'], $location);
+            
+            $score = $this->calculateCropScore($crop, $soil_type_id, $weather_data, $user_id, $history_score);
             
             if ($score > 0.3) { // Only recommend crops with score > 30%
                 $recommendations[] = [
                     'crop' => $crop,
                     'score' => $score,
-                    'reasons' => $this->generateReasons($crop, $soil_type_id, $weather_data, $score),
+                    'history_score' => $history_score,
+                    'reasons' => $this->generateReasons($crop, $soil_type_id, $weather_data, $score, $history_score),
                     'planting_tips' => $this->generatePlantingTips($crop, $weather_data)
                 ];
             }
@@ -52,16 +64,29 @@ class CropRecommendationEngine {
      * @param array $crop Crop data
      * @param int $soil_type_id Soil type ID
      * @param array $weather_data Weather data
+     * @param int $user_id User ID (for history)
+     * @param float $history_score Precomputed history score (0-1)
      * @return float Score between 0 and 1
      */
-    private function calculateCropScore($crop, $soil_type_id, $weather_data) {
+    private function calculateCropScore($crop, $soil_type_id, $weather_data, $user_id = null, $history_score = 0.0) {
         $soil_score = $this->calculateSoilScore($crop['id'], $soil_type_id);
         $weather_score = $this->calculateWeatherScore($crop, $weather_data);
         $season_score = $this->calculateSeasonScore($crop);
         $marketability_score = $this->calculateMarketabilityScore($crop);
         
-        // Weighted average: 30% soil, 30% weather, 20% season, 20% marketability
-        $total_score = ($soil_score * 0.3) + ($weather_score * 0.3) + ($season_score * 0.2) + ($marketability_score * 0.2);
+        // Historical factor: how dominant this crop is in the farmer's past schedules
+        // If no precomputed history_score was passed, compute a generic one (no location filter)
+        if ($user_id !== null && $history_score === 0.0) {
+            $history_score = $this->calculateHistoryScore($user_id, (int)$crop['id'], null);
+        }
+        
+        // Weighted average:
+        // 25% soil, 25% weather, 20% season, 20% marketability, 10% historical dominance
+        $total_score = ($soil_score * 0.25)
+                     + ($weather_score * 0.25)
+                     + ($season_score * 0.20)
+                     + ($marketability_score * 0.20)
+                     + ($history_score * 0.10);
         
         return min(1.0, max(0.0, $total_score));
     }
@@ -239,9 +264,10 @@ class CropRecommendationEngine {
      * @param int $soil_type_id Soil type ID
      * @param array $weather_data Weather data
      * @param float $score Recommendation score
+     * @param float $history_score Historical dominance score (0-1)
      * @return array Array of reasons
      */
-    private function generateReasons($crop, $soil_type_id, $weather_data, $score) {
+    private function generateReasons($crop, $soil_type_id, $weather_data, $score, $history_score = 0.0) {
         $reasons = [];
         
         // Soil compatibility reason
@@ -275,6 +301,13 @@ class CropRecommendationEngine {
             $reasons[] = "High market demand and profitability";
         } elseif ($marketability_score > 0.6) {
             $reasons[] = "Good market potential";
+        }
+        
+        // Historical usage reason
+        if ($history_score > 0.7) {
+            $reasons[] = "Frequently and successfully planted in your area";
+        } elseif ($history_score > 0.4) {
+            $reasons[] = "Commonly planted in your farm/area";
         }
         
         return $reasons;
@@ -325,6 +358,74 @@ class CropRecommendationEngine {
         }
         
         return $crops;
+    }
+    
+    /**
+     * Calculate historical dominance score for a crop for a given user and location.
+     * Uses crop_schedules joined with crop_recommendations + weather_data to infer location.
+     * Score range: 0 (never planted) to 1 (most frequently planted crop).
+     *
+     * @param int $user_id
+     * @param int $crop_id
+     * @param string|null $location Optional location filter (e.g., barangay)
+     * @return float
+     */
+    private function calculateHistoryScore($user_id, $crop_id, $location = null) {
+        if (!$user_id) {
+            return 0.0;
+        }
+        
+        $cacheKey = $user_id . '|' . ($location ?? '_any_');
+        if (!isset($this->historyCache[$cacheKey])) {
+            // Build history map for this user (and optional location)
+            $sql = "SELECT cs.crop_id, COUNT(*) AS cnt
+                    FROM crop_schedules cs
+                    LEFT JOIN crop_recommendations cr ON cs.recommendation_id = cr.id
+                    LEFT JOIN weather_data wd ON cr.weather_data_id = wd.id
+                    WHERE cs.user_id = ?";
+            
+            if ($location !== null) {
+                $sql .= " AND wd.location = ?";
+            }
+            
+            $sql .= " GROUP BY cs.crop_id";
+            
+            if ($location !== null) {
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bind_param("is", $user_id, $location);
+            } else {
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bind_param("i", $user_id);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $counts = [];
+            $maxCount = 0;
+            while ($row = $result->fetch_assoc()) {
+                $cid = (int)$row['crop_id'];
+                $cnt = (int)$row['cnt'];
+                $counts[$cid] = $cnt;
+                if ($cnt > $maxCount) {
+                    $maxCount = $cnt;
+                }
+            }
+            $stmt->close();
+            
+            // Normalize to 0-1 scale
+            $scores = [];
+            if ($maxCount > 0) {
+                foreach ($counts as $cid => $cnt) {
+                    $scores[$cid] = $cnt / $maxCount;
+                }
+            }
+            
+            $this->historyCache[$cacheKey] = $scores;
+        }
+        
+        $scores = $this->historyCache[$cacheKey];
+        return isset($scores[$crop_id]) ? (float)$scores[$crop_id] : 0.0;
     }
     
     /**

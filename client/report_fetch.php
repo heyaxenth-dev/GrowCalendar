@@ -210,4 +210,49 @@
         });
         $top_performer = $sorted_performance[0]['name'];
     }
+    
+    // Historical data analytics: Location, Soil Type, Crop, Weather, Feedback summary
+    $historical_analytics = [];
+    $history_query = "
+        SELECT 
+            COALESCE(wd.location, 'N/A') AS location,
+            st.name AS soil_type,
+            c.name AS crop_name,
+            wd.weather_condition AS weather_condition,
+            AVG(cf.feedback_score) AS avg_score,
+            SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) AS success_count,
+            SUM(CASE WHEN cf.crop_condition = 'failure' THEN 1 ELSE 0 END) AS failure_count,
+            COUNT(cf.id) AS total_feedback
+        FROM crop_feedback cf
+        JOIN crop_schedules cs ON cf.crop_schedule_id = cs.id
+        JOIN crops c ON cs.crop_id = c.id
+        LEFT JOIN crop_recommendations cr ON cf.recommendation_id = cr.id
+        LEFT JOIN soil_types st ON cr.soil_type_id = st.id
+        LEFT JOIN weather_data wd ON cr.weather_data_id = wd.id
+        GROUP BY COALESCE(wd.location, 'N/A'), st.name, c.name, wd.weather_condition
+        HAVING total_feedback > 0
+        ORDER BY COALESCE(wd.location, 'N/A'), c.name
+    ";
+    if ($history_result = $conn->query($history_query)) {
+        while ($row = $history_result->fetch_assoc()) {
+            // Derive qualitative feedback label
+            $avg_score = (float)($row['avg_score'] ?? 0);
+            $feedback_label = 'Average';
+            if ($avg_score >= 4.0 || (int)$row['success_count'] > (int)$row['failure_count']) {
+                $feedback_label = 'Good (Successful)';
+            } elseif ($avg_score <= 2.0 || (int)$row['failure_count'] > (int)$row['success_count']) {
+                $feedback_label = 'Failure or Bad';
+            }
+            
+            $historical_analytics[] = [
+                'location' => $row['location'],
+                'soil_type' => $row['soil_type'] ?? 'N/A',
+                'crop_name' => $row['crop_name'],
+                'weather_condition' => $row['weather_condition'] ?? 'N/A',
+                'feedback_label' => $feedback_label,
+                'avg_score' => round($avg_score, 1),
+                'total_feedback' => (int)$row['total_feedback'],
+            ];
+        }
+    }
 ?>

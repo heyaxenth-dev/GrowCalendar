@@ -380,29 +380,44 @@ function viewDetails(scheduleId) {
         .then(data => {
             if (data.success) {
                 const schedule = data.schedule;
+                const farmerLine = schedule.farmer_name ?
+                    `<p class="mb-1"><strong>Farmer's Name:</strong> ${schedule.farmer_name}</p>` :
+                    '';
+                const locationLine = schedule.location ?
+                    `<p class="mb-1"><strong>Location:</strong> ${schedule.location}</p>` :
+                    '';
+
                 const content = `
                     <div class="mb-3">
-                        <h6>Crop Information</h6>
-                        <p><strong>Name:</strong> ${schedule.crop_name}</p>
-                        <p><strong>Scientific Name:</strong> <em>${schedule.scientific_name}</em></p>
+                        <h6 class="text-primary">Crop Information</h6>
+                        ${farmerLine}
+                        <p class="mb-1"><strong>Name of Crop:</strong> ${schedule.crop_name}</p>
+                        <p class="mb-1"><strong>Scientific Name:</strong> <em>${schedule.scientific_name}</em></p>
+                        ${locationLine}
                     </div>
                     <div class="mb-3">
-                        <h6>Timeline</h6>
-                        <p><strong>Planting Date:</strong> ${schedule.planting_date_formatted}</p>
-                        <p><strong>Expected Harvest:</strong> ${schedule.expected_harvest_date_formatted}</p>
-                        ${schedule.actual_harvest_date ? `<p><strong>Actual Harvest:</strong> ${schedule.actual_harvest_date_formatted}</p>` : ''}
+                        <h6 class="text-primary">Timeline</h6>
+                        <p class="mb-1"><strong>Planting Date:</strong> ${schedule.planting_date_formatted}</p>
+                        <p class="mb-1"><strong>Expected Harvest:</strong> ${schedule.expected_harvest_date_formatted}</p>
+                        ${schedule.actual_harvest_date ? `<p class="mb-1"><strong>Actual Harvest:</strong> ${schedule.actual_harvest_date_formatted}</p>` : ''}
                     </div>
                     <div class="mb-3">
-                        <h6>Progress</h6>
+                        <h6 class="text-primary">Progress</h6>
                         <div class="progress mb-2" style="height: 20px;">
-                            <div class="progress-bar" style="width: ${schedule.progress_percentage}%">
+                            <div class="progress-bar bg-${schedule.status_color}" style="width: ${schedule.progress_percentage}%">
                                 ${schedule.progress_percentage}%
                             </div>
                         </div>
-                        <p><strong>Status:</strong> <span class="badge bg-${schedule.status_color}">${schedule.status}</span></p>
-                        <small class="text-muted"><i class="bi bi-info-circle"></i> Progress is automatically calculated based on dates</small>
+                        <p class="mb-1">
+                            <strong>Status / Phase:</strong>
+                            <span class="badge bg-${schedule.status_color}">${schedule.status}</span>
+                        </p>
+                        <small class="text-muted d-block">
+                            <i class="bi bi-info-circle"></i>
+                            Progress is automatically calculated based on planting and expected harvest dates.
+                        </small>
                     </div>
-                    ${schedule.notes ? `<div class="mb-3"><h6>Notes</h6><p>${schedule.notes}</p></div>` : ''}
+                    ${schedule.notes ? `<div class="mb-3"><h6 class="text-primary">Notes</h6><p class="mb-0">${schedule.notes.replace(/\n/g, '<br>')}</p></div>` : ''}
                 `;
                 document.getElementById('detailsContent').innerHTML = content;
                 const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
