@@ -86,6 +86,12 @@
                                                 <i class="bi bi-person-check"></i> Reactivate
                                             </button>
                                             <?php } ?>
+
+                                            <button type="button" class="btn btn-outline-danger btn-sm deleteUserBtn"
+                                                data-id="<?= $row['id']; ?>"
+                                                data-name="<?= htmlspecialchars($row['firstname'] . ' ' . $row['lastname']); ?>">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php } ?>
@@ -328,6 +334,50 @@ document.addEventListener('DOMContentLoaded', function() {
                                 icon: 'error',
                                 title: 'Error',
                                 text: 'Failed to reactivate the user.'
+                            });
+                        });
+                }
+            });
+        });
+    });
+
+    // ====== DELETE USER ======
+    document.querySelectorAll('.deleteUserBtn').forEach(button => {
+        button.addEventListener('click', function() {
+            const user_id = this.dataset.id;
+            const name = this.dataset.name || 'this user';
+            Swal.fire({
+                title: 'Delete this user?',
+                html: `<strong>${name}</strong> will be permanently removed. Their schedules, feedback, and preferences will also be deleted.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('delete_user.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `user_id=${user_id}`
+                        })
+                        .then(res => res.text())
+                        .then(data => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'User Deleted',
+                                text: data,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        })
+                        .catch(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to delete the user.'
                             });
                         });
                 }

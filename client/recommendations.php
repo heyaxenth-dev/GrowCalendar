@@ -15,14 +15,15 @@
     
     $user_id = $_SESSION['user_id'];
     
-    // Get user's name for farmer name field
-    $user_name_query = "SELECT firstname, lastname FROM users WHERE id = ?";
+    // Get user's name and assigned barangay for farmer name and auto location/soil
+    $user_name_query = "SELECT firstname, lastname, barangay FROM users WHERE id = ?";
     $user_name_stmt = $conn->prepare($user_name_query);
     $user_name_stmt->bind_param("i", $user_id);
     $user_name_stmt->execute();
     $user_name_result = $user_name_stmt->get_result();
     $user_name_data = $user_name_result->fetch_assoc();
     $farmer_name = trim(($user_name_data['firstname'] ?? '') . ' ' . ($user_name_data['lastname'] ?? ''));
+    $user_barangay = !empty($user_name_data['barangay']) ? trim($user_name_data['barangay']) : null;
     
     // Initialize variables
     $soil_types = [];
@@ -75,7 +76,7 @@
     
     // Define available locations (Barangays in Barbaza, Antique)
     $locations = [
-        'Bagarhi, Barbaza, Antique',
+        'Baghari, Barbaza, Antique',
         'Bahuyan, Barbaza, Antique',
         'Beri, Barbaza, Antique',
         'Biga-a, Barbaza, Antique',
@@ -115,7 +116,98 @@
         'Tig-Alaran, Barbaza, Antique',
         'Yapo, Barbaza, Antique'
     ];
-    
+
+    /**
+     * Barangay → primary soil type name (from Corresponding_SoilTypes_BRGY-BARBAZA).
+     * Used to auto-select soil type when location/brgy is known.
+     */
+    $barangay_to_soil_type_name = [
+        'Baghari' => 'Alluvial clay loam',
+        'Bahuyan' => 'Loam, well-drained',
+        'Beri' => 'Clay to silty clay (moist soils)',
+        'Biga-a' => 'Alluvial clay loam',
+        'Binangbang' => 'Alluvial clay loam',
+        'Binangbang Centro' => 'Loam, fertile garden soil',
+        'Binanu-an' => 'Sandy loam, well-drained coastals',
+        'Cadiao' => 'Clay to silty clay (moist soils)',
+        'Calapadan' => 'Wide range; loam preferred',
+        'Capoyuan' => 'Alluvial clay loam',
+        'Cubay' => 'Sandy loam, well-drained coastals',
+        'Embrangga-an' => 'Well-drained loam',
+        'Esparar' => 'Clay to silty clay (moist soils)',
+        'Gua' => 'Loam with good organic matter',
+        'Idao' => 'Sandy loam, well-drained coastals',
+        'Igpalge' => 'Alluvial clay loam',
+        'Igtunarum' => 'Well-drained loam',
+        'Integasan' => 'Clay to silty clay (moist soils)',
+        'Ipil' => 'Sandy loam, well-drained coastals',
+        'Jinalinan' => 'Clay to silty clay (moist soils)',
+        'Lanas' => 'Clay to silty clay (moist soils)',
+        'Langcaon (Evelio Javier)' => 'Clay to silty clay (moist soils)',
+        'Lisub' => 'Clay to silty clay (moist soils)',
+        'Lombuyan' => 'Clay to silty clay (moist soils)',
+        'Mablad' => 'Loam with good organic matter',
+        'Magtulis' => 'Clay to silty clay (moist soils)',
+        'Marigne' => 'Clay to silty clay (moist soils)',
+        'Mayabay' => 'Clay to silty clay (moist soils)',
+        'Mayos' => 'Loam to sandy loam',
+        'Nalusdan' => 'Sandy loam to loam',
+        'Narirong' => 'Well-drained loam',
+        'Palma' => 'Clay to silty clay (moist soils)',
+        'Poblacion' => 'Sandy loam, well-drained coastals',
+        'San Antonio' => 'Clay to silty clay (moist soils)',
+        'San Ramon' => 'Sandy loam, well-drained coastals',
+        'Soligao' => 'Alluvial clay loam',
+        'Tabongtabong' => 'Alluvial clay loam',
+        'Tig-Alaran' => 'Clay to silty clay (moist soils)',
+        'Yapo' => 'Alluvial clay loam',
+    ];
+
+    // Resolve soil type ID from barangay (by name match in soil_types)
+    $auto_soil_id_from_barangay = null;
+    if ($user_barangay && isset($barangay_to_soil_type_name[$user_barangay]) && !empty($soil_types)) {
+        $target_soil_name = $barangay_to_soil_type_name[$user_barangay];
+        foreach ($soil_types as $st) {
+            if (strcasecmp(trim($st['name']), $target_soil_name) === 0) {
+                $auto_soil_id_from_barangay = (int) $st['id'];
+                break;
+            }
+        }
+    }
+
+    // Full location string from barangay (e.g. "Poblacion, Barbaza, Antique")
+    $auto_location_from_barangay = null;
+    if ($user_barangay) {
+        $suffix = ', Barbaza, Antique';
+        $candidate = $user_barangay . $suffix;
+        if (in_array($candidate, $locations, true)) {
+            $auto_location_from_barangay = $candidate;
+        } else {
+            // Match by prefix (e.g. "Langcaon (Evelio Javier), Barbaza, Antique")
+            foreach ($locations as $loc) {
+                if (strpos($loc, $user_barangay) === 0) {
+                    $auto_location_from_barangay = $loc;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Build location string → soil_type_id for JS (so changing location auto-sets soil type)
+    $location_to_soil_id = [];
+    foreach ($locations as $loc) {
+        $brgy = preg_replace('/, Barbaza, Antique$/', '', $loc);
+        if (isset($barangay_to_soil_type_name[$brgy]) && !empty($soil_types)) {
+            $soil_name = $barangay_to_soil_type_name[$brgy];
+            foreach ($soil_types as $st) {
+                if (strcasecmp(trim($st['name']), $soil_name) === 0) {
+                    $location_to_soil_id[$loc] = (int) $st['id'];
+                    break;
+                }
+            }
+        }
+    }
+
     // Get user's current soil preference (only if engine is available)
     $user_soil_preference = null;
     if ($recommendation_engine) {
@@ -123,20 +215,26 @@
     }
     
     // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD (Automatic System)
-    // Use user's saved preference or default values
+    // Prefer: 1) assigned barangay (location + soil from mapping), 2) saved preference, 3) default
     if ($recommendation_engine && empty($recommendations)) {
         $selected_soil_id = null;
         $location = 'Poblacion, Barbaza, Antique'; // Default location
-        
-        // Use saved preference if available
-        if ($user_soil_preference) {
+
+        // 1) Auto from assigned barangay: set location and soil type from mapping
+        if ($auto_location_from_barangay !== null) {
+            $location = $auto_location_from_barangay;
+            if ($auto_soil_id_from_barangay !== null) {
+                $selected_soil_id = $auto_soil_id_from_barangay;
+            }
+        }
+        // 2) Use saved preference if no barangay-based selection yet
+        if ($selected_soil_id === null && $user_soil_preference) {
             $selected_soil_id = $user_soil_preference['id'];
             $location = $user_soil_preference['location'] ?? $location;
-        } else {
-            // Use first available soil type as default
-            if (!empty($soil_types)) {
-                $selected_soil_id = $soil_types[0]['id'];
-            }
+        }
+        // 3) Default soil if still not set
+        if ($selected_soil_id === null && !empty($soil_types)) {
+            $selected_soil_id = (int) $soil_types[0]['id'];
         }
         
         // Auto-generate recommendations if we have a soil type
@@ -302,8 +400,16 @@
                                         <?php endforeach; ?>
                                     </select>
                                     <div class="form-text">Select your city and province for accurate weather data.
-                                        Recommendations will update automatically.
+                                        Soil type is set automatically from your barangay (or use "Detect my location" if not assigned).
                                     </div>
+                                    <?php if (!$user_barangay): ?>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="detectLocationBtn" title="Use browser location and free geolocation to suggest barangay">
+                                            <i class="bi bi-geo-alt"></i> Detect my location
+                                        </button>
+                                        <span class="text-muted small ms-2" id="detectLocationStatus"></span>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -564,6 +670,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php
+    // Location → soil type ID for auto-selecting soil when location changes (from Barbaza PDF mapping)
+    $location_to_soil_id_js = json_encode($location_to_soil_id ?? [], JSON_UNESCAPED_UNICODE);
     // Build lightweight dataset for JS details modal
     $recommendation_js = [];
     if (!empty($recommendations)) {
@@ -601,6 +709,9 @@
     }
     ?>
     <script>
+// Location → soil_type_id (from Corresponding_SoilTypes_BRGY-BARBAZA). When user changes location, soil type auto-updates.
+const locationToSoilId = <?= $location_to_soil_id_js ?>;
+
 const recommendationDetails =
     <?= json_encode($recommendation_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
@@ -645,12 +756,95 @@ function changeRecommendationsPage(delta) {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateRecommendationsPagination();
+    syncSoilFromLocation();
+
+    // "Detect my location" (free: browser geolocation + Nominatim reverse geocode)
+    const detectBtn = document.getElementById('detectLocationBtn');
+    const detectStatus = document.getElementById('detectLocationStatus');
+    if (detectBtn && detectStatus) {
+        detectBtn.addEventListener('click', function() {
+            detectStatus.textContent = 'Getting location...';
+            detectBtn.disabled = true;
+            if (!navigator.geolocation) {
+                detectStatus.textContent = 'Geolocation not supported.';
+                detectBtn.disabled = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    detectStatus.textContent = 'Looking up address...';
+                    fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&addressdetails=1', {
+                        headers: { 'Accept': 'application/json' }
+                    })
+                    .then(r => r.json())
+                    .then(function(data) {
+                        const addr = data.address || {};
+                        const village = (addr.village || addr.suburb || addr.hamlet || addr.neighbourhood || '').trim();
+                        const town = (addr.town || addr.municipality || addr.county || '').trim();
+                        const state = (addr.state || '').trim();
+                        const locStr = (village + ' ' + town + ' ' + state).toLowerCase();
+                        const inBarbaza = locStr.indexOf('barbaza') !== -1 || locStr.indexOf('antique') !== -1;
+                        let matchedLocation = null;
+                        const locationSelect = document.getElementById('location');
+                        if (!locationSelect) { detectBtn.disabled = false; detectStatus.textContent = ''; return; }
+                        const options = Array.from(locationSelect.options).filter(o => o.value);
+                        for (let i = 0; i < options.length; i++) {
+                            const full = options[i].value;
+                            const brgyPart = full.split(',')[0].trim().toLowerCase();
+                            const v = village.toLowerCase();
+                            if (v && (brgyPart === v || brgyPart.indexOf(v) !== -1 || v.indexOf(brgyPart) !== -1)) {
+                                matchedLocation = full;
+                                break;
+                            }
+                        }
+                        if (!matchedLocation && inBarbaza && options.length > 0) {
+                            matchedLocation = options.find(o => o.value && o.value.indexOf('Poblacion') !== -1)?.value || options[0]?.value;
+                        }
+                        if (matchedLocation) {
+                            locationSelect.value = matchedLocation;
+                            syncSoilFromLocation();
+                            detectStatus.textContent = 'Found. Updating...';
+                            var sub = document.querySelector('button[name="get_recommendations"]');
+                            if (sub) sub.click();
+                        } else {
+                            detectStatus.textContent = 'Could not match to a Barbaza barangay. Please select manually.';
+                        }
+                        detectBtn.disabled = false;
+                    })
+                    .catch(function() {
+                        detectStatus.textContent = 'Lookup failed. Please select location manually.';
+                        detectBtn.disabled = false;
+                    });
+                },
+                function() {
+                    detectStatus.textContent = 'Location denied or unavailable.';
+                    detectBtn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+            );
+        });
+    }
 });
 
-// Handle location change - automatically reload recommendations
+// When location changes, auto-set soil type from barangay mapping (Barbaza PDF)
+function syncSoilFromLocation() {
+    const locationSelect = document.getElementById('location');
+    const soilTypeSelect = document.getElementById('soil_type');
+    if (!locationSelect || !soilTypeSelect || !locationSelect.value) return;
+    const soilId = locationToSoilId && locationToSoilId[locationSelect.value];
+    if (soilId) {
+        soilTypeSelect.value = String(soilId);
+    }
+}
+
+// Handle location change - auto-set soil type from mapping, then reload recommendations
 function handleLocationChange() {
     const locationSelect = document.getElementById('location');
     const soilTypeSelect = document.getElementById('soil_type');
+
+    syncSoilFromLocation();
 
     // Check if both location and soil type are selected
     if (locationSelect.value && soilTypeSelect.value) {
