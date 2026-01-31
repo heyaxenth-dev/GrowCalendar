@@ -25,19 +25,28 @@ class CropRecommendationEngine {
      * @return array Array of recommended crops with scores
      */
     public function generateRecommendations($user_id, $soil_type_id, $weather_data) {
-        // Get all crops
+        $recommendations = $this->generateRecommendationsInternal($user_id, $soil_type_id, $weather_data);
+        $this->saveRecommendations($user_id, $recommendations, $soil_type_id, $weather_data);
+        return $recommendations;
+    }
+
+    /**
+     * Generate recommendations in memory without saving (used for single or multi-soil merge).
+     * @param int $user_id User ID
+     * @param int $soil_type_id Selected soil type
+     * @param array $weather_data Current weather conditions
+     * @return array Array of recommended crops with scores
+     */
+    private function generateRecommendationsInternal($user_id, $soil_type_id, $weather_data) {
         $crops = $this->getAllCrops();
         $recommendations = [];
-        
         $location = $weather_data['location'] ?? null;
-        
+
         foreach ($crops as $crop) {
-            // Historical score based on farmer's previous plantings in this location
             $history_score = $this->calculateHistoryScore($user_id, (int)$crop['id'], $location);
-            
             $score = $this->calculateCropScore($crop, $soil_type_id, $weather_data, $user_id, $history_score);
-            
-            if ($score > 0.3) { // Only recommend crops with score > 30%
+
+            if ($score > 0.3) {
                 $recommendations[] = [
                     'crop' => $crop,
                     'score' => $score,
@@ -47,15 +56,10 @@ class CropRecommendationEngine {
                 ];
             }
         }
-        
-        // Sort by score (highest first)
-        usort($recommendations, function($a, $b) {
+
+        usort($recommendations, function ($a, $b) {
             return $b['score'] <=> $a['score'];
         });
-        
-        // Save recommendations to database
-        $this->saveRecommendations($user_id, $recommendations, $soil_type_id, $weather_data);
-        
         return $recommendations;
     }
     
@@ -476,6 +480,93 @@ class CropRecommendationEngine {
         }
     }
     
+    /**
+     * Get soil types associated with a location (barangay).
+     * Uses location_soil_types if available; otherwise returns all soil types.
+     *
+     * @param string $location Location string (e.g. "Esparar, Barbaza, Antique")
+     * @return array List of soil type rows (id, name, description, ...)
+     */
+    public function getSoilTypesByLocation($location) {
+        $location = trim($location);
+        if ($location === '') {
+            return $this->getAllSoilTypes();
+        }
+        // Check if location_soil_types exists and has rows for this location
+        $table_check = $this->conn->query("SHOW TABLES LIKE 'location_soil_types'");
+        if ($table_check && $table_check->num_rows > 0) {
+            $sql = "SELECT st.* FROM soil_types st
+                    INNER JOIN location_soil_types lst ON lst.soil_type_id = st.id
+                    WHERE lst.location = ?
+                    ORDER BY st.name";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("s", $location);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $rows = [];
+            while ($row = $result->fetch_assoc()) {
+                $rows[] = $row;
+            }
+            $stmt->close();
+            if (!empty($rows)) {
+                return $rows;
+            }
+        }
+        return $this->getAllSoilTypes();
+    }
+
+    /**
+     * Get all soil types (for fallback when location has no mapping).
+     * @return array
+     */
+    private function getAllSoilTypes() {
+        $result = $this->conn->query("SELECT * FROM soil_types ORDER BY name");
+        $rows = [];
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * Generate recommendations for multiple soil types and merge by crop (keep best score per crop).
+     *
+     * @param int $user_id User ID
+     * @param int[] $soil_type_ids Array of soil type IDs
+     * @param array $weather_data Current weather conditions
+     * @return array Array of recommended crops with scores (merged, sorted by score)
+     */
+    public function generateRecommendationsForSoils($user_id, array $soil_type_ids, $weather_data) {
+        $soil_type_ids = array_map('intval', array_filter($soil_type_ids));
+        if (empty($soil_type_ids)) {
+            return [];
+        }
+        $by_crop = [];
+        foreach ($soil_type_ids as $soil_type_id) {
+            $recs = $this->generateRecommendationsInternal($user_id, $soil_type_id, $weather_data);
+            foreach ($recs as $rec) {
+                $crop_id = (int)$rec['crop']['id'];
+                if (!isset($by_crop[$crop_id]) || $rec['score'] > $by_crop[$crop_id]['score']) {
+                    $by_crop[$crop_id] = $rec;
+                    $by_crop[$crop_id]['soil_type_id'] = $soil_type_id;
+                }
+            }
+        }
+        $merged = array_values($by_crop);
+        usort($merged, function ($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+        $first_soil_id = $soil_type_ids[0];
+        $to_save = [];
+        foreach ($merged as $r) {
+            $copy = $r;
+            unset($copy['soil_type_id']);
+            $to_save[] = $copy;
+        }
+        $this->saveRecommendations($user_id, $to_save, $first_soil_id, $weather_data);
+        return $merged;
+    }
+
     /**
      * Get user's soil preferences
      * @param int $user_id User ID

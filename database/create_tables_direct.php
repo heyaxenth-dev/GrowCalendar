@@ -64,6 +64,16 @@ try {
     $conn->query($sql);
     echo "✓ Created crop_soil_compatibility table\n";
 
+    // Create location-soil mapping (soil types per barangay)
+    $sql = "CREATE TABLE IF NOT EXISTS location_soil_types (
+        location VARCHAR(150) NOT NULL,
+        soil_type_id INT NOT NULL,
+        PRIMARY KEY (location, soil_type_id),
+        FOREIGN KEY (soil_type_id) REFERENCES soil_types(id) ON DELETE CASCADE
+    )";
+    $conn->query($sql);
+    echo "✓ Created location_soil_types table\n";
+
     // Create weather data table
     $sql = "CREATE TABLE IF NOT EXISTS weather_data (
         id INT AUTO_INCREMENT PRIMARY KEY,

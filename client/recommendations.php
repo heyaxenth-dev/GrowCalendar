@@ -58,7 +58,7 @@
             // Initialize recommendation engine
             $recommendation_engine = new CropRecommendationEngine($conn);
             
-            // Get soil types for dropdown
+            // Soil types still loaded for display (e.g. selected soil info); full list from engine when needed
             $soil_types_sql = "SELECT * FROM soil_types ORDER BY name";
             $soil_types_result = $conn->query($soil_types_sql);
             if ($soil_types_result) {
@@ -122,88 +122,61 @@
         $user_soil_preference = $recommendation_engine->getUserSoilPreference($user_id);
     }
     
-    // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD (Automatic System)
-    // Use user's saved preference or default values
+    // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD
+    // Use location from saved preference or default; load recommendations for ALL soil types associated with that barangay
     if ($recommendation_engine && empty($recommendations)) {
-        $selected_soil_id = null;
-        $location = 'Poblacion, Barbaza, Antique'; // Default location
-        
-        // Use saved preference if available
-        if ($user_soil_preference) {
-            $selected_soil_id = $user_soil_preference['id'];
-            $location = $user_soil_preference['location'] ?? $location;
-        } else {
-            // Use first available soil type as default
-            if (!empty($soil_types)) {
-                $selected_soil_id = $soil_types[0]['id'];
-            }
-        }
-        
-        // Auto-generate recommendations if we have a soil type
-        if ($selected_soil_id) {
+        $location = $user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique';
+        $soil_types_for_location = $recommendation_engine->getSoilTypesByLocation($location);
+        $soil_type_ids_for_location = array_column($soil_types_for_location, 'id');
+
+        if (!empty($soil_type_ids_for_location)) {
             try {
-                // Get weather data
                 $weather_api = new WeatherAPI(getWeatherApiKey());
                 $weather_result = $weather_api->getCurrentWeather($location);
-                
                 if (!$weather_result['error']) {
                     $weather_data = $weather_result;
                 } else {
-                    // Use fallback weather data
                     $weather_data = getFallbackWeatherData($location);
                 }
-                
-                // Save weather data to database
-                $weather_id = $weather_api->saveWeatherData($conn, $weather_data);
-                
-                // Save/update user soil preference
-                $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_id, $location);
-                
-                // Generate recommendations automatically
-                $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
-                $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
+                $weather_api->saveWeatherData($conn, $weather_data);
+                $first_soil_id = $soil_type_ids_for_location[0];
+                $recommendation_engine->saveUserSoilPreference($user_id, $first_soil_id, $location);
+                $recommendations = $recommendation_engine->generateRecommendationsForSoils($user_id, $soil_type_ids_for_location, $weather_data);
+                $selected_soil_type = null; // Multiple soils; show first or omit "Selected Soil Type" section
             } catch (Exception $e) {
                 $error_message = "Error generating recommendations: " . $e->getMessage();
             }
         }
     }
     
-    // Handle manual form submission (optional - for changing preferences)
+    // Handle form submission from soil-type subform (user re-selected location and chose soil types)
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $recommendation_engine) {
         if (isset($_POST['get_recommendations'])) {
-            $selected_soil_id = $_POST['soil_type'];
             $location = $_POST['location'] ?? 'Poblacion, Barbaza, Antique';
-            
-            try {
-                // Get weather data
-                $weather_api = new WeatherAPI(getWeatherApiKey());
-                $weather_result = $weather_api->getCurrentWeather($location);
-                
-                if (!$weather_result['error']) {
-                    $weather_data = $weather_result;
-                    
-                    // Save weather data to database
-                    $weather_id = $weather_api->saveWeatherData($conn, $weather_data);
-                    
-                    // Save user soil preference
-                    $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_id, $location);
-                    
-                    // Generate recommendations
-                    $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
-                    $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
-                    $success_message = "Recommendations updated successfully!";
-                } else {
-                    // Use fallback weather data
-                    $weather_data = getFallbackWeatherData($location);
-                    $weather_id = $weather_api->saveWeatherData($conn, $weather_data);
-                    
-                    $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_id, $location);
-                    $recommendations = $recommendation_engine->generateRecommendations($user_id, $selected_soil_id, $weather_data);
-                    $selected_soil_type = $soil_types[array_search($selected_soil_id, array_column($soil_types, 'id'))];
-                    $success_message = "Recommendations updated using fallback weather data!";
+            $selected_soil_ids = isset($_POST['soil_type_ids']) && is_array($_POST['soil_type_ids'])
+                ? array_map('intval', array_filter($_POST['soil_type_ids']))
+                : [];
+
+            if (empty($selected_soil_ids)) {
+                $error_message = "Please select at least one soil type.";
+            } else {
+                try {
+                    $weather_api = new WeatherAPI(getWeatherApiKey());
+                    $weather_result = $weather_api->getCurrentWeather($location);
+                    if (!$weather_result['error']) {
+                        $weather_data = $weather_result;
+                        $success_message = "Recommendations updated successfully!";
+                    } else {
+                        $weather_data = getFallbackWeatherData($location);
+                        $success_message = "Recommendations updated using fallback weather data!";
+                    }
+                    $weather_api->saveWeatherData($conn, $weather_data);
+                    $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_ids[0], $location);
+                    $recommendations = $recommendation_engine->generateRecommendationsForSoils($user_id, $selected_soil_ids, $weather_data);
+                    $selected_soil_type = null;
+                } catch (Exception $e) {
+                    $error_message = "Error generating recommendations: " . $e->getMessage();
                 }
-            } catch (Exception $e) {
-                $error_message = "Error generating recommendations: " . $e->getMessage();
             }
         }
     }
@@ -267,29 +240,17 @@
                     <div class="card-body">
                         <h5 class="card-title">Crop Recommendations</h5>
                         <p class="card-text">Recommendations are automatically generated based on your saved preferences
-                            and current weather conditions. You can update your soil type and location below to refresh
-                            recommendations.</p>
+                            and current weather conditions. Select your location; soil type is set automatically from
+                            your barangay. If you change location, select soil type(s) in the subform and click Okay to
+                            update recommendations.</p>
 
-                        <form method="POST" action="">
+                        <form method="POST" action="" id="recommendationsForm">
+                            <input type="hidden" name="get_recommendations" value="1">
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="soil_type" class="form-label">Soil Type</label>
-                                    <select class="form-select" id="soil_type" name="soil_type" required>
-                                        <option value="">Select Soil Type</option>
-                                        <?php foreach ($soil_types as $soil): ?>
-                                        <option value="<?= $soil['id'] ?>"
-                                            <?= ($user_soil_preference && $user_soil_preference['id'] == $soil['id']) ? 'selected' : '' ?>>
-                                            <?= $soil['name'] ?>
-                                        </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="form-text">Choose the soil type that best describes your farming area.
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <label for="location" class="form-label">Location</label>
                                     <select class="form-select" id="location" name="location" required
-                                        onchange="handleLocationChange()">
+                                        data-initial-location="<?= htmlspecialchars($user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique') ?>">
                                         <option value="">Select Location</option>
                                         <?php 
                                         $selected_location = $user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique';
@@ -302,13 +263,14 @@
                                         <?php endforeach; ?>
                                     </select>
                                     <div class="form-text">Select your city and province for accurate weather data.
-                                        Recommendations will update automatically.
+                                        Soil type is set automatically from your barangay (or use "Detect my location" if not assigned).
+                                        If you re-select a different location, a subform will appear to choose soil type(s) before updating.
                                     </div>
                                 </div>
                             </div>
 
                             <div class="text-center">
-                                <button type="submit" name="get_recommendations" class="btn btn-primary">
+                                <button type="button" id="updateRecommendationsBtn" class="btn btn-primary">
                                     <i class="bi bi-arrow-clockwise me-1"></i>Update Recommendations
                                 </button>
                                 <small class="d-block text-muted mt-2">Recommendations are automatically generated on
@@ -509,6 +471,27 @@
         </div>
     </div>
 
+    <!-- Soil Type Selection Modal (when user re-selects location) -->
+    <div class="modal fade" id="soilTypeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="soilTypeModalTitle">Soil types for location</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Select one or more soil types for the selected location, then click Okay to update the recommendation list.</p>
+                    <div id="soilTypeCheckboxes"></div>
+                    <div id="soilTypeModalError" class="alert alert-warning mt-2 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="soilTypeModalOkay">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Add to Schedule Modal -->
     <div class="modal fade" id="addToScheduleModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -647,64 +630,94 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRecommendationsPagination();
 });
 
-// Handle location change - automatically reload recommendations
-function handleLocationChange() {
-    const locationSelect = document.getElementById('location');
-    const soilTypeSelect = document.getElementById('soil_type');
+// Soil-type subform: show when user re-selects location or clicks Update Recommendations
+const locationSelect = document.getElementById('location');
+const soilTypeModalEl = document.getElementById('soilTypeModal');
+const soilTypeModalTitle = document.getElementById('soilTypeModalTitle');
+const soilTypeCheckboxes = document.getElementById('soilTypeCheckboxes');
+const soilTypeModalError = document.getElementById('soilTypeModalError');
+const soilTypeModalOkay = document.getElementById('soilTypeModalOkay');
+const updateRecommendationsBtn = document.getElementById('updateRecommendationsBtn');
+const recommendationsForm = document.getElementById('recommendationsForm');
 
-    // Check if both location and soil type are selected
-    if (locationSelect.value && soilTypeSelect.value) {
-        // Show loading indicator
-        Swal.fire({
-            title: 'Updating Recommendations',
-            text: 'Fetching weather data and generating new recommendations...',
-            icon: 'info',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
+function getInitialLocation() {
+    return locationSelect ? locationSelect.getAttribute('data-initial-location') || '' : '';
+}
+
+function openSoilTypeModal() {
+    const location = locationSelect ? locationSelect.value : '';
+    if (!location) {
+        Swal.fire({ title: 'Select Location', text: 'Please select a location first.', icon: 'warning', confirmButtonText: 'OK' });
+        return;
+    }
+    soilTypeModalTitle.textContent = 'Soil types: ' + location;
+    soilTypeCheckboxes.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading soil types...</div>';
+    soilTypeModalError.classList.add('d-none');
+    const modal = new bootstrap.Modal(soilTypeModalEl);
+    modal.show();
+
+    fetch('./includes/get_soil_types_by_location.php?location=' + encodeURIComponent(location))
+        .then(r => r.json())
+        .then(data => {
+            soilTypeCheckboxes.innerHTML = '';
+            if (data.success && data.soil_types && data.soil_types.length) {
+                data.soil_types.forEach(st => {
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = '<input class="form-check-input" type="checkbox" name="soil_type_ids[]" value="' + st.id + '" id="soil_cb_' + st.id + '">' +
+                        '<label class="form-check-label" for="soil_cb_' + st.id + '">' + (st.name || 'Soil #' + st.id) + '</label>';
+                    soilTypeCheckboxes.appendChild(div);
+                });
+            } else {
+                soilTypeCheckboxes.innerHTML = '<p class="text-muted">No soil types found for this location.</p>';
             }
+        })
+        .catch(() => {
+            soilTypeCheckboxes.innerHTML = '';
+            soilTypeModalError.textContent = 'Failed to load soil types.';
+            soilTypeModalError.classList.remove('d-none');
         });
+}
 
-        // Create a hidden form to submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '';
-
-        // Add soil type
-        const soilInput = document.createElement('input');
-        soilInput.type = 'hidden';
-        soilInput.name = 'soil_type';
-        soilInput.value = soilTypeSelect.value;
-        form.appendChild(soilInput);
-
-        // Add location
-        const locationInput = document.createElement('input');
+function submitSoilTypeSelection() {
+    const checked = soilTypeCheckboxes.querySelectorAll('input[name="soil_type_ids[]"]:checked');
+    if (!checked.length) {
+        soilTypeModalError.textContent = 'Please select at least one soil type.';
+        soilTypeModalError.classList.remove('d-none');
+        return;
+    }
+    // Remove any existing hidden soil_type_ids from form (from previous modal open)
+    recommendationsForm.querySelectorAll('input[name="soil_type_ids[]"]').forEach(el => el.remove());
+    checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'soil_type_ids[]';
+        input.value = cb.value;
+        recommendationsForm.appendChild(input);
+    });
+    const locationInput = recommendationsForm.querySelector('input[name="location"]') || document.createElement('input');
+    if (!recommendationsForm.querySelector('input[name="location"]')) {
         locationInput.type = 'hidden';
         locationInput.name = 'location';
-        locationInput.value = locationSelect.value;
-        form.appendChild(locationInput);
-
-        // Add submit button name
-        const submitInput = document.createElement('input');
-        submitInput.type = 'hidden';
-        submitInput.name = 'get_recommendations';
-        submitInput.value = '1';
-        form.appendChild(submitInput);
-
-        // Append to body and submit
-        document.body.appendChild(form);
-        form.submit();
-    } else if (locationSelect.value && !soilTypeSelect.value) {
-        // If location is selected but soil type is not, just show a message
-        Swal.fire({
-            title: 'Soil Type Required',
-            text: 'Please select a soil type first to generate recommendations.',
-            icon: 'warning',
-            confirmButtonText: 'OK'
-        });
+        recommendationsForm.appendChild(locationInput);
     }
+    locationInput.value = locationSelect.value;
+    recommendationsForm.submit();
+}
+
+if (locationSelect) {
+    locationSelect.addEventListener('change', function() {
+        const initial = getInitialLocation();
+        if (this.value && this.value !== initial) {
+            openSoilTypeModal();
+        }
+    });
+}
+if (updateRecommendationsBtn && soilTypeModalEl) {
+    updateRecommendationsBtn.addEventListener('click', openSoilTypeModal);
+}
+if (soilTypeModalOkay) {
+    soilTypeModalOkay.addEventListener('click', submitSoilTypeSelection);
 }
 
 function filterRecommendations() {
