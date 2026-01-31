@@ -71,6 +71,15 @@
                 </a>
             </li>
             <!-- End User Management Page Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link <?= ($current_page == 'add_crop_recommendation') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('add_crop_recommendation') ?>">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Add Crop Recommendation</span>
+                </a>
+            </li>
+            <!-- End Add Crop Recommendation Page Nav -->
         </ul>
     </aside>
     <!-- End Sidebar -->

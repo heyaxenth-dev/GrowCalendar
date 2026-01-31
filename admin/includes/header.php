@@ -33,6 +33,7 @@
         'user_management' => 'User Management',
         'users-profile' => $user_firstname . " " . $user_lastname . "'s Profile",
         'crop_management' => 'Crop Management',
+        'add_crop_recommendation' => 'Add Crop Recommendation',
     ];
     
     ?>

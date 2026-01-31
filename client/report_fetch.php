@@ -210,6 +210,15 @@
         });
         $top_performer = $sorted_performance[0]['name'];
     }
+
+    // Suggested focus: lowest performer
+    $suggested_focus = "Improve corn yield practices";
+    if (!empty($crop_performance) && count($crop_performance) > 1) {
+        $by_score = $crop_performance;
+        usort($by_score, function($a, $b) { return $a['score'] <=> $b['score']; });
+        $lowest = $by_score[0]['name'];
+        $suggested_focus = "Improve " . strtolower($lowest) . " yield practices";
+    }
     
     // Historical data analytics: Location, Soil Type, Crop, Weather, Feedback summary
     $historical_analytics = [];

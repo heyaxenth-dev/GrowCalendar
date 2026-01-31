@@ -1,7 +1,8 @@
 <?php
 /**
- * API: Get soil types for a given location (barangay).
+ * API: Get all soil types corresponding to a given location (barangay).
  * Used by the soil-type subform when user re-selects location.
+ * Returns all soil types available for that location (from location_soil_types), so the subform has all corresponding options.
  */
 header('Content-Type: application/json');
 ini_set('display_errors', 0);

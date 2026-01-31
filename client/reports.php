@@ -79,6 +79,80 @@
 
         <section class="section">
             <div class="row">
+                <!-- Reports: Performance, Summary, Historical Data -->
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Reports</h5>
+                            <p class="text-muted small">Performance overview and historical crop data from the system.
+                            </p>
+
+                            <?php
+                            $featured_crop_name = !empty($crop_performance) ? $crop_performance[0]['name'] : 'Rice';
+                            $featured_crop_score = !empty($crop_performance) ? (float)$crop_performance[0]['score'] : 90;
+                            $display_name = strlen($featured_crop_name) > 28 ? substr($featured_crop_name, 0, 25) . '...' : $featured_crop_name;
+                            ?>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold"><?= htmlspecialchars($display_name) ?></span>
+                                    <span class="small text-muted"><?= number_format($featured_crop_score, 0) ?>%</span>
+                                </div>
+                                <div class="progress" style="height: 24px;">
+                                    <div class="progress-bar bg-warning" role="progressbar"
+                                        style="width: <?= min(100, max(0, $featured_crop_score)) ?>%;"
+                                        aria-valuenow="<?= $featured_crop_score ?>" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <span class="small text-muted">0</span>
+                                    <span class="small text-muted">100</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 pt-3 border-top">
+                                <h6 class="small fw-bold">Summary</h6>
+                                <ul class="small mb-0">
+                                    <li>Top Performer: <strong><?= htmlspecialchars($top_performer) ?></strong></li>
+                                    <li>Suggested Focus: <strong><?= htmlspecialchars($suggested_focus) ?></strong></li>
+                                </ul>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Location</th>
+                                            <th>Soil Types</th>
+                                            <th>Crop Name</th>
+                                            <th>Weather Forecasted</th>
+                                            <th>Feedback</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!empty($historical_analytics)): ?>
+                                        <?php foreach ($historical_analytics as $row): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($row['location']) ?></td>
+                                            <td><?= htmlspecialchars($row['soil_type']) ?></td>
+                                            <td><?= htmlspecialchars($row['crop_name']) ?></td>
+                                            <td><?= htmlspecialchars($row['weather_condition']) ?></td>
+                                            <td><?= htmlspecialchars($row['feedback_label']) ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                        <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No historical feedback data
+                                                yet. Data will appear here once schedules have feedback.</td>
+                                        </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Reports Card -->
+
                 <!-- Seasonal Crop Availability Card -->
                 <div class="col-lg-12">
                     <div class="card">
@@ -413,8 +487,42 @@
                             <p><strong>Summary:</strong></p>
                             <ul>
                                 <li>Top Performer: <strong><?= htmlspecialchars($top_performer) ?></strong></li>
-                                <li>Suggested Focus: <strong>Improve corn yield practices</strong></li>
+                                <li>Suggested Focus: <strong><?= htmlspecialchars($suggested_focus) ?></strong></li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Historical Data (Reports) -->
+                    <div class="mb-4">
+                        <h4 class="mb-3">Historical Data Summary</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Location</th>
+                                        <th>Soil Types</th>
+                                        <th>Crop Name</th>
+                                        <th>Weather Forecasted</th>
+                                        <th>Feedback</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($historical_analytics)): foreach ($historical_analytics as $row): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($row['location']) ?></td>
+                                        <td><?= htmlspecialchars($row['soil_type']) ?></td>
+                                        <td><?= htmlspecialchars($row['crop_name']) ?></td>
+                                        <td><?= htmlspecialchars($row['weather_condition']) ?></td>
+                                        <td><?= htmlspecialchars($row['feedback_label']) ?></td>
+                                    </tr>
+                                    <?php endforeach; else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No historical feedback data yet.
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 

@@ -6,7 +6,7 @@
 include 'config.php';
 
 $locations = [
-    'Bagarhi, Barbaza, Antique', 'Bahuyan, Barbaza, Antique', 'Beri, Barbaza, Antique',
+    'Baghari, Barbaza, Antique', 'Bahuyan, Barbaza, Antique', 'Beri, Barbaza, Antique',
     'Biga-a, Barbaza, Antique', 'Binangbang, Barbaza, Antique', 'Binangbang Centro, Barbaza, Antique',
     'Binanu-an, Barbaza, Antique', 'Cadiao, Barbaza, Antique', 'Calapadan, Barbaza, Antique',
     'Capoyuan, Barbaza, Antique', 'Cubay, Barbaza, Antique', 'Esparar, Barbaza, Antique',

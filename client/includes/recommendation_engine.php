@@ -481,8 +481,9 @@ class CropRecommendationEngine {
     }
     
     /**
-     * Get soil types associated with a location (barangay).
-     * Uses location_soil_types if available; otherwise returns all soil types.
+     * Get all soil types associated with a location (barangay).
+     * Used by the subform so the user can choose from all corresponding soil types for that location.
+     * Uses location_soil_types if available; otherwise returns all soil types so the subform always has options.
      *
      * @param string $location Location string (e.g. "Esparar, Barbaza, Antique")
      * @return array List of soil type rows (id, name, description, ...)
@@ -492,7 +493,7 @@ class CropRecommendationEngine {
         if ($location === '') {
             return $this->getAllSoilTypes();
         }
-        // Check if location_soil_types exists and has rows for this location
+        // Return all soil types corresponding to this location from location_soil_types
         $table_check = $this->conn->query("SHOW TABLES LIKE 'location_soil_types'");
         if ($table_check && $table_check->num_rows > 0) {
             $sql = "SELECT st.* FROM soil_types st
@@ -512,6 +513,7 @@ class CropRecommendationEngine {
                 return $rows;
             }
         }
+        // No mapping for this location: return all soil types so subform has all options available
         return $this->getAllSoilTypes();
     }
 

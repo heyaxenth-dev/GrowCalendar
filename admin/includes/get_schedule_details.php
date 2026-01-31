@@ -10,8 +10,9 @@ include '../../database/config.php';
 // Start session
 session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+// Check if user or admin is logged in
+$is_admin = !empty($_SESSION['admin_authenticated']);
+if (!$is_admin && !isset($_SESSION['user_id'])) {
     echo '<div class="alert alert-danger">User not logged in</div>';
     exit;
 }
@@ -25,18 +26,28 @@ if (!$schedule_id) {
 }
 
 try {
-    // Get detailed schedule information
+    // Get detailed schedule information; farmer name comes only from crop_feedback/crop_schedules/notes, not from user (technologist)
     $query = "SELECT cs.*, c.name as crop_name, c.scientific_name, c.harvest_days, c.description,
                      st.name as soil_type_name, st.description as soil_description,
-                     cf.crop_condition, cf.challenges_encountered, cf.remarks as feedback_remarks, cf.feedback_score, cf.created_at as feedback_date
+                     cf.crop_condition, cf.challenges_encountered, cf.remarks as feedback_remarks, cf.feedback_score, cf.created_at as feedback_date, cf.farmer_name AS feedback_farmer_name
               FROM crop_schedules cs 
               JOIN crops c ON cs.crop_id = c.id 
               LEFT JOIN soil_types st ON cs.recommendation_id = st.id
               LEFT JOIN crop_feedback cf ON cs.id = cf.crop_schedule_id
-              WHERE cs.id = ? AND cs.user_id = ?";
-    
+              WHERE cs.id = ?";
+    $params = [$schedule_id];
+    if (!$is_admin) {
+        $query .= " AND cs.user_id = ?";
+        $params[] = $_SESSION['user_id'];
+    }
+    $query .= " LIMIT 1";
+
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $schedule_id, $_SESSION['user_id']);
+    if (count($params) === 1) {
+        $stmt->bind_param("i", $schedule_id);
+    } else {
+        $stmt->bind_param("ii", $schedule_id, $_SESSION['user_id']);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -59,11 +70,27 @@ try {
         $days_until_harvest = -$days_until_harvest; // Negative if past harvest date
     }
     
+    // Resolve farmer name only from farmer fields (never from user/technologist): crop_feedback.farmer_name, crop_schedules.farmer_name, or "Farmer: ..." in notes
+    $farmer_name = '';
+    if (!empty(trim((string)($schedule['feedback_farmer_name'] ?? '')))) {
+        $farmer_name = trim($schedule['feedback_farmer_name']);
+    } elseif (!empty($schedule['farmer_name'])) {
+        $farmer_name = trim($schedule['farmer_name']);
+    } elseif (!empty($schedule['notes']) && preg_match('/^Farmer:\s*(.+?)(\n\n|$)/i', $schedule['notes'], $m)) {
+        $farmer_name = trim($m[1]);
+    }
+    if ($farmer_name === '') {
+        $farmer_name = 'Not specified';
+    }
     ?>
 <div class="row">
     <div class="col-md-6">
         <h6 class="text-primary mb-3">Crop Information</h6>
         <table class="table table-sm">
+            <tr>
+                <td><strong>Farmer Name:</strong></td>
+                <td><?= htmlspecialchars($farmer_name) ?></td>
+            </tr>
             <tr>
                 <td><strong>Crop Name:</strong></td>
                 <td><?= htmlspecialchars($schedule['crop_name']) ?></td>
