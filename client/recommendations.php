@@ -15,14 +15,15 @@
     
     $user_id = $_SESSION['user_id'];
     
-    // Get user's name for farmer name field
-    $user_name_query = "SELECT firstname, lastname FROM users WHERE id = ?";
+    // Get user's name and assigned barangay for farmer name and auto location/soil
+    $user_name_query = "SELECT firstname, lastname, barangay FROM users WHERE id = ?";
     $user_name_stmt = $conn->prepare($user_name_query);
     $user_name_stmt->bind_param("i", $user_id);
     $user_name_stmt->execute();
     $user_name_result = $user_name_stmt->get_result();
     $user_name_data = $user_name_result->fetch_assoc();
     $farmer_name = trim(($user_name_data['firstname'] ?? '') . ' ' . ($user_name_data['lastname'] ?? ''));
+    $user_barangay = !empty($user_name_data['barangay']) ? trim($user_name_data['barangay']) : null;
     
     // Initialize variables
     $soil_types = [];
@@ -75,7 +76,7 @@
     
     // Define available locations (Barangays in Barbaza, Antique)
     $locations = [
-        'Bagarhi, Barbaza, Antique',
+        'Baghari, Barbaza, Antique',
         'Bahuyan, Barbaza, Antique',
         'Beri, Barbaza, Antique',
         'Biga-a, Barbaza, Antique',
@@ -115,21 +116,123 @@
         'Tig-Alaran, Barbaza, Antique',
         'Yapo, Barbaza, Antique'
     ];
-    
+
+    /**
+     * Barangay → primary soil type name (from Corresponding_SoilTypes_BRGY-BARBAZA).
+     * Used to auto-select soil type when location/brgy is known.
+     */
+    $barangay_to_soil_type_name = [
+        'Baghari' => 'Alluvial clay loam',
+        'Bahuyan' => 'Loam, well-drained',
+        'Beri' => 'Clay to silty clay (moist soils)',
+        'Biga-a' => 'Alluvial clay loam',
+        'Binangbang' => 'Alluvial clay loam',
+        'Binangbang Centro' => 'Loam, fertile garden soil',
+        'Binanu-an' => 'Sandy loam, well-drained coastals',
+        'Cadiao' => 'Clay to silty clay (moist soils)',
+        'Calapadan' => 'Wide range; loam preferred',
+        'Capoyuan' => 'Alluvial clay loam',
+        'Cubay' => 'Sandy loam, well-drained coastals',
+        'Embrangga-an' => 'Well-drained loam',
+        'Esparar' => 'Clay to silty clay (moist soils)',
+        'Gua' => 'Loam with good organic matter',
+        'Idao' => 'Sandy loam, well-drained coastals',
+        'Igpalge' => 'Alluvial clay loam',
+        'Igtunarum' => 'Well-drained loam',
+        'Integasan' => 'Clay to silty clay (moist soils)',
+        'Ipil' => 'Sandy loam, well-drained coastals',
+        'Jinalinan' => 'Clay to silty clay (moist soils)',
+        'Lanas' => 'Clay to silty clay (moist soils)',
+        'Langcaon (Evelio Javier)' => 'Clay to silty clay (moist soils)',
+        'Lisub' => 'Clay to silty clay (moist soils)',
+        'Lombuyan' => 'Clay to silty clay (moist soils)',
+        'Mablad' => 'Loam with good organic matter',
+        'Magtulis' => 'Clay to silty clay (moist soils)',
+        'Marigne' => 'Clay to silty clay (moist soils)',
+        'Mayabay' => 'Clay to silty clay (moist soils)',
+        'Mayos' => 'Loam to sandy loam',
+        'Nalusdan' => 'Sandy loam to loam',
+        'Narirong' => 'Well-drained loam',
+        'Palma' => 'Clay to silty clay (moist soils)',
+        'Poblacion' => 'Sandy loam, well-drained coastals',
+        'San Antonio' => 'Clay to silty clay (moist soils)',
+        'San Ramon' => 'Sandy loam, well-drained coastals',
+        'Soligao' => 'Alluvial clay loam',
+        'Tabongtabong' => 'Alluvial clay loam',
+        'Tig-Alaran' => 'Clay to silty clay (moist soils)',
+        'Yapo' => 'Alluvial clay loam',
+    ];
+
+    // Resolve soil type ID from barangay (by name match in soil_types)
+    $auto_soil_id_from_barangay = null;
+    if ($user_barangay && isset($barangay_to_soil_type_name[$user_barangay]) && !empty($soil_types)) {
+        $target_soil_name = $barangay_to_soil_type_name[$user_barangay];
+        foreach ($soil_types as $st) {
+            if (strcasecmp(trim($st['name']), $target_soil_name) === 0) {
+                $auto_soil_id_from_barangay = (int) $st['id'];
+                break;
+            }
+        }
+    }
+
+    // Full location string from barangay (e.g. "Poblacion, Barbaza, Antique")
+    $auto_location_from_barangay = null;
+    if ($user_barangay) {
+        $suffix = ', Barbaza, Antique';
+        $candidate = $user_barangay . $suffix;
+        if (in_array($candidate, $locations, true)) {
+            $auto_location_from_barangay = $candidate;
+        } else {
+            // Match by prefix (e.g. "Langcaon (Evelio Javier), Barbaza, Antique")
+            foreach ($locations as $loc) {
+                if (strpos($loc, $user_barangay) === 0) {
+                    $auto_location_from_barangay = $loc;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Build location string → soil_type_id for JS (so changing location auto-sets soil type)
+    $location_to_soil_id = [];
+    foreach ($locations as $loc) {
+        $brgy = preg_replace('/, Barbaza, Antique$/', '', $loc);
+        if (isset($barangay_to_soil_type_name[$brgy]) && !empty($soil_types)) {
+            $soil_name = $barangay_to_soil_type_name[$brgy];
+            foreach ($soil_types as $st) {
+                if (strcasecmp(trim($st['name']), $soil_name) === 0) {
+                    $location_to_soil_id[$loc] = (int) $st['id'];
+                    break;
+                }
+            }
+        }
+    }
+
     // Get user's current soil preference (only if engine is available)
     $user_soil_preference = null;
     if ($recommendation_engine) {
         $user_soil_preference = $recommendation_engine->getUserSoilPreference($user_id);
     }
     
-    // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD
-    // Use location from saved preference or default; load recommendations for ALL soil types associated with that barangay
+    // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD (Automatic System)
+    // Use user's saved preference or default values
     if ($recommendation_engine && empty($recommendations)) {
-        $location = $user_soil_preference['location'] ?? 'Poblacion, Barbaza, Antique';
-        $soil_types_for_location = $recommendation_engine->getSoilTypesByLocation($location);
-        $soil_type_ids_for_location = array_column($soil_types_for_location, 'id');
-
-        if (!empty($soil_type_ids_for_location)) {
+        $selected_soil_id = null;
+        $location = 'Poblacion, Barbaza, Antique'; // Default location
+        
+        // Use saved preference if available
+        if ($user_soil_preference) {
+            $selected_soil_id = $user_soil_preference['id'];
+            $location = $user_soil_preference['location'] ?? $location;
+        } else {
+            // Use first available soil type as default
+            if (!empty($soil_types)) {
+                $selected_soil_id = $soil_types[0]['id'];
+            }
+        }
+        
+        // Auto-generate recommendations if we have a soil type
+        if ($selected_soil_id) {
             try {
                 $weather_api = new WeatherAPI(getWeatherApiKey());
                 $weather_result = $weather_api->getCurrentWeather($location);
@@ -263,9 +366,18 @@
                                         <?php endforeach; ?>
                                     </select>
                                     <div class="form-text">Select your city and province for accurate weather data.
-                                        Soil type is set automatically from your barangay (or use "Detect my location" if not assigned).
-                                        If you re-select a different location, a subform will appear to choose soil type(s) before updating.
+                                        Recommendations will update automatically.
                                     </div>
+                                    <?php if (!$user_barangay): ?>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            id="detectLocationBtn"
+                                            title="Use browser location and free geolocation to suggest barangay">
+                                            <i class="bi bi-geo-alt"></i> Detect my location
+                                        </button>
+                                        <span class="text-muted small ms-2" id="detectLocationStatus"></span>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -480,7 +592,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-3">Select one or more soil types for the selected location, then click Okay to update the recommendation list.</p>
+                    <p class="text-muted small mb-3">Select one or more soil types for the selected location, then click
+                        Okay to update the recommendation list.</p>
                     <div id="soilTypeCheckboxes"></div>
                     <div id="soilTypeModalError" class="alert alert-warning mt-2 d-none"></div>
                 </div>
@@ -547,6 +660,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php
+    // Location → soil type ID for auto-selecting soil when location changes (from Barbaza PDF mapping)
+    $location_to_soil_id_js = json_encode($location_to_soil_id ?? [], JSON_UNESCAPED_UNICODE);
     // Build lightweight dataset for JS details modal
     $recommendation_js = [];
     if (!empty($recommendations)) {
@@ -584,6 +699,9 @@
     }
     ?>
     <script>
+// Location → soil_type_id (from Corresponding_SoilTypes_BRGY-BARBAZA). When user changes location, soil type auto-updates.
+const locationToSoilId = <?= $location_to_soil_id_js ?>;
+
 const recommendationDetails =
     <?= json_encode($recommendation_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
@@ -630,217 +748,195 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRecommendationsPagination();
 });
 
-// Soil-type subform: show when user re-selects location or clicks Update Recommendations
-const locationSelect = document.getElementById('location');
-const soilTypeModalEl = document.getElementById('soilTypeModal');
-const soilTypeModalTitle = document.getElementById('soilTypeModalTitle');
-const soilTypeCheckboxes = document.getElementById('soilTypeCheckboxes');
-const soilTypeModalError = document.getElementById('soilTypeModalError');
-const soilTypeModalOkay = document.getElementById('soilTypeModalOkay');
-const updateRecommendationsBtn = document.getElementById('updateRecommendationsBtn');
-const recommendationsForm = document.getElementById('recommendationsForm');
+// Handle location change - automatically reload recommendations
+function handleLocationChange() {
+    const locationSelect = document.getElementById('location');
+    const soilTypeSelect = document.getElementById('soil_type');
 
-function getInitialLocation() {
-    return locationSelect ? locationSelect.getAttribute('data-initial-location') || '' : '';
-}
-
-function openSoilTypeModal() {
-    const location = locationSelect ? locationSelect.value : '';
-    if (!location) {
-        Swal.fire({ title: 'Select Location', text: 'Please select a location first.', icon: 'warning', confirmButtonText: 'OK' });
-        return;
+    // Check if both location and soil type are selected
+    if (locationSelect.value && soilTypeSelect.value) {
+        // Show loading indicator
+        Swal.fire({
+                title: 'Updating Recommendations',
+                text: 'Fetching weather data and generating new recommendations...',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            })
+            .catch(() => {
+                soilTypeCheckboxes.innerHTML = '';
+                soilTypeModalError.textContent = 'Failed to load soil types.';
+                soilTypeModalError.classList.remove('d-none');
+            });
     }
-    soilTypeModalTitle.textContent = 'Soil types: ' + location;
-    soilTypeCheckboxes.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Loading soil types...</div>';
-    soilTypeModalError.classList.add('d-none');
-    const modal = new bootstrap.Modal(soilTypeModalEl);
-    modal.show();
 
-    fetch('./includes/get_soil_types_by_location.php?location=' + encodeURIComponent(location))
-        .then(r => r.json())
-        .then(data => {
-            soilTypeCheckboxes.innerHTML = '';
-            if (data.success && data.soil_types && data.soil_types.length) {
-                data.soil_types.forEach(st => {
-                    const div = document.createElement('div');
-                    div.className = 'form-check';
-                    div.innerHTML = '<input class="form-check-input" type="checkbox" name="soil_type_ids[]" value="' + st.id + '" id="soil_cb_' + st.id + '">' +
-                        '<label class="form-check-label" for="soil_cb_' + st.id + '">' + (st.name || 'Soil #' + st.id) + '</label>';
-                    soilTypeCheckboxes.appendChild(div);
-                });
-            } else {
-                soilTypeCheckboxes.innerHTML = '<p class="text-muted">No soil types found for this location.</p>';
-            }
-        })
-        .catch(() => {
-            soilTypeCheckboxes.innerHTML = '';
-            soilTypeModalError.textContent = 'Failed to load soil types.';
+    function submitSoilTypeSelection() {
+        const checked = soilTypeCheckboxes.querySelectorAll('input[name="soil_type_ids[]"]:checked');
+        if (!checked.length) {
+            soilTypeModalError.textContent = 'Please select at least one soil type.';
             soilTypeModalError.classList.remove('d-none');
+            return;
+        }
+        // Remove any existing hidden soil_type_ids from form (from previous modal open)
+        recommendationsForm.querySelectorAll('input[name="soil_type_ids[]"]').forEach(el => el.remove());
+        checked.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'soil_type_ids[]';
+            input.value = cb.value;
+            recommendationsForm.appendChild(input);
         });
-}
-
-function submitSoilTypeSelection() {
-    const checked = soilTypeCheckboxes.querySelectorAll('input[name="soil_type_ids[]"]:checked');
-    if (!checked.length) {
-        soilTypeModalError.textContent = 'Please select at least one soil type.';
-        soilTypeModalError.classList.remove('d-none');
-        return;
-    }
-    // Remove any existing hidden soil_type_ids from form (from previous modal open)
-    recommendationsForm.querySelectorAll('input[name="soil_type_ids[]"]').forEach(el => el.remove());
-    checked.forEach(cb => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'soil_type_ids[]';
-        input.value = cb.value;
-        recommendationsForm.appendChild(input);
-    });
-    const locationInput = recommendationsForm.querySelector('input[name="location"]') || document.createElement('input');
-    if (!recommendationsForm.querySelector('input[name="location"]')) {
-        locationInput.type = 'hidden';
-        locationInput.name = 'location';
-        recommendationsForm.appendChild(locationInput);
-    }
-    locationInput.value = locationSelect.value;
-    recommendationsForm.submit();
-}
-
-if (locationSelect) {
-    locationSelect.addEventListener('change', function() {
-        const initial = getInitialLocation();
-        if (this.value && this.value !== initial) {
-            openSoilTypeModal();
+        const locationInput = recommendationsForm.querySelector('input[name="location"]') || document.createElement(
+            'input');
+        if (!recommendationsForm.querySelector('input[name="location"]')) {
+            locationInput.type = 'hidden';
+            locationInput.name = 'location';
+            recommendationsForm.appendChild(locationInput);
         }
-    });
-}
-if (updateRecommendationsBtn && soilTypeModalEl) {
-    updateRecommendationsBtn.addEventListener('click', openSoilTypeModal);
-}
-if (soilTypeModalOkay) {
-    soilTypeModalOkay.addEventListener('click', submitSoilTypeSelection);
-}
+        locationInput.value = locationSelect.value;
+        recommendationsForm.submit();
+    }
 
-function filterRecommendations() {
-    const searchTerm = document.getElementById('recommendationSearch').value.toLowerCase().trim();
-    const recommendationItems = document.querySelectorAll('.recommendation-item');
-    const clearBtn = document.getElementById('clearSearchBtn');
-    const resultCount = document.getElementById('resultCount');
-    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (locationSelect) {
+        locationSelect.addEventListener('change', function() {
+            const initial = getInitialLocation();
+            if (this.value && this.value !== initial) {
+                openSoilTypeModal();
+            }
+        });
+    }
+    if (updateRecommendationsBtn && soilTypeModalEl) {
+        updateRecommendationsBtn.addEventListener('click', openSoilTypeModal);
+    }
+    if (soilTypeModalOkay) {
+        soilTypeModalOkay.addEventListener('click', submitSoilTypeSelection);
+    }
 
-    let visibleCount = 0;
-    let hasResults = false;
+    function filterRecommendations() {
+        const searchTerm = document.getElementById('recommendationSearch').value.toLowerCase().trim();
+        const recommendationItems = document.querySelectorAll('.recommendation-item');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const resultCount = document.getElementById('resultCount');
+        const noResultsMessage = document.getElementById('noResultsMessage');
 
-    recommendationItems.forEach(item => {
-        const cropName = item.getAttribute('data-crop-name') || '';
-        const scientificName = item.getAttribute('data-scientific-name') || '';
-        const season = item.getAttribute('data-season') || '';
-        const harvestDays = String(item.getAttribute('data-harvest-days') || '');
+        let visibleCount = 0;
+        let hasResults = false;
 
-        // Check if search term matches any attribute
-        const matches = !searchTerm ||
-            cropName.includes(searchTerm) ||
-            scientificName.includes(searchTerm) ||
-            season.includes(searchTerm) ||
-            harvestDays.includes(searchTerm);
+        recommendationItems.forEach(item => {
+            const cropName = item.getAttribute('data-crop-name') || '';
+            const scientificName = item.getAttribute('data-scientific-name') || '';
+            const season = item.getAttribute('data-season') || '';
+            const harvestDays = String(item.getAttribute('data-harvest-days') || '');
 
-        if (matches) {
-            // Remove d-none class to show the item (Bootstrap class takes precedence)
-            item.classList.remove('d-none');
-            visibleCount++;
-            hasResults = true;
+            // Check if search term matches any attribute
+            const matches = !searchTerm ||
+                cropName.includes(searchTerm) ||
+                scientificName.includes(searchTerm) ||
+                season.includes(searchTerm) ||
+                harvestDays.includes(searchTerm);
+
+            if (matches) {
+                // Remove d-none class to show the item (Bootstrap class takes precedence)
+                item.classList.remove('d-none');
+                visibleCount++;
+                hasResults = true;
+            } else {
+                // Add d-none class to hide the item
+                item.classList.add('d-none');
+            }
+        });
+
+        // Update result count
+        if (resultCount) {
+            resultCount.textContent = visibleCount;
+        }
+
+        // Show/hide clear button
+        if (clearBtn) {
+            clearBtn.style.display = searchTerm ? '' : 'none';
+        }
+
+        // Show/hide no results message
+        if (noResultsMessage) {
+            noResultsMessage.style.display = hasResults ? 'none' : 'block';
+        }
+
+        // When searching, disable pagination buttons and show result count
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        const paginationInfo = document.getElementById('paginationInfo');
+
+        if (searchTerm) {
+            if (prevBtn) prevBtn.disabled = true;
+            if (nextBtn) nextBtn.disabled = true;
+            if (paginationInfo) {
+                paginationInfo.textContent = `${visibleCount} result(s)`;
+            }
         } else {
-            // Add d-none class to hide the item
-            item.classList.add('d-none');
-        }
-    });
-
-    // Update result count
-    if (resultCount) {
-        resultCount.textContent = visibleCount;
-    }
-
-    // Show/hide clear button
-    if (clearBtn) {
-        clearBtn.style.display = searchTerm ? '' : 'none';
-    }
-
-    // Show/hide no results message
-    if (noResultsMessage) {
-        noResultsMessage.style.display = hasResults ? 'none' : 'block';
-    }
-
-    // When searching, disable pagination buttons and show result count
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const paginationInfo = document.getElementById('paginationInfo');
-
-    if (searchTerm) {
-        if (prevBtn) prevBtn.disabled = true;
-        if (nextBtn) nextBtn.disabled = true;
-        if (paginationInfo) {
-            paginationInfo.textContent = `${visibleCount} result(s)`;
-        }
-    } else {
-        // Restore pagination when search is cleared
-        if (prevBtn || nextBtn || paginationInfo) {
-            currentRecommendationsPage = 1;
-            updateRecommendationsPagination();
+            // Restore pagination when search is cleared
+            if (prevBtn || nextBtn || paginationInfo) {
+                currentRecommendationsPage = 1;
+                updateRecommendationsPagination();
+            }
         }
     }
-}
 
-function clearSearch() {
-    document.getElementById('recommendationSearch').value = '';
-    const recommendationItems = document.querySelectorAll('.recommendation-item');
+    function clearSearch() {
+        document.getElementById('recommendationSearch').value = '';
+        const recommendationItems = document.querySelectorAll('.recommendation-item');
 
-    // Reset pagination to first page
-    currentRecommendationsPage = 1;
-    updateRecommendationsPagination();
+        // Reset pagination to first page
+        currentRecommendationsPage = 1;
+        updateRecommendationsPagination();
 
-    // Update result count
-    const resultCount = document.getElementById('resultCount');
-    if (resultCount) {
-        resultCount.textContent = recommendationItems.length;
+        // Update result count
+        const resultCount = document.getElementById('resultCount');
+        if (resultCount) {
+            resultCount.textContent = recommendationItems.length;
+        }
+
+        // Hide clear button
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if (clearBtn) {
+            clearBtn.style.display = 'none';
+        }
+
+        // Hide no results message
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        if (noResultsMessage) {
+            noResultsMessage.style.display = 'none';
+        }
+
+        document.getElementById('recommendationSearch').focus();
     }
 
-    // Hide clear button
-    const clearBtn = document.getElementById('clearSearchBtn');
-    if (clearBtn) {
-        clearBtn.style.display = 'none';
-    }
+    // Show details modal for a recommendation
+    function showRecommendationDetails(index) {
+        if (!recommendationDetails || !recommendationDetails[index]) {
+            return;
+        }
+        const rec = recommendationDetails[index];
 
-    // Hide no results message
-    const noResultsMessage = document.getElementById('noResultsMessage');
-    if (noResultsMessage) {
-        noResultsMessage.style.display = 'none';
-    }
+        const titleEl = document.getElementById('recommendationDetailsTitle');
+        if (titleEl) {
+            titleEl.textContent = `${rec.name} – ${rec.score}% match`;
+        }
 
-    document.getElementById('recommendationSearch').focus();
-}
+        const bodyEl = document.getElementById('recommendationDetailsBody');
+        if (bodyEl) {
+            const reasonsHtml = (rec.reasons || []).map(r =>
+                `<li><i class="bi bi-check-circle-fill text-success me-1"></i>${r}</li>`
+            ).join('');
 
-// Show details modal for a recommendation
-function showRecommendationDetails(index) {
-    if (!recommendationDetails || !recommendationDetails[index]) {
-        return;
-    }
-    const rec = recommendationDetails[index];
+            const tipsHtml = (rec.planting_tips || []).map(t =>
+                `<li><i class="bi bi-lightbulb text-warning me-1"></i>${t}</li>`
+            ).join('');
 
-    const titleEl = document.getElementById('recommendationDetailsTitle');
-    if (titleEl) {
-        titleEl.textContent = `${rec.name} – ${rec.score}% match`;
-    }
-
-    const bodyEl = document.getElementById('recommendationDetailsBody');
-    if (bodyEl) {
-        const reasonsHtml = (rec.reasons || []).map(r =>
-            `<li><i class="bi bi-check-circle-fill text-success me-1"></i>${r}</li>`
-        ).join('');
-
-        const tipsHtml = (rec.planting_tips || []).map(t =>
-            `<li><i class="bi bi-lightbulb text-warning me-1"></i>${t}</li>`
-        ).join('');
-
-        bodyEl.innerHTML = `
+            bodyEl.innerHTML = `
             <h5 class="mb-1">${rec.name}</h5>
             <p class="text-muted mb-2"><em>${rec.scientific_name || ''}</em></p>
             ${rec.description ? `
@@ -899,106 +995,106 @@ function showRecommendationDetails(index) {
                 </button>
             </div>
         `;
-    }
-
-    const modal = new bootstrap.Modal(document.getElementById('recommendationDetailsModal'));
-    modal.show();
-}
-
-function addToSchedule(cropId, cropName, harvestDays) {
-    document.getElementById('cropId').value = cropId;
-    document.getElementById('cropName').value = cropName;
-    document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
-
-    // Set today as default planting date
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('plantingDate').value = today;
-
-    // Calculate expected harvest date and format as mm/dd/yy
-    const plantingDate = new Date(today);
-    const harvestDate = new Date(plantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
-
-    // Format as mm/dd/yy
-    const month = String(harvestDate.getMonth() + 1).padStart(2, '0');
-    const day = String(harvestDate.getDate()).padStart(2, '0');
-    const year = String(harvestDate.getFullYear()).slice(-2);
-    const formattedDate = `${month}/${day}/${year}`;
-
-    // Store ISO date for form submission
-    document.getElementById('harvestDate').value = harvestDate.toISOString().split('T')[0];
-
-    // Display formatted date
-    const harvestDateDisplay = document.getElementById('harvestDateDisplay');
-    if (harvestDateDisplay) {
-        harvestDateDisplay.value = formattedDate;
-    }
-
-    // Update harvest date when planting date changes
-    document.getElementById('plantingDate').addEventListener('change', function() {
-        const newPlantingDate = new Date(this.value);
-        const newHarvestDate = new Date(newPlantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
-        const newMonth = String(newHarvestDate.getMonth() + 1).padStart(2, '0');
-        const newDay = String(newHarvestDate.getDate()).padStart(2, '0');
-        const newYear = String(newHarvestDate.getFullYear()).slice(-2);
-        document.getElementById('harvestDate').value = newHarvestDate.toISOString().split('T')[0];
-        if (harvestDateDisplay) {
-            harvestDateDisplay.value = `${newMonth}/${newDay}/${newYear}`;
         }
-    });
 
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('addToScheduleModal'));
-    modal.show();
-}
+        const modal = new bootstrap.Modal(document.getElementById('recommendationDetailsModal'));
+        modal.show();
+    }
 
-// Handle form submission
-document.getElementById('addToScheduleForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+    function addToSchedule(cropId, cropName, harvestDays) {
+        document.getElementById('cropId').value = cropId;
+        document.getElementById('cropName').value = cropName;
+        document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
 
-    const formData = new FormData(this);
+        // Set today as default planting date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('plantingDate').value = today;
 
-    fetch('./includes/add_crop_schedule.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            const modalEl = document.getElementById('addToScheduleModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
+        // Calculate expected harvest date and format as mm/dd/yy
+        const plantingDate = new Date(today);
+        const harvestDate = new Date(plantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
 
-            if (data.success) {
-                modal.hide();
+        // Format as mm/dd/yy
+        const month = String(harvestDate.getMonth() + 1).padStart(2, '0');
+        const day = String(harvestDate.getDate()).padStart(2, '0');
+        const year = String(harvestDate.getFullYear()).slice(-2);
+        const formattedDate = `${month}/${day}/${year}`;
 
-                Swal.fire({
-                    title: "Success!",
-                    text: "Crop successfully added to your schedule!",
-                    icon: "success",
-                    confirmButtonText: "Done",
-                    timer: 2500,
-                    timerProgressBar: true
-                }).then(() => {
-                    // Redirect only after user closes alert
-                    window.location.href = 'crop_schedule.php';
-                });
-            } else {
+        // Store ISO date for form submission
+        document.getElementById('harvestDate').value = harvestDate.toISOString().split('T')[0];
+
+        // Display formatted date
+        const harvestDateDisplay = document.getElementById('harvestDateDisplay');
+        if (harvestDateDisplay) {
+            harvestDateDisplay.value = formattedDate;
+        }
+
+        // Update harvest date when planting date changes
+        document.getElementById('plantingDate').addEventListener('change', function() {
+            const newPlantingDate = new Date(this.value);
+            const newHarvestDate = new Date(newPlantingDate.getTime() + (harvestDays * 24 * 60 * 60 * 1000));
+            const newMonth = String(newHarvestDate.getMonth() + 1).padStart(2, '0');
+            const newDay = String(newHarvestDate.getDate()).padStart(2, '0');
+            const newYear = String(newHarvestDate.getFullYear()).slice(-2);
+            document.getElementById('harvestDate').value = newHarvestDate.toISOString().split('T')[0];
+            if (harvestDateDisplay) {
+                harvestDateDisplay.value = `${newMonth}/${newDay}/${newYear}`;
+            }
+        });
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('addToScheduleModal'));
+        modal.show();
+    }
+
+    // Handle form submission
+    document.getElementById('addToScheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch('./includes/add_crop_schedule.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modalEl = document.getElementById('addToScheduleModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+
+                if (data.success) {
+                    modal.hide();
+
+                    Swal.fire({
+                        title: "Success!",
+                        text: "Crop successfully added to your schedule!",
+                        icon: "success",
+                        confirmButtonText: "Done",
+                        timer: 2500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Redirect only after user closes alert
+                        window.location.href = 'crop_schedule.php';
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error!",
+                        text: data.message || "Failed to add crop to schedule.",
+                        icon: "error",
+                        confirmButtonText: "Retry"
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 Swal.fire({
                     title: "Error!",
-                    text: data.message || "Failed to add crop to schedule.",
+                    text: "An error occurred while adding the crop to schedule.",
                     icon: "error",
                     confirmButtonText: "Retry"
                 });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: "Error!",
-                text: "An error occurred while adding the crop to schedule.",
-                icon: "error",
-                confirmButtonText: "Retry"
             });
-        });
-});
+    });
     </script>
 
 
