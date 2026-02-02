@@ -124,6 +124,7 @@
                                             <th>Location</th>
                                             <th>Soil Types</th>
                                             <th>Crop Name</th>
+                                            <th>Date</th>
                                             <th>Weather Forecasted</th>
                                             <th>Feedback</th>
                                         </tr>
@@ -135,13 +136,15 @@
                                             <td><?= htmlspecialchars($row['location']) ?></td>
                                             <td><?= htmlspecialchars($row['soil_type']) ?></td>
                                             <td><?= htmlspecialchars($row['crop_name']) ?></td>
+                                            <td><?= !empty($row['feedback_date']) ? date('M j, Y', strtotime($row['feedback_date'])) : '—' ?>
+                                            </td>
                                             <td><?= htmlspecialchars($row['weather_condition']) ?></td>
                                             <td><?= htmlspecialchars($row['feedback_label']) ?></td>
                                         </tr>
                                         <?php endforeach; ?>
                                         <?php else: ?>
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted">No historical feedback data
+                                            <td colspan="6" class="text-center text-muted">No historical feedback data
                                                 yet. Data will appear here once schedules have feedback.</td>
                                         </tr>
                                         <?php endif; ?>
@@ -512,12 +515,14 @@
                                         <td><?= htmlspecialchars($row['location']) ?></td>
                                         <td><?= htmlspecialchars($row['soil_type']) ?></td>
                                         <td><?= htmlspecialchars($row['crop_name']) ?></td>
+                                        <td><?= !empty($row['feedback_date']) ? date('M j, Y', strtotime($row['feedback_date'])) : '—' ?>
+                                        </td>
                                         <td><?= htmlspecialchars($row['weather_condition']) ?></td>
                                         <td><?= htmlspecialchars($row['feedback_label']) ?></td>
                                     </tr>
                                     <?php endforeach; else: ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">No historical feedback data yet.
+                                        <td colspan="6" class="text-center text-muted">No historical feedback data yet.
                                         </td>
                                     </tr>
                                     <?php endif; ?>

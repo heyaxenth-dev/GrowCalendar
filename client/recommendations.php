@@ -120,8 +120,8 @@
     ];
 
     /**
-     * Barangay → primary soil type name (from Corresponding_SoilTypes_BRGY-BARBAZA).
-     * Used to auto-select soil type when location/brgy is known.
+     * Barangay → primary soil type name (from Corresponding_SoilTypes_BRGY-BARBAZA PDF).
+     * Primary = first of 3–5 soil types listed per barangay. Names must match soil_types.name.
      */
     $barangay_to_soil_type_name = [
         'Baghari' => 'Alluvial clay loam',
@@ -132,18 +132,18 @@
         'Binangbang Centro' => 'Loam, fertile garden soil',
         'Binanu-an' => 'Sandy loam, well-drained coastals',
         'Cadiao' => 'Clay to silty clay (moist soils)',
-        'Calapadan' => 'Wide range; loam preferred',
-        'Capoyuan' => 'Alluvial clay loam',
-        'Cubay' => 'Sandy loam, well-drained coastals',
-        'Embrangga-an' => 'Well-drained loam',
-        'Esparar' => 'Clay to silty clay (moist soils)',
-        'Gua' => 'Loam with good organic matter',
-        'Idao' => 'Sandy loam, well-drained coastals',
-        'Igpalge' => 'Alluvial clay loam',
-        'Igtunarum' => 'Well-drained loam',
+        'Calapadan' => 'Alluvial clay loam',
+        'Capoyuan' => 'Sandy loam, well-drained coastals',
+        'Cubay' => 'Well-drained loam',
+        'Embrangga-an' => 'Clay to silty clay (moist soils)',
+        'Esparar' => 'Loam with good organic matter',
+        'Gua' => 'Sandy loam, well-drained coastals',
+        'Idao' => 'Alluvial clay loam',
+        'Igpalge' => 'Well-drained loam',
+        'Igtunarum' => 'Clay to silty clay (moist soils)',
         'Integasan' => 'Clay to silty clay (moist soils)',
         'Ipil' => 'Sandy loam, well-drained coastals',
-        'Jinalinan' => 'Clay to silty clay (moist soils)',
+        'Jinalinan' => 'Sandy loam, well-drained coastals',
         'Lanas' => 'Clay to silty clay (moist soils)',
         'Langcaon (Evelio Javier)' => 'Clay to silty clay (moist soils)',
         'Lisub' => 'Clay to silty clay (moist soils)',
@@ -151,18 +151,18 @@
         'Mablad' => 'Loam with good organic matter',
         'Magtulis' => 'Clay to silty clay (moist soils)',
         'Marigne' => 'Clay to silty clay (moist soils)',
-        'Mayabay' => 'Clay to silty clay (moist soils)',
-        'Mayos' => 'Loam to sandy loam',
-        'Nalusdan' => 'Sandy loam to loam',
-        'Narirong' => 'Well-drained loam',
-        'Palma' => 'Clay to silty clay (moist soils)',
-        'Poblacion' => 'Sandy loam, well-drained coastals',
+        'Mayabay' => 'Deep loam to clay loam',
+        'Mayos' => 'Clay to silty clay (moist soils)',
+        'Nalusdan' => 'Clay to silty clay (moist soils)',
+        'Narirong' => 'Loam to sandy loam',
+        'Palma' => 'Sandy loam to loam',
+        'Poblacion' => 'Well-drained loam',
         'San Antonio' => 'Clay to silty clay (moist soils)',
         'San Ramon' => 'Sandy loam, well-drained coastals',
         'Soligao' => 'Alluvial clay loam',
         'Tabongtabong' => 'Alluvial clay loam',
         'Tig-Alaran' => 'Clay to silty clay (moist soils)',
-        'Yapo' => 'Alluvial clay loam',
+        'Yapo' => 'Clay to silty clay (moist soils)',
     ];
 
     // Resolve soil type ID from barangay (by name match in soil_types)
@@ -365,7 +365,8 @@
                         <h5 class="card-title">Crop Recommendations</h5>
                         <p class="card-text">Recommendations are automatically generated based on your saved preferences
                             and current weather conditions. Select your location; soil type is set automatically from
-                            your barangay. If you change location, select soil type(s) in the subform and click Okay to
+                            your barangay. If you change location, the subform shows soil types for that barangay—click
+                            Okay to
                             update recommendations.</p>
 
                         <form method="POST" action="" id="recommendationsForm">
@@ -637,8 +638,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-3">Select one or more soil types for the selected location, then click
-                        Okay to update the recommendation list.</p>
+                    <p class="text-muted small mb-3">Soil types for this barangay. Click Okay to update the
+                        recommendation list using these soil types.</p>
                     <div id="soilTypeCheckboxes"></div>
                     <div id="soilTypeModalError" class="alert alert-warning mt-2 d-none"></div>
                 </div>
@@ -802,6 +803,7 @@ const soilTypeModalError = document.getElementById('soilTypeModalError');
 const soilTypeModalOkay = document.getElementById('soilTypeModalOkay');
 const updateRecommendationsBtn = document.getElementById('updateRecommendationsBtn');
 const recommendationsForm = document.getElementById('recommendationsForm');
+let currentModalSoilTypeIds = [];
 
 function getInitialLocation() {
     return locationSelect ? (locationSelect.getAttribute('data-initial-location') || '') : '';
@@ -830,22 +832,23 @@ function openSoilTypeModal() {
     const modal = soilTypeModalEl ? new bootstrap.Modal(soilTypeModalEl) : null;
     if (modal) modal.show();
 
+    currentModalSoilTypeIds = [];
     fetch('./includes/get_soil_types_by_location.php?location=' + encodeURIComponent(location))
         .then(r => r.json())
         .then(data => {
             if (!soilTypeCheckboxes) return;
             soilTypeCheckboxes.innerHTML = '';
+            currentModalSoilTypeIds = [];
             if (data.success && data.soil_types && data.soil_types.length) {
+                currentModalSoilTypeIds = data.soil_types.map(st => parseInt(st.id, 10));
+                const ul = document.createElement('ul');
+                ul.className = 'list-unstyled mb-0';
                 data.soil_types.forEach(st => {
-                    const div = document.createElement('div');
-                    div.className = 'form-check';
-                    div.innerHTML =
-                        '<input class="form-check-input" type="checkbox" name="soil_type_ids[]" value="' +
-                        st.id + '" id="soil_cb_' + st.id + '">' +
-                        '<label class="form-check-label" for="soil_cb_' + st.id + '">' + (st.name ||
-                            'Soil #' + st.id) + '</label>';
-                    soilTypeCheckboxes.appendChild(div);
+                    const li = document.createElement('li');
+                    li.textContent = st.name || ('Soil #' + st.id);
+                    ul.appendChild(li);
                 });
+                soilTypeCheckboxes.appendChild(ul);
             } else {
                 soilTypeCheckboxes.innerHTML = '<p class="text-muted">No soil types found for this location.</p>';
             }
@@ -861,20 +864,19 @@ function openSoilTypeModal() {
 
 function submitSoilTypeSelection() {
     if (!soilTypeCheckboxes || !recommendationsForm || !locationSelect) return;
-    const checked = soilTypeCheckboxes.querySelectorAll('input[name="soil_type_ids[]"]:checked');
-    if (!checked.length) {
+    if (!currentModalSoilTypeIds.length) {
         if (soilTypeModalError) {
-            soilTypeModalError.textContent = 'Please select at least one soil type.';
+            soilTypeModalError.textContent = 'No soil types for this location.';
             soilTypeModalError.classList.remove('d-none');
         }
         return;
     }
     recommendationsForm.querySelectorAll('input[name="soil_type_ids[]"]').forEach(el => el.remove());
-    checked.forEach(cb => {
+    currentModalSoilTypeIds.forEach(id => {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'soil_type_ids[]';
-        input.value = cb.value;
+        input.value = id;
         recommendationsForm.appendChild(input);
     });
     // Location is already in the form via the location dropdown (name="location")
