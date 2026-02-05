@@ -221,20 +221,24 @@
         ?? ($user_soil_preference && !empty($user_soil_preference['location']) ? $user_soil_preference['location'] : null)
         ?? 'Poblacion, Barbaza, Antique';
 
-    // Soil types aligned with location: use barangay → primary soil type (Corresponding_SoilTypes_BRGY-BARBAZA)
+    // Soil types aligned with location.
+    // Prefer precise mapping from location_soil_types (via engine), fall back to primary PDF soil type per barangay.
     $soil_types_aligned_with_location = [];
-    $location_brgy = preg_replace('/, Barbaza, Antique$/', '', $effective_location);
-    if (isset($barangay_to_soil_type_name[$location_brgy]) && !empty($soil_types)) {
-        $primary_soil_name = $barangay_to_soil_type_name[$location_brgy];
-        foreach ($soil_types as $st) {
-            if (strcasecmp(trim($st['name']), $primary_soil_name) === 0) {
-                $soil_types_aligned_with_location[] = $st;
-                break;
+    if ($recommendation_engine) {
+        $soil_types_aligned_with_location = $recommendation_engine->getSoilTypesByLocation($effective_location);
+    }
+    // Fallback: use primary soil type from PDF mapping if no location-specific rows found.
+    if (empty($soil_types_aligned_with_location)) {
+        $location_brgy = preg_replace('/, Barbaza, Antique$/', '', $effective_location);
+        if (isset($barangay_to_soil_type_name[$location_brgy]) && !empty($soil_types)) {
+            $primary_soil_name = $barangay_to_soil_type_name[$location_brgy];
+            foreach ($soil_types as $st) {
+                if (strcasecmp(trim($st['name']), $primary_soil_name) === 0) {
+                    $soil_types_aligned_with_location[] = $st;
+                                break;
+                }
             }
         }
-    }
-    if (empty($soil_types_aligned_with_location) && $recommendation_engine) {
-        $soil_types_aligned_with_location = $recommendation_engine->getSoilTypesByLocation($effective_location);
     }
 
     // AUTO-GENERATE RECOMMENDATIONS ON PAGE LOAD

@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $soil_type_preference = trim($_POST['soil_type_preference'] ?? '');
     $weather_conditions = trim($_POST['weather_conditions'] ?? '');
     $image_url = trim($_POST['image_url'] ?? '');
+    $image_url_param = $image_url !== '' ? $image_url : '';
 
     if ($name === '') {
         $error_message = 'Crop name is required.';
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt->bind_param("ssssisddddddddssss",
             $name, $scientific_name, $description, $planting_season, $harvest_days, $water_requirements,
             $temperature_min, $temperature_max, $humidity_min, $humidity_max, $rainfall_min, $rainfall_max,
-            $ph_min, $ph_max, $marketability, $soil_type_preference, $weather_conditions, $image_url !== '' ? $image_url : '');
+            $ph_min, $ph_max, $marketability, $soil_type_preference, $weather_conditions, $image_url_param);
         if ($stmt->execute()) {
             $success_message = 'Crop added successfully.';
         } else {
@@ -198,8 +199,7 @@ if ($result) {
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
                                         <a href="add_crop_recommendation.php?action=delete&id=<?= (int)$c['id'] ?>"
-                                            class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Delete this crop?');">
+                                            class="btn btn-sm btn-outline-danger btn-delete-crop">
                                             <i class="bi bi-trash"></i> Delete
                                         </a>
                                     </td>
@@ -306,22 +306,53 @@ if ($result) {
                         </div>
                         <div class="col-12">
                             <label class="form-label">Marketability</label>
-                            <input type="text" class="form-control" name="marketability" id="cropMarketability">
+                            <input type="text" class="form-control" name="marketability" id="cropMarketability"
+                                list="marketabilityOptions" placeholder="Select or type...">
+                            <datalist id="marketabilityOptions">
+                                <option value="Local demand (household / village)">
+                                <option value="Local & Provincial">
+                                <option value="Local & Provincial (staple); high demand">
+                                <option value="Provincial & National">
+                                <option value="National & Export">
+                                <option value="High-value cash crop">
+                                <option value="Niche / specialty market">
+                            </datalist>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Soil type preference</label>
                             <input type="text" class="form-control" name="soil_type_preference"
-                                id="cropSoilTypePreference">
+                                id="cropSoilTypePreference" list="soilTypePrefOptions" placeholder="Select or type...">
+                            <datalist id="soilTypePrefOptions">
+                                <option value="Alluvial clay loam">
+                                <option value="Loam to sandy loam">
+                                <option value="Sandy loam, well-drained coastals">
+                                <option value="Loam, clay loam, alluvial soils">
+                                <option value="Well-drained loam">
+                                <option value="Sandy loam to loam">
+                                <option value="Clay to silty clay (moist soils)">
+                                <option value="Sandy loam, well-drained">
+                                <option value="Loam, fertile garden soil">
+                                <option value="Loam, well-drained">
+                                <option value="Deep loam, well-drained">
+                                <option value="Sandy loam, well-drained acidic soil">
+                                <option value="Loam with good organic matter">
+                                <option value="Deep loam to clay loam">
+                                <option value="Wide range; loam preferred">
+                            </datalist>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Weather conditions</label>
-                            <input type="text" class="form-control" name="weather_conditions"
-                                id="cropWeatherConditions">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Image URL</label>
-                            <input type="url" class="form-control" name="image_url" id="cropImageUrl"
-                                placeholder="https://...">
+                            <input type="text" class="form-control" name="weather_conditions" id="cropWeatherConditions"
+                                list="weatherConditionOptions" placeholder="Select or type...">
+                            <datalist id="weatherConditionOptions">
+                                <option value="Tropical, wet season (May–Nov)">
+                                <option value="Tropical, dry season (Dec–Apr)">
+                                <option value="Year-round, tropical humid">
+                                <option value="Prefers cool, upland conditions">
+                                <option value="Tolerant of variable rainfall">
+                                <option value="Requires well-distributed rainfall">
+                                <option value="Drought-tolerant once established">
+                            </datalist>
                         </div>
                     </div>
                 </div>
@@ -334,6 +365,15 @@ if ($result) {
     </div>
 </div>
 
+<style>
+/* Ensure the add/edit crop modal body scrolls on smaller screens */
+#cropFormModal .modal-body {
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+</style>
+
+<script src="assets/js/sweetalert2.all.min.js"></script>
 <script>
 (function() {
     const searchEl = document.getElementById('cropSearch');
@@ -394,9 +434,40 @@ function openEditModal(c) {
     document.getElementById('cropMarketability').value = c.marketability || '';
     document.getElementById('cropSoilTypePreference').value = c.soil_type_preference || '';
     document.getElementById('cropWeatherConditions').value = c.weather_conditions || '';
-    document.getElementById('cropImageUrl').value = c.image_url || '';
     new bootstrap.Modal(document.getElementById('cropFormModal')).show();
 }
+
+// SweetAlert2 delete confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('cropsTableBody');
+    if (!table || typeof Swal === 'undefined') return;
+
+    table.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-delete-crop');
+        if (!btn) return;
+        e.preventDefault();
+
+        const href = btn.getAttribute('href');
+        const cropNameCell = btn.closest('tr')?.querySelector('td');
+        const cropName = cropNameCell ? cropNameCell.textContent.trim() : 'this crop';
+
+        Swal.fire({
+            title: 'Delete crop?',
+            text: 'Are you sure you want to delete ' + cropName +
+                '? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed && href) {
+                window.location.href = href;
+            }
+        });
+    });
+});
 </script>
 
 <?php include 'includes/footer.php'; ?>
