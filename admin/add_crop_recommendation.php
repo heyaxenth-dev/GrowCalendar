@@ -1,9 +1,6 @@
 <?php
 include './authentication/authentication.php';
 include '../database/config.php';
-include 'includes/header.php';
-include 'includes/sidebar.php';
-include 'alert.php';
 
 $success_message = '';
 $error_message = '';
@@ -90,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $soil_type_preference = trim($_POST['soil_type_preference'] ?? '');
         $weather_conditions = trim($_POST['weather_conditions'] ?? '');
         $image_url = trim($_POST['image_url'] ?? '');
+        $image_url_param_update = $image_url !== '' ? $image_url : '';
 
         if ($name === '') {
             $error_message = 'Crop name is required.';
@@ -102,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt->bind_param("ssssisddddddddssssi",
                 $name, $scientific_name, $description, $planting_season, $harvest_days, $water_requirements,
                 $temperature_min, $temperature_max, $humidity_min, $humidity_max, $rainfall_min, $rainfall_max,
-                $ph_min, $ph_max, $marketability, $soil_type_preference, $weather_conditions, $image_url !== '' ? $image_url : '', $id);
+                $ph_min, $ph_max, $marketability, $soil_type_preference, $weather_conditions, $image_url_param_update, $id);
             if ($stmt->execute()) {
                 $success_message = 'Crop updated successfully.';
             } else {
@@ -125,6 +123,11 @@ if ($result) {
         $crops[] = $row;
     }
 }
+
+// After all processing (no output yet), include layout/header pieces
+include 'includes/header.php';
+include 'includes/sidebar.php';
+include 'alert.php';
 ?>
 
 <main id="main" class="main">
@@ -421,16 +424,16 @@ function openEditModal(c) {
     document.getElementById('cropScientificName').value = c.scientific_name || '';
     document.getElementById('cropDescription').value = c.description || '';
     document.getElementById('cropPlantingSeason').value = c.planting_season || '';
-    document.getElementById('cropHarvestDays').value = c.harvest_days ?? '';
+    document.getElementById('cropHarvestDays').value = (c.harvest_days !== null && c.harvest_days !== undefined) ? c.harvest_days : '';
     document.getElementById('cropWaterRequirements').value = c.water_requirements || '';
-    document.getElementById('cropTempMin').value = c.temperature_min ?? '';
-    document.getElementById('cropTempMax').value = c.temperature_max ?? '';
-    document.getElementById('cropHumidityMin').value = c.humidity_min ?? '';
-    document.getElementById('cropHumidityMax').value = c.humidity_max ?? '';
-    document.getElementById('cropRainfallMin').value = c.rainfall_min ?? '';
-    document.getElementById('cropRainfallMax').value = c.rainfall_max ?? '';
-    document.getElementById('cropPhMin').value = c.ph_min ?? '';
-    document.getElementById('cropPhMax').value = c.ph_max ?? '';
+    document.getElementById('cropTempMin').value = (c.temperature_min !== null && c.temperature_min !== undefined) ? c.temperature_min : '';
+    document.getElementById('cropTempMax').value = (c.temperature_max !== null && c.temperature_max !== undefined) ? c.temperature_max : '';
+    document.getElementById('cropHumidityMin').value = (c.humidity_min !== null && c.humidity_min !== undefined) ? c.humidity_min : '';
+    document.getElementById('cropHumidityMax').value = (c.humidity_max !== null && c.humidity_max !== undefined) ? c.humidity_max : '';
+    document.getElementById('cropRainfallMin').value = (c.rainfall_min !== null && c.rainfall_min !== undefined) ? c.rainfall_min : '';
+    document.getElementById('cropRainfallMax').value = (c.rainfall_max !== null && c.rainfall_max !== undefined) ? c.rainfall_max : '';
+    document.getElementById('cropPhMin').value = (c.ph_min !== null && c.ph_min !== undefined) ? c.ph_min : '';
+    document.getElementById('cropPhMax').value = (c.ph_max !== null && c.ph_max !== undefined) ? c.ph_max : '';
     document.getElementById('cropMarketability').value = c.marketability || '';
     document.getElementById('cropSoilTypePreference').value = c.soil_type_preference || '';
     document.getElementById('cropWeatherConditions').value = c.weather_conditions || '';
