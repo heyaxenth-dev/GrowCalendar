@@ -684,7 +684,10 @@
                     <div class="modal-body">
                         <input type="hidden" id="cropId" name="crop_id">
                         <input type="hidden" id="recommendationId" name="recommendation_id">
-                        <input type="hidden" id="scheduleLocation" name="location" value="<?= htmlspecialchars($recommendation_location ?? '') ?>">
+                        <input type="hidden" id="scheduleLocation" name="location"
+                            value="<?= htmlspecialchars($recommendation_location ?? '') ?>">
+                        <input type="hidden" id="scheduleWeatherCondition" name="weather_condition"
+                            value="<?= htmlspecialchars($weather_data['weather_condition'] ?? '') ?>">
 
                         <div class="mb-3">
                             <label class="form-label">Farmer's Name</label>
@@ -796,8 +799,10 @@ const locationToSoilId = <?= $location_to_soil_id_js ?>;
 const recommendationDetails =
     <?= json_encode($recommendation_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
-// Selected location for current recommendations (used when adding to schedule so crop uses this location, not user's designated barangay)
+// Selected location and weather for current recommendations (used when adding to schedule so report shows correct values)
 var currentRecommendationLocation = <?= json_encode($recommendation_location ?? '', JSON_UNESCAPED_UNICODE); ?>;
+var currentRecommendationWeatherCondition =
+    <?= json_encode(isset($weather_data['weather_condition']) ? $weather_data['weather_condition'] : '', JSON_UNESCAPED_UNICODE); ?>;
 
 // Pagination state
 let recommendationsPerPage = 5;
@@ -1140,10 +1145,14 @@ function addToSchedule(cropId, cropName, harvestDays) {
     document.getElementById('cropId').value = cropId;
     document.getElementById('cropName').value = cropName;
     document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
-    // Use the location used for current recommendations (selected location), not user's designated barangay
+    // Use the location and weather from current recommendations so reports show correct values (e.g. Clouds not Clear)
     var locEl = document.getElementById('scheduleLocation');
     if (locEl && typeof currentRecommendationLocation !== 'undefined') {
         locEl.value = currentRecommendationLocation || '';
+    }
+    var weatherEl = document.getElementById('scheduleWeatherCondition');
+    if (weatherEl && typeof currentRecommendationWeatherCondition !== 'undefined') {
+        weatherEl.value = currentRecommendationWeatherCondition || '';
     }
 
     // Set today as default planting date

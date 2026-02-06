@@ -220,23 +220,30 @@
         $suggested_focus = "Improve " . strtolower($lowest) . " yield practices";
     }
 
-    // Historical data: Prefer schedule's stored location (selected when adding from recommendations), then weather/user fallback
+    // Historical data: Prefer schedule's stored location and weather_condition (from when crop was added) so report matches database
     $historical_analytics = [];
+    $col_check = $conn->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'crop_schedules' AND COLUMN_NAME IN ('location', 'weather_condition')");
     $has_schedule_location = false;
-    $col_check = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'crop_schedules' AND COLUMN_NAME = 'location'");
-    if ($col_check && $col_check->num_rows > 0) {
-        $has_schedule_location = true;
+    $has_schedule_weather = false;
+    if ($col_check) {
+        while ($r = $col_check->fetch_assoc()) {
+            if ($r['COLUMN_NAME'] === 'location') $has_schedule_location = true;
+            if ($r['COLUMN_NAME'] === 'weather_condition') $has_schedule_weather = true;
+        }
     }
     $loc_expr = $has_schedule_location
         ? "COALESCE(NULLIF(TRIM(cs.location), ''), wd.location, NULLIF(TRIM(u.barangay), ''), 'N/A')"
         : "COALESCE(wd.location, NULLIF(TRIM(u.barangay), ''), 'N/A')";
+    $weather_expr = $has_schedule_weather
+        ? "COALESCE(NULLIF(TRIM(cs.weather_condition), ''), wd.weather_condition, 'N/A')"
+        : "COALESCE(wd.weather_condition, 'N/A')";
     $history_query = "
         SELECT 
             {$loc_expr} AS location_display,
             st.name AS soil_type,
             c.name AS crop_name,
             MAX(cf.created_at) AS feedback_date,
-            wd.weather_condition AS weather_condition,
+            {$weather_expr} AS weather_condition,
             AVG(cf.feedback_score) AS avg_score,
             SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) AS success_count,
             SUM(CASE WHEN cf.crop_condition = 'failure' THEN 1 ELSE 0 END) AS failure_count,
@@ -248,7 +255,7 @@
         LEFT JOIN crop_recommendations cr ON cf.recommendation_id = cr.id
         LEFT JOIN soil_types st ON cr.soil_type_id = st.id
         LEFT JOIN weather_data wd ON cr.weather_data_id = wd.id
-        GROUP BY location_display, st.name, c.name, wd.weather_condition
+        GROUP BY location_display, st.name, c.name, weather_condition
         HAVING total_feedback > 0
         ORDER BY location_display, c.name
     ";
