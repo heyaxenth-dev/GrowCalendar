@@ -302,7 +302,7 @@
                                 <h6 class="small fw-bold">Summary</h6>
                                 <ul class="small mb-0">
                                     <li>Top Performer: <strong><?= htmlspecialchars($top_performer) ?></strong></li>
-                                    <li>Suggested Focus: <strong>Improve corn yield practices</strong></li>
+                                    <li>Suggested Focus: <strong><?= htmlspecialchars($suggested_focus) ?></strong></li>
                                 </ul>
                             </div>
                         </div>

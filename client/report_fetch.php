@@ -179,7 +179,7 @@
         usort($sorted_availability, function($a, $b) {
             // Sort by availability descending, then by crop name for consistency
             if ($b['availability'] !== $a['availability']) {
-                return $b['availability'] - $a['availability'];
+            return $b['availability'] - $a['availability'];
             }
             return strcmp($a['crop'], $b['crop']);
         });
@@ -204,14 +204,14 @@
         usort($sorted_performance, function($a, $b) {
             // Sort by score descending, then by name for consistency
             if ($b['score'] !== $a['score']) {
-                return $b['score'] - $a['score'];
+            return $b['score'] - $a['score'];
             }
             return strcmp($a['name'], $b['name']);
         });
         $top_performer = $sorted_performance[0]['name'];
     }
 
-    // Suggested focus: lowest performer
+    // Suggested focus: lowest performer (improve that crop's yield practices)
     $suggested_focus = "Improve corn yield practices";
     if (!empty($crop_performance) && count($crop_performance) > 1) {
         $by_score = $crop_performance;
@@ -219,12 +219,12 @@
         $lowest = $by_score[0]['name'];
         $suggested_focus = "Improve " . strtolower($lowest) . " yield practices";
     }
-    
-    // Historical data analytics: Location, Soil Type, Crop, Weather, Feedback summary
+
+    // Historical data: Location from generated recommendation (weather_data.location), with fallback
     $historical_analytics = [];
     $history_query = "
         SELECT 
-            COALESCE(wd.location, 'N/A') AS location,
+            COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A') AS location_display,
             st.name AS soil_type,
             c.name AS crop_name,
             MAX(cf.created_at) AS feedback_date,
@@ -236,16 +236,16 @@
         FROM crop_feedback cf
         JOIN crop_schedules cs ON cf.crop_schedule_id = cs.id
         JOIN crops c ON cs.crop_id = c.id
+        LEFT JOIN users u ON cs.user_id = u.id
         LEFT JOIN crop_recommendations cr ON cf.recommendation_id = cr.id
         LEFT JOIN soil_types st ON cr.soil_type_id = st.id
         LEFT JOIN weather_data wd ON cr.weather_data_id = wd.id
-        GROUP BY COALESCE(wd.location, 'N/A'), st.name, c.name, wd.weather_condition
+        GROUP BY COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A'), st.name, c.name, wd.weather_condition
         HAVING total_feedback > 0
-        ORDER BY COALESCE(wd.location, 'N/A'), c.name
+        ORDER BY COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A'), c.name
     ";
     if ($history_result = $conn->query($history_query)) {
         while ($row = $history_result->fetch_assoc()) {
-            // Derive qualitative feedback label
             $avg_score = (float)($row['avg_score'] ?? 0);
             $feedback_label = 'Average';
             if ($avg_score >= 4.0 || (int)$row['success_count'] > (int)$row['failure_count']) {
@@ -253,9 +253,9 @@
             } elseif ($avg_score <= 2.0 || (int)$row['failure_count'] > (int)$row['success_count']) {
                 $feedback_label = 'Failure or Bad';
             }
-            
             $historical_analytics[] = [
-                'location' => $row['location'],
+                // For reports table, show barangay when available; otherwise the original weather location
+                'location' => $row['location_display'],
                 'soil_type' => $row['soil_type'] ?? 'N/A',
                 'crop_name' => $row['crop_name'],
                 'feedback_date' => $row['feedback_date'] ?? null,
