@@ -220,11 +220,19 @@
         $suggested_focus = "Improve " . strtolower($lowest) . " yield practices";
     }
 
-    // Historical data: Location from generated recommendation (weather_data.location), with fallback
+    // Historical data: Prefer schedule's stored location (selected when adding from recommendations), then weather/user fallback
     $historical_analytics = [];
+    $has_schedule_location = false;
+    $col_check = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'crop_schedules' AND COLUMN_NAME = 'location'");
+    if ($col_check && $col_check->num_rows > 0) {
+        $has_schedule_location = true;
+    }
+    $loc_expr = $has_schedule_location
+        ? "COALESCE(NULLIF(TRIM(cs.location), ''), wd.location, NULLIF(TRIM(u.barangay), ''), 'N/A')"
+        : "COALESCE(wd.location, NULLIF(TRIM(u.barangay), ''), 'N/A')";
     $history_query = "
         SELECT 
-            COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A') AS location_display,
+            {$loc_expr} AS location_display,
             st.name AS soil_type,
             c.name AS crop_name,
             MAX(cf.created_at) AS feedback_date,
@@ -240,9 +248,9 @@
         LEFT JOIN crop_recommendations cr ON cf.recommendation_id = cr.id
         LEFT JOIN soil_types st ON cr.soil_type_id = st.id
         LEFT JOIN weather_data wd ON cr.weather_data_id = wd.id
-        GROUP BY COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A'), st.name, c.name, wd.weather_condition
+        GROUP BY location_display, st.name, c.name, wd.weather_condition
         HAVING total_feedback > 0
-        ORDER BY COALESCE(wd.location, NULLIF(u.barangay, ''), 'N/A'), c.name
+        ORDER BY location_display, c.name
     ";
     if ($history_result = $conn->query($history_query)) {
         while ($row = $history_result->fetch_assoc()) {

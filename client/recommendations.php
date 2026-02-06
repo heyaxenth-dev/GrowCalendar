@@ -216,10 +216,10 @@
         $user_soil_preference = $recommendation_engine->getUserSoilPreference($user_id);
     }
 
-    // Default location: user's designated location (barangay from profile) first, then saved preference, then fallback
-    $effective_location = $auto_location_from_barangay
-        ?? ($user_soil_preference && !empty($user_soil_preference['location']) ? $user_soil_preference['location'] : null)
-        ?? 'Poblacion, Barbaza, Antique';
+    // Default location: last selected location (from Update Recommendations) first, then barangay, then fallback.
+    // This keeps all processes (weather, soil, recommendations, reports) aligned to the location the user chose.
+    $saved_location = ($user_soil_preference && !empty($user_soil_preference['location'])) ? $user_soil_preference['location'] : null;
+    $effective_location = $saved_location ?? $auto_location_from_barangay ?? 'Poblacion, Barbaza, Antique';
 
     // Soil types aligned with location.
     // Prefer precise mapping from location_soil_types (via engine), fall back to primary PDF soil type per barangay.
@@ -257,6 +257,8 @@
                 } else {
                     $weather_data = getFallbackWeatherData($location);
                 }
+                // Use selected location so UI, DB, and reports stay aligned (API may return different place name)
+                $weather_data['location'] = $location;
                 $weather_api->saveWeatherData($conn, $weather_data);
                 $first_soil_id = $soil_type_ids_for_location[0];
                 $recommendation_engine->saveUserSoilPreference($user_id, $first_soil_id, $location);
@@ -291,11 +293,14 @@
                         $weather_data = getFallbackWeatherData($location);
                         $success_message = "Recommendations updated using fallback weather data!";
                     }
+                    // Use selected location so UI, DB, and reports stay aligned (API may return different place name)
+                    $weather_data['location'] = $location;
                     $weather_api->saveWeatherData($conn, $weather_data);
                     $recommendation_engine->saveUserSoilPreference($user_id, $selected_soil_ids[0], $location);
                     $recommendations = $recommendation_engine->generateRecommendationsForSoils($user_id, $selected_soil_ids, $weather_data);
                     $selected_soil_type = null;
                     $recommendation_location = $location;
+                    $effective_location = $location;
                     $soil_types_used_for_recommendations = [];
                     foreach ($soil_types as $st) {
                         if (in_array((int)$st['id'], $selected_soil_ids, true)) {
@@ -633,6 +638,18 @@
         </div>
     </div>
 
+    <!-- Loading overlay when fetching recommendations -->
+    <div id="recommendationsLoadingOverlay" class="recommendations-loading-overlay" style="display: none;"
+        aria-hidden="true">
+        <div class="recommendations-loading-content">
+            <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 class="text-dark mb-1">Getting recommendations</h5>
+            <p class="text-muted small mb-0">Please wait while we update your crop list...</p>
+        </div>
+    </div>
+
     <!-- Soil Type Selection Modal (when user re-selects location) -->
     <div class="modal fade" id="soilTypeModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -667,6 +684,7 @@
                     <div class="modal-body">
                         <input type="hidden" id="cropId" name="crop_id">
                         <input type="hidden" id="recommendationId" name="recommendation_id">
+                        <input type="hidden" id="scheduleLocation" name="location" value="<?= htmlspecialchars($recommendation_location ?? '') ?>">
 
                         <div class="mb-3">
                             <label class="form-label">Farmer's Name</label>
@@ -707,6 +725,29 @@
             </div>
         </div>
     </div>
+
+    <style>
+.recommendations-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recommendations-loading-content {
+    text-align: center;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
+}
+    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php
@@ -754,6 +795,9 @@ const locationToSoilId = <?= $location_to_soil_id_js ?>;
 
 const recommendationDetails =
     <?= json_encode($recommendation_js, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+// Selected location for current recommendations (used when adding to schedule so crop uses this location, not user's designated barangay)
+var currentRecommendationLocation = <?= json_encode($recommendation_location ?? '', JSON_UNESCAPED_UNICODE); ?>;
 
 // Pagination state
 let recommendationsPerPage = 5;
@@ -883,6 +927,11 @@ function submitSoilTypeSelection() {
         input.value = id;
         recommendationsForm.appendChild(input);
     });
+    // Show loading overlay while form submits and page reloads
+    const loadingEl = document.getElementById('recommendationsLoadingOverlay');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+    }
     // Location is already in the form via the location dropdown (name="location")
     recommendationsForm.submit();
 }
@@ -1091,6 +1140,11 @@ function addToSchedule(cropId, cropName, harvestDays) {
     document.getElementById('cropId').value = cropId;
     document.getElementById('cropName').value = cropName;
     document.getElementById('recommendationId').value = cropId; // Using crop ID as recommendation ID for now
+    // Use the location used for current recommendations (selected location), not user's designated barangay
+    var locEl = document.getElementById('scheduleLocation');
+    if (locEl && typeof currentRecommendationLocation !== 'undefined') {
+        locEl.value = currentRecommendationLocation || '';
+    }
 
     // Set today as default planting date
     const today = new Date().toISOString().split('T')[0];

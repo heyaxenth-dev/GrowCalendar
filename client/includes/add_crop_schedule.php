@@ -27,9 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get form data
+// Get form data (location = selected location from recommendations page, not user's designated barangay)
 $crop_id = $_POST['crop_id'] ?? null;
 $recommendation_id = $_POST['recommendation_id'] ?? null;
+$location = isset($_POST['location']) ? trim($_POST['location']) : null;
 $planting_date = $_POST['planting_date'] ?? null;
 $farmer_name = $_POST['farmer_name'] ?? '';
 $notes = $_POST['notes'] ?? '';
@@ -62,20 +63,38 @@ try {
     $harvest_date_obj->add(new DateInterval('P' . $harvest_days . 'D'));
     $expected_harvest_date = $harvest_date_obj->format('Y-m-d');
     
-    // Check if farmer_name column exists in the table
-    $check_column = "SELECT COUNT(*) as count 
-                     FROM INFORMATION_SCHEMA.COLUMNS 
-                     WHERE TABLE_SCHEMA = DATABASE() 
-                     AND TABLE_NAME = 'crop_schedules' 
-                     AND COLUMN_NAME = 'farmer_name'";
-    $column_check = $conn->query($check_column);
-    $has_farmer_name_column = $column_check->fetch_assoc()['count'] > 0;
+    // Check if farmer_name and location columns exist
+    $check_columns = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+                      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'crop_schedules' 
+                      AND COLUMN_NAME IN ('farmer_name', 'location')";
+    $col_result = $conn->query($check_columns);
+    $existing_columns = [];
+    while ($row = $col_result->fetch_assoc()) {
+        $existing_columns[] = $row['COLUMN_NAME'];
+    }
+    $has_farmer_name_column = in_array('farmer_name', $existing_columns, true);
+    $has_location_column = in_array('location', $existing_columns, true);
     
-    // Prepare farmer name
+    // Prepare farmer name and location (use selected location from recommendations, not user profile)
     $farmer_name_clean = !empty($farmer_name) ? trim($farmer_name) : null;
+    $location_clean = (!empty($location) && $has_location_column) ? $location : null;
     
-    if ($has_farmer_name_column) {
-        // Insert crop schedule with farmer_name column
+    if ($has_farmer_name_column && $has_location_column) {
+        $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, location, planting_date, expected_harvest_date, farmer_name, status, notes) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, 'planting', ?)";
+        $stmt = $conn->prepare($insert_query);
+        $stmt->bind_param("iiisssss", 
+            $_SESSION['user_id'], 
+            $crop_id, 
+            $recommendation_id, 
+            $location_clean,
+            $planting_date, 
+            $expected_harvest_date, 
+            $farmer_name_clean,
+            $notes
+        );
+    } elseif ($has_farmer_name_column) {
+        // Insert crop schedule with farmer_name column (no location column yet)
         $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, planting_date, expected_harvest_date, farmer_name, status, notes) 
                          VALUES (?, ?, ?, ?, ?, ?, 'planting', ?)";
         
@@ -87,6 +106,20 @@ try {
             $planting_date, 
             $expected_harvest_date, 
             $farmer_name_clean,
+            $notes
+        );
+    } elseif ($has_location_column) {
+        // Insert with location column only (selected location from recommendations)
+        $insert_query = "INSERT INTO crop_schedules (user_id, crop_id, recommendation_id, location, planting_date, expected_harvest_date, status, notes) 
+                         VALUES (?, ?, ?, ?, ?, ?, 'planting', ?)";
+        $stmt = $conn->prepare($insert_query);
+        $stmt->bind_param("iisssss", 
+            $_SESSION['user_id'], 
+            $crop_id, 
+            $recommendation_id, 
+            $location_clean,
+            $planting_date, 
+            $expected_harvest_date, 
             $notes
         );
     } else {

@@ -28,13 +28,21 @@ if (!$schedule_id) {
 }
 
 try {
-    // Get schedule details, including location (via recommendations & weather) and farmer/user info
+    // Prefer schedule's stored location (selected when adding from recommendations), else from recommendation/weather.
+    $has_location_col = false;
+    $col_check = $conn->query("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'crop_schedules' AND COLUMN_NAME = 'location'");
+    if ($col_check && $col_check->num_rows > 0) {
+        $has_location_col = true;
+    }
+    $location_select = $has_location_col
+        ? "cs.location AS schedule_location, wd.location AS weather_location"
+        : "NULL AS schedule_location, wd.location AS weather_location";
     $query = "SELECT 
                 cs.*,
                 c.name AS crop_name,
                 c.scientific_name,
                 c.harvest_days,
-                wd.location,
+                {$location_select},
                 u.firstname,
                 u.lastname
               FROM crop_schedules cs
@@ -91,7 +99,7 @@ try {
             'crop_name' => $schedule['crop_name'],
             'scientific_name' => $schedule['scientific_name'],
             'farmer_name' => $farmer_name,
-            'location' => $schedule['location'] ?? null,
+            'location' => $schedule['schedule_location'] ?? $schedule['weather_location'] ?? null,
             'planting_date' => $schedule['planting_date'],
             'planting_date_formatted' => $planting_formatted,
             'expected_harvest_date' => $schedule['expected_harvest_date'],
