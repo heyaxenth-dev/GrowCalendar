@@ -110,10 +110,13 @@ class CropRecommendationEngine {
         $result = $stmt->get_result();
         
         if ($row = $result->fetch_assoc()) {
-            return (float)$row['compatibility_score'];
+            $score = (float)$row['compatibility_score'];
+            $stmt->close();
+            return $score;
         }
-        
-        return 0.0; // No compatibility data
+        $stmt->close();
+        // New crops may have no compatibility rows yet; use neutral score so they can appear in recommendations
+        return 0.5;
     }
     
     /**
@@ -139,25 +142,21 @@ class CropRecommendationEngine {
     private function calculateTemperatureScore($crop, $current_temp) {
         $min_temp = $crop['temperature_min'];
         $max_temp = $crop['temperature_max'];
-        
+        // New crops may have null temp range; use neutral score so they can appear
+        if ($min_temp === null || $min_temp === '' || $max_temp === null || $max_temp === '') {
+            return 0.5;
+        }
+        $min_temp = (float)$min_temp;
+        $max_temp = (float)$max_temp;
         if ($current_temp < $min_temp || $current_temp > $max_temp) {
             return 0.0;
         }
-        
         $optimal_range = $max_temp - $min_temp;
-        
-        // Handle case where min and max temperature are the same (zero range)
         if ($optimal_range == 0) {
-            return 1.0; // Perfect score if current temperature matches the exact requirement
+            return 1.0;
         }
-        
-        $distance_from_min = abs($current_temp - $min_temp);
-        $distance_from_max = abs($current_temp - $max_temp);
-        
-        // Score higher for temperatures closer to the middle of the range
         $middle = ($min_temp + $max_temp) / 2;
         $distance_from_middle = abs($current_temp - $middle);
-        
         return max(0.0, 1.0 - ($distance_from_middle / ($optimal_range / 2)));
     }
     
@@ -170,21 +169,20 @@ class CropRecommendationEngine {
     private function calculateHumidityScore($crop, $current_humidity) {
         $min_humidity = $crop['humidity_min'];
         $max_humidity = $crop['humidity_max'];
-        
+        if ($min_humidity === null || $min_humidity === '' || $max_humidity === null || $max_humidity === '') {
+            return 0.5;
+        }
+        $min_humidity = (float)$min_humidity;
+        $max_humidity = (float)$max_humidity;
         if ($current_humidity < $min_humidity || $current_humidity > $max_humidity) {
             return 0.0;
         }
-        
         $optimal_range = $max_humidity - $min_humidity;
-        
-        // Handle case where min and max humidity are the same (zero range)
         if ($optimal_range == 0) {
-            return 1.0; // Perfect score if current humidity matches the exact requirement
+            return 1.0;
         }
-        
         $middle = ($min_humidity + $max_humidity) / 2;
         $distance_from_middle = abs($current_humidity - $middle);
-        
         return max(0.0, 1.0 - ($distance_from_middle / ($optimal_range / 2)));
     }
     
@@ -197,21 +195,20 @@ class CropRecommendationEngine {
     private function calculateRainfallScore($crop, $current_rainfall) {
         $min_rainfall = $crop['rainfall_min'];
         $max_rainfall = $crop['rainfall_max'];
-        
+        if ($min_rainfall === null || $min_rainfall === '' || $max_rainfall === null || $max_rainfall === '') {
+            return 0.5;
+        }
+        $min_rainfall = (float)$min_rainfall;
+        $max_rainfall = (float)$max_rainfall;
         if ($current_rainfall < $min_rainfall || $current_rainfall > $max_rainfall) {
             return 0.0;
         }
-        
         $optimal_range = $max_rainfall - $min_rainfall;
-        
-        // Handle case where min and max rainfall are the same (zero range)
         if ($optimal_range == 0) {
-            return 1.0; // Perfect score if current rainfall matches the exact requirement
+            return 1.0;
         }
-        
         $middle = ($min_rainfall + $max_rainfall) / 2;
         $distance_from_middle = abs($current_rainfall - $middle);
-        
         return max(0.0, 1.0 - ($distance_from_middle / ($optimal_range / 2)));
     }
     
@@ -327,21 +324,23 @@ class CropRecommendationEngine {
         $tips = [];
         
         // Water requirements tips
-        if ($crop['water_requirements'] === 'High') {
+        if (!empty($crop['water_requirements']) && $crop['water_requirements'] === 'High') {
             $tips[] = "Ensure adequate irrigation as this crop requires high water";
-        } elseif ($crop['water_requirements'] === 'Low') {
+        } elseif (!empty($crop['water_requirements']) && $crop['water_requirements'] === 'Low') {
             $tips[] = "This crop is drought-tolerant and requires minimal watering";
         }
         
-        // Temperature tips
-        if ($weather_data['temperature'] < $crop['temperature_min']) {
-            $tips[] = "Consider using greenhouses or row covers to maintain temperature";
-        } elseif ($weather_data['temperature'] > $crop['temperature_max']) {
-            $tips[] = "Provide shade or mulch to protect from excessive heat";
+        // Temperature tips (only when crop has temp range)
+        if (isset($crop['temperature_min'], $crop['temperature_max']) && $crop['temperature_min'] !== '' && $crop['temperature_max'] !== '') {
+            if ($weather_data['temperature'] < $crop['temperature_min']) {
+                $tips[] = "Consider using greenhouses or row covers to maintain temperature";
+            } elseif ($weather_data['temperature'] > $crop['temperature_max']) {
+                $tips[] = "Provide shade or mulch to protect from excessive heat";
+            }
         }
         
         // Humidity tips
-        if ($weather_data['humidity'] < $crop['humidity_min']) {
+        if (isset($crop['humidity_min']) && $crop['humidity_min'] !== '' && $weather_data['humidity'] < $crop['humidity_min']) {
             $tips[] = "Consider misting or using humidity trays to increase moisture";
         }
         

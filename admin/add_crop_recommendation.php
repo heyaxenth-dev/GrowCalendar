@@ -309,53 +309,57 @@ include 'alert.php';
                         </div>
                         <div class="col-12">
                             <label class="form-label">Marketability</label>
-                            <input type="text" class="form-control" name="marketability" id="cropMarketability"
-                                list="marketabilityOptions" placeholder="Select or type...">
-                            <datalist id="marketabilityOptions">
-                                <option value="Local demand (household / village)">
-                                <option value="Local & Provincial">
-                                <option value="Local & Provincial (staple); high demand">
-                                <option value="Provincial & National">
-                                <option value="National & Export">
-                                <option value="High-value cash crop">
-                                <option value="Niche / specialty market">
-                            </datalist>
+                            <select class="form-select" name="marketability" id="cropMarketability">
+                                <option value="">—</option>
+                                <option value="Local demand (household / village)">Local demand (household / village)
+                                </option>
+                                <option value="Local & Provincial">Local & Provincial</option>
+                                <option value="Local & Provincial (staple); high demand">Local & Provincial (staple);
+                                    high demand</option>
+                                <option value="Provincial & National">Provincial & National</option>
+                                <option value="National & Export">National & Export</option>
+                                <option value="High-value cash crop">High-value cash crop</option>
+                                <option value="Niche / specialty market">Niche / specialty market</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Soil type preference</label>
-                            <input type="text" class="form-control" name="soil_type_preference"
-                                id="cropSoilTypePreference" list="soilTypePrefOptions" placeholder="Select or type...">
-                            <datalist id="soilTypePrefOptions">
-                                <option value="Alluvial clay loam">
-                                <option value="Loam to sandy loam">
-                                <option value="Sandy loam, well-drained coastals">
-                                <option value="Loam, clay loam, alluvial soils">
-                                <option value="Well-drained loam">
-                                <option value="Sandy loam to loam">
-                                <option value="Clay to silty clay (moist soils)">
-                                <option value="Sandy loam, well-drained">
-                                <option value="Loam, fertile garden soil">
-                                <option value="Loam, well-drained">
-                                <option value="Deep loam, well-drained">
-                                <option value="Sandy loam, well-drained acidic soil">
-                                <option value="Loam with good organic matter">
-                                <option value="Deep loam to clay loam">
-                                <option value="Wide range; loam preferred">
-                            </datalist>
+                            <select class="form-select" name="soil_type_preference" id="cropSoilTypePreference">
+                                <option value="">—</option>
+                                <option value="Alluvial clay loam">Alluvial clay loam</option>
+                                <option value="Loam to sandy loam">Loam to sandy loam</option>
+                                <option value="Sandy loam, well-drained coastals">Sandy loam, well-drained coastals
+                                </option>
+                                <option value="Loam, clay loam, alluvial soils">Loam, clay loam, alluvial soils</option>
+                                <option value="Well-drained loam">Well-drained loam</option>
+                                <option value="Sandy loam to loam">Sandy loam to loam</option>
+                                <option value="Clay to silty clay (moist soils)">Clay to silty clay (moist soils)
+                                </option>
+                                <option value="Sandy loam, well-drained">Sandy loam, well-drained</option>
+                                <option value="Loam, fertile garden soil">Loam, fertile garden soil</option>
+                                <option value="Loam, well-drained">Loam, well-drained</option>
+                                <option value="Deep loam, well-drained">Deep loam, well-drained</option>
+                                <option value="Sandy loam, well-drained acidic soil">Sandy loam, well-drained acidic
+                                    soil</option>
+                                <option value="Loam with good organic matter">Loam with good organic matter</option>
+                                <option value="Deep loam to clay loam">Deep loam to clay loam</option>
+                                <option value="Wide range; loam preferred">Wide range; loam preferred</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Weather conditions</label>
-                            <input type="text" class="form-control" name="weather_conditions" id="cropWeatherConditions"
-                                list="weatherConditionOptions" placeholder="Select or type...">
-                            <datalist id="weatherConditionOptions">
-                                <option value="Tropical, wet season (May–Nov)">
-                                <option value="Tropical, dry season (Dec–Apr)">
-                                <option value="Year-round, tropical humid">
-                                <option value="Prefers cool, upland conditions">
-                                <option value="Tolerant of variable rainfall">
-                                <option value="Requires well-distributed rainfall">
-                                <option value="Drought-tolerant once established">
-                            </datalist>
+                            <select class="form-select" name="weather_conditions" id="cropWeatherConditions">
+                                <option value="">—</option>
+                                <option value="Tropical, wet season (May–Nov)">Tropical, wet season (May–Nov)</option>
+                                <option value="Tropical, dry season (Dec–Apr)">Tropical, dry season (Dec–Apr)</option>
+                                <option value="Year-round, tropical humid">Year-round, tropical humid</option>
+                                <option value="Prefers cool, upland conditions">Prefers cool, upland conditions</option>
+                                <option value="Tolerant of variable rainfall">Tolerant of variable rainfall</option>
+                                <option value="Requires well-distributed rainfall">Requires well-distributed rainfall
+                                </option>
+                                <option value="Drought-tolerant once established">Drought-tolerant once established
+                                </option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -416,6 +420,26 @@ function openAddModal() {
     document.getElementById('cropForm').reset();
 }
 
+// Ensure a <select> has an option for the given value (adds it if missing) so edit form shows/saves it
+function ensureSelectOption(selectId, value) {
+    if (!value) return;
+    var sel = document.getElementById(selectId);
+    if (!sel || sel.tagName !== 'SELECT') return;
+    var found = false;
+    for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === value) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        sel.appendChild(opt);
+    }
+}
+
 function openEditModal(c) {
     document.getElementById('cropFormModalTitle').textContent = 'Edit Crop';
     document.getElementById('formAction').value = 'update';
@@ -424,18 +448,29 @@ function openEditModal(c) {
     document.getElementById('cropScientificName').value = c.scientific_name || '';
     document.getElementById('cropDescription').value = c.description || '';
     document.getElementById('cropPlantingSeason').value = c.planting_season || '';
-    document.getElementById('cropHarvestDays').value = (c.harvest_days !== null && c.harvest_days !== undefined) ? c.harvest_days : '';
+    document.getElementById('cropHarvestDays').value = (c.harvest_days !== null && c.harvest_days !== undefined) ? c
+        .harvest_days : '';
     document.getElementById('cropWaterRequirements').value = c.water_requirements || '';
-    document.getElementById('cropTempMin').value = (c.temperature_min !== null && c.temperature_min !== undefined) ? c.temperature_min : '';
-    document.getElementById('cropTempMax').value = (c.temperature_max !== null && c.temperature_max !== undefined) ? c.temperature_max : '';
-    document.getElementById('cropHumidityMin').value = (c.humidity_min !== null && c.humidity_min !== undefined) ? c.humidity_min : '';
-    document.getElementById('cropHumidityMax').value = (c.humidity_max !== null && c.humidity_max !== undefined) ? c.humidity_max : '';
-    document.getElementById('cropRainfallMin').value = (c.rainfall_min !== null && c.rainfall_min !== undefined) ? c.rainfall_min : '';
-    document.getElementById('cropRainfallMax').value = (c.rainfall_max !== null && c.rainfall_max !== undefined) ? c.rainfall_max : '';
+    document.getElementById('cropTempMin').value = (c.temperature_min !== null && c.temperature_min !== undefined) ? c
+        .temperature_min : '';
+    document.getElementById('cropTempMax').value = (c.temperature_max !== null && c.temperature_max !== undefined) ? c
+        .temperature_max : '';
+    document.getElementById('cropHumidityMin').value = (c.humidity_min !== null && c.humidity_min !== undefined) ? c
+        .humidity_min : '';
+    document.getElementById('cropHumidityMax').value = (c.humidity_max !== null && c.humidity_max !== undefined) ? c
+        .humidity_max : '';
+    document.getElementById('cropRainfallMin').value = (c.rainfall_min !== null && c.rainfall_min !== undefined) ? c
+        .rainfall_min : '';
+    document.getElementById('cropRainfallMax').value = (c.rainfall_max !== null && c.rainfall_max !== undefined) ? c
+        .rainfall_max : '';
     document.getElementById('cropPhMin').value = (c.ph_min !== null && c.ph_min !== undefined) ? c.ph_min : '';
     document.getElementById('cropPhMax').value = (c.ph_max !== null && c.ph_max !== undefined) ? c.ph_max : '';
+    // Marketability, soil type, weather: dropdowns; ensure current value exists as option when editing
+    ensureSelectOption('cropMarketability', c.marketability || '');
     document.getElementById('cropMarketability').value = c.marketability || '';
+    ensureSelectOption('cropSoilTypePreference', c.soil_type_preference || '');
     document.getElementById('cropSoilTypePreference').value = c.soil_type_preference || '';
+    ensureSelectOption('cropWeatherConditions', c.weather_conditions || '');
     document.getElementById('cropWeatherConditions').value = c.weather_conditions || '';
     new bootstrap.Modal(document.getElementById('cropFormModal')).show();
 }
