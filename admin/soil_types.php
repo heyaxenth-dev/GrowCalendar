@@ -1,5 +1,10 @@
 <?php
     include './authentication/authentication.php';
+    include '../database/config.php';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        include 'includes/soil_type_post_handlers.php';
+        exit;
+    }
     include 'includes/header.php';
     include 'includes/sidebar.php';
     include 'add_soil_type.php';
