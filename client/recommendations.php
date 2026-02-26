@@ -754,6 +754,42 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php
+    // Per-crop feedback from reports (same logic as report_fetch / Reports table) for current user
+    $crop_report_feedback = [];
+    $feedback_table_check = @$conn->query("SHOW TABLES LIKE 'crop_feedback'");
+    if ($feedback_table_check && $feedback_table_check->num_rows > 0) {
+        $fb_query = "SELECT cs.crop_id,
+                AVG(cf.feedback_score) AS avg_score,
+                SUM(CASE WHEN cf.crop_condition = 'success' THEN 1 ELSE 0 END) AS success_count,
+                SUM(CASE WHEN cf.crop_condition = 'failure' THEN 1 ELSE 0 END) AS failure_count,
+                COUNT(cf.id) AS total_feedback
+            FROM crop_feedback cf
+            JOIN crop_schedules cs ON cf.crop_schedule_id = cs.id
+            WHERE cs.user_id = ?
+            GROUP BY cs.crop_id
+            HAVING total_feedback > 0";
+        $fb_stmt = $conn->prepare($fb_query);
+        $fb_stmt->bind_param("i", $user_id);
+        $fb_stmt->execute();
+        $fb_result = $fb_stmt->get_result();
+        while ($row = $fb_result->fetch_assoc()) {
+            $avg_score = (float)($row['avg_score'] ?? 0);
+            $success_count = (int)($row['success_count'] ?? 0);
+            $failure_count = (int)($row['failure_count'] ?? 0);
+            $label = 'Average';
+            if ($avg_score >= 4.0 || $success_count > $failure_count) {
+                $label = 'Good (Successful)';
+            } elseif ($avg_score <= 2.0 || $failure_count > $success_count) {
+                $label = 'Failure or Bad';
+            }
+            $crop_report_feedback[(int)$row['crop_id']] = [
+                'label' => $label,
+                'total_feedback' => (int)$row['total_feedback'],
+            ];
+        }
+        $fb_stmt->close();
+    }
+
     // Location → soil type ID for auto-selecting soil when location changes (from Barbaza PDF mapping)
     $location_to_soil_id_js = json_encode($location_to_soil_id ?? [], JSON_UNESCAPED_UNICODE);
     // Build lightweight dataset for JS details modal
@@ -770,6 +806,9 @@
             } elseif ($historyScore > 0.0) {
                 $historyLabel = 'Previously planted at least once in your farm/area.';
             }
+
+            $crop_id = (int)$rec['crop']['id'];
+            $report_feedback = $crop_report_feedback[$crop_id] ?? null;
 
             $recommendation_js[] = [
                 'id' => $rec['crop']['id'],
@@ -788,6 +827,7 @@
                 'planting_tips' => array_values($rec['planting_tips']),
                 'history_score' => $historyScore,
                 'history_label' => $historyLabel,
+                'report_feedback' => $report_feedback,
             ];
         }
     }
@@ -1076,7 +1116,30 @@ function showRecommendationDetails(index) {
             `<li><i class="bi bi-lightbulb text-warning me-1"></i>${t}</li>`
         ).join('');
 
+        let reportFeedbackHtml = '';
+        if (rec.report_feedback && rec.report_feedback.label) {
+            const rf = rec.report_feedback;
+            const label = rf.label;
+            const isGood = label === 'Good (Successful)';
+            const isBad = label === 'Failure or Bad';
+            const alertClass = isGood ? 'alert-success' : (isBad ? 'alert-danger' : 'alert-warning');
+            const iconClass = isGood ? 'bi-check-circle-fill' : (isBad ? 'bi-exclamation-triangle-fill' :
+                'bi-info-circle-fill');
+            const msg = isGood ?
+                'Your previous records for this crop were successful. This crop matches what the reports gathered.' :
+                (isBad ?
+                    'Your previous records for this crop had issues. Consider the reports and improve practices if you plant again.' :
+                    'Your previous records for this crop were average. See reports for details.');
+            reportFeedbackHtml = `
+            <div class="alert ${alertClass} mb-3 py-2 px-3" role="alert">
+                <i class="bi ${iconClass} me-2"></i>
+                <strong>Feedback from your records:</strong> ${label}
+                <span class="d-block small mt-1 mb-0">${msg}</span>
+            </div>`;
+        }
+
         bodyEl.innerHTML = `
+            ${reportFeedbackHtml}
             <h5 class="mb-1">${rec.name}</h5>
             <p class="text-muted mb-2"><em>${rec.scientific_name || ''}</em></p>
             ${rec.description ? `

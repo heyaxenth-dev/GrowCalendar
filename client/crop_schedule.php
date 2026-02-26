@@ -112,14 +112,14 @@
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="card h-100">
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-3">
-                                            <h6 class="card-title"><?= htmlspecialchars($schedule['crop_name']) ?></h6>
-                                            <span class="badge bg-<?= 
-                                                $schedule['status'] == 'planting' ? 'success' : 
-                                                ($schedule['status'] == 'vegetative' ? 'primary' : 
+                                        <div class="mb-2 mt-3">
+                                            <span class="badge bg-<?=
+                                                $schedule['status'] == 'planting' ? 'success' :
+                                                ($schedule['status'] == 'vegetative' ? 'primary' :
                                                 ($schedule['status'] == 'reproductive' ? 'warning' : 'danger'))
-                                            ?>"><?= ucfirst($schedule['status']) ?></span>
+                                            ?> px-3 py-2 fs-6"><?= ucfirst($schedule['status']) ?></span>
                                         </div>
+                                        <h6 class="card-title mb-2"><?= htmlspecialchars($schedule['crop_name']) ?></h6>
 
                                         <p class="text-muted small mb-2">
                                             <em><?= htmlspecialchars($schedule['scientific_name']) ?></em>
@@ -408,7 +408,7 @@ function viewDetails(scheduleId) {
                                 ${schedule.progress_percentage}%
                             </div>
                         </div>
-                        <p class="mb-1">
+                        <p class="mb-1 mt-2">
                             <strong>Status / Phase:</strong>
                             <span class="badge bg-${schedule.status_color}">${schedule.status}</span>
                         </p>

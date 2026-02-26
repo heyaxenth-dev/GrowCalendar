@@ -80,6 +80,15 @@
                 </a>
             </li>
             <!-- End Add Crop Recommendation Page Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link <?= ($current_page == 'soil_types') ? '' : 'collapsed' ?>"
+                    href="<?= get_page_link('soil_types') ?>">
+                    <i class="bi bi-layers"></i>
+                    <span>Soil Types</span>
+                </a>
+            </li>
+            <!-- End Soil Types Page Nav -->
         </ul>
     </aside>
     <!-- End Sidebar -->
